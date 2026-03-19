@@ -1,4 +1,11 @@
 @import "tailwindcss";
+@import "swiper/css";
+@import "swiper/css/a11y";
+@import "swiper/css/autoplay";
+@import "swiper/css/effect-fade";
+@import "swiper/css/free-mode";
+@import "swiper/css/pagination";
+@import "swiper/css/thumbs";
 
 @view-transition {
   navigation: auto;
@@ -152,7 +159,7 @@
 @keyframes sheet-in-right {
   from {
     opacity: 0;
-    transform: translate3d(28px, 0, 0);
+    transform: translate3d(42px, 0, 0);
   }
 
   to {
@@ -164,7 +171,7 @@
 @keyframes sheet-in-left {
   from {
     opacity: 0;
-    transform: translate3d(-28px, 0, 0);
+    transform: translate3d(-42px, 0, 0);
   }
 
   to {
@@ -181,7 +188,7 @@
 
   to {
     opacity: 0;
-    transform: translate3d(28px, 0, 0);
+    transform: translate3d(22px, 0, 0);
   }
 }
 
@@ -193,7 +200,35 @@
 
   to {
     opacity: 0;
-    transform: translate3d(-28px, 0, 0);
+    transform: translate3d(-22px, 0, 0);
+  }
+}
+
+@keyframes sheet-item-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+    filter: blur(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+@keyframes home-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+    filter: blur(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
   }
 }
 
@@ -222,6 +257,30 @@
     opacity: 0;
     transform: scale(1.012);
     filter: saturate(0.98);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -16px, 0) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0) scale(0.98);
   }
 }
 
@@ -277,6 +336,190 @@
   will-change: opacity, transform, filter;
 }
 
+.marquee-track {
+  display: flex;
+  min-width: max-content;
+  animation: marquee-scroll 32s linear infinite;
+}
+
+.toast-shell {
+  position: relative;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  overflow: hidden;
+  border-width: 1px;
+  border-radius: 1rem;
+  background: #fff;
+  padding: 1rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  will-change: opacity, transform;
+}
+
+.toast-shell-enter {
+  animation: toast-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.toast-shell-exit {
+  animation: toast-out 180ms ease-in both;
+}
+
+.toast-icon {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+}
+
+.toast-progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 0.25rem;
+  transform-origin: left center;
+  animation: toast-progress 3s linear forwards;
+}
+
+.products-page-bar,
+.products-page-meta,
+.products-page-heading,
+.products-page-toolbar,
+.products-page-results-meta,
+.products-page-empty,
+.products-page-footer,
+.products-grid-card {
+  will-change: opacity, transform, filter;
+}
+
+.home-category-card {
+  will-change: opacity, transform, filter;
+}
+
+.add-to-cart-button {
+  transition-property: transform, background-color, border-color, color, box-shadow;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  will-change: transform;
+}
+
+.add-to-cart-button:active {
+  transform: scale(0.96);
+}
+
+.add-to-cart-icon {
+  opacity: 0;
+  transform: scale(0.25);
+  filter: blur(4px);
+  transition-property: opacity, transform, filter;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  will-change: opacity, transform, filter;
+}
+
+.add-to-cart-icon.is-visible {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .products-page-bar {
+    animation: fade-in 220ms ease-out both;
+  }
+
+  .products-page-meta {
+    opacity: 0;
+    animation: home-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: 60ms;
+  }
+
+  .products-page-heading {
+    opacity: 0;
+    animation: home-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: 110ms;
+  }
+
+  .products-page-toolbar {
+    opacity: 0;
+    animation: home-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: 70ms;
+  }
+
+  .products-page-results-meta,
+  .products-page-empty,
+  .products-page-footer {
+    opacity: 0;
+    animation: home-enter 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: 110ms;
+  }
+
+  .products-grid-card {
+    opacity: 0;
+    animation: home-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--products-card-delay, 0ms);
+  }
+
+  .home-category-card {
+    opacity: 0;
+    animation: home-enter 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--home-enter-delay, 0ms) + var(--home-category-delay, 0ms));
+  }
+}
+
+.swiper .swiper-slide {
+  height: auto;
+}
+
+.swiper.swiper-thumbs .swiper-slide-thumb-active {
+  opacity: 1;
+}
+
+.hero-swiper .swiper-slide-active .hero-swiper-image {
+  animation: hero-fade-in 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hero-swiper-bullet {
+  display: inline-flex;
+  height: 0.5rem;
+  width: 0.5rem;
+  cursor: pointer;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.45);
+  transition:
+    width 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.hero-swiper-bullet:hover {
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.hero-swiper-bullet-active {
+  width: 1.25rem;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(255, 255, 255, 0.22);
+}
+
+.hero-swiper-bullet-active:hover {
+  background: #fff;
+}
+
+.hero-swiper .swiper-pagination.swiper-pagination-clickable.swiper-pagination-bullets.swiper-pagination-horizontal {
+  bottom: 1.25rem !important;
+  left: 50% !important;
+  z-index: 10;
+  display: flex;
+  width: auto !important;
+  transform: translateX(-50%);
+  gap: 0.5rem;
+}
+
 [data-slot="sheet-overlay"][data-state="open"] {
   animation: fade-in 220ms ease-out both;
 }
@@ -305,6 +548,7 @@
   will-change: opacity, transform;
 }
 
+
 [data-slot="sheet-content"][data-side="top"][data-state="open"],
 [data-slot="sheet-content"][data-side="bottom"][data-state="open"] {
   animation: fade-up 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -315,10 +559,67 @@
   animation: fade-out 220ms ease-out both;
 }
 
-.marquee-track {
-  display: flex;
-  min-width: max-content;
-  animation: marquee-scroll 32s linear infinite;
+[data-slot="sheet-content"][data-state="open"] .sheet-stagger-item,
+[data-slot="sheet-content"][data-state="open"] .sheet-stagger > * {
+  animation: sheet-item-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+[data-slot="sheet-content"][data-state="open"] .sheet-stagger > :nth-child(1) {
+  animation-delay: 60ms;
+}
+
+[data-slot="sheet-content"][data-state="open"] .sheet-stagger > :nth-child(2) {
+  animation-delay: 120ms;
+}
+
+[data-slot="sheet-content"][data-state="open"] .sheet-stagger > :nth-child(3) {
+  animation-delay: 180ms;
+}
+
+[data-slot="sheet-content"][data-state="open"] .sheet-stagger > :nth-child(4) {
+  animation-delay: 240ms;
+}
+
+.home-enter {
+  opacity: 1;
+  will-change: opacity, transform, filter;
+}
+
+.home-section {
+  opacity: 1;
+  will-change: opacity, transform, filter;
+}
+
+.home-section-item {
+  opacity: 1;
+  will-change: opacity, transform, filter;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-enter {
+    opacity: 0;
+    animation: home-enter 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--home-enter-delay, 0ms);
+  }
+
+  .home-section {
+    opacity: 0;
+    animation: home-enter 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: var(--home-section-delay, 0ms);
+  }
+
+  .home-section-item {
+    opacity: 0;
+    animation: home-enter 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .home-section .home-section-item:nth-child(1) {
+    animation-delay: calc(var(--home-section-delay, 0ms) + 70ms);
+  }
+
+  .home-section .home-section-item:nth-child(2) {
+    animation-delay: calc(var(--home-section-delay, 0ms) + 140ms);
+  }
 }
 
 [data-sonner-toaster] {

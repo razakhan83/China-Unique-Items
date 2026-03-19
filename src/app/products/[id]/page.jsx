@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
 import { BadgeCheck, PackageCheck, Truck } from 'lucide-react';
+import { cacheLife, cacheTag } from 'next/cache';
 import { notFound } from 'next/navigation';
 
 import CategoryProductSlider from '@/components/CategoryProductSlider';
 import ProductActions from '@/components/ProductActions';
-import ProductDetailSkeleton from '@/components/ProductDetailSkeleton';
 import ProductGallery from '@/components/ProductGallery';
 import ProductReviews from '@/components/ProductReviews';
 import { Badge } from '@/components/ui/badge';
@@ -16,16 +16,16 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { getProductBySlug, getRelatedProducts } from '@/lib/data';
+import { getProductBySlug, getProductPrerenderParams, getRelatedProducts } from '@/lib/data';
 import { getCategoryColor } from '@/lib/categoryColors';
 import { getProductCategories } from '@/lib/productCategories';
 const formatPrice = (raw) => `Rs. ${Number(raw || 0).toLocaleString('en-PK')}`;
 
 export async function generateStaticParams() {
-  return [{ id: '__placeholder__' }];
+  return getProductPrerenderParams(1);
 }
-
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
@@ -51,17 +51,13 @@ export async function generateMetadata({ params }) {
 export default async function ProductPage({ params }) {
   const { id } = await params;
 
-  return (
-    <Suspense fallback={<ProductDetailSkeleton />}>
-      <ProductPageContent slug={id} />
-    </Suspense>
-  );
+  return <ProductPageContent slug={id} />;
 }
 
 async function ProductPageContent({ slug }) {
-  if (slug === '__placeholder__') {
-    notFound();
-  }
+  'use cache';
+  cacheLife('hours');
+  cacheTag('products', `product-${slug}`);
 
   const product = await getProductBySlug(slug);
 

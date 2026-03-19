@@ -145,7 +145,7 @@ function NavbarContent({ categories }) {
       </div>
 
       <header className="relative mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
-        <Button variant="ghost" size="icon" onClick={openSidebar} aria-label="Open menu">
+        <Button variant="ghost" size="icon" onClick={openSidebar} aria-label="Open menu" className="md:hidden">
           <Menu />
         </Button>
 
@@ -305,12 +305,12 @@ function NavbarContent({ categories }) {
 
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetContent side="left" className="w-[min(70vw,22rem)] min-w-[16rem]">
-          <SheetHeader>
+          <SheetHeader className="sheet-stagger-item">
             <SheetTitle>Browse the store</SheetTitle>
             <SheetDescription>Navigation and category shortcuts in one place.</SheetDescription>
           </SheetHeader>
 
-          <div className="flex flex-col gap-6 pt-2">
+          <div className="sheet-stagger flex flex-col gap-6 pt-2">
             <div className="flex flex-col gap-2">
               {mobileItems.map(({ href, label, icon: Icon }) => (
                 <Link

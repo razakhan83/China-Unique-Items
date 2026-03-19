@@ -1,41 +1,17 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
-import useEmblaCarousel from 'embla-carousel-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { FreeMode } from 'swiper/modules';
 import { ImageIcon } from 'lucide-react';
 import { normalizeProductImage } from '@/lib/productImages';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
+import { SHARED_SWIPER_PROPS } from '@/components/swiper/swiperConfig';
 
 export default function ProductGallery({ images }) {
     const [selectedIndex, setSelectedIndex] = useState(0);
-    const [emblaMainRef, emblaMainApi] = useEmblaCarousel({ loop: true });
-    // Make thumbnails easy to interact with
-    const [emblaThumbsRef, emblaThumbsApi] = useEmblaCarousel({
-        containScroll: 'keepSnaps',
-        dragFree: true,
-        align: 'start'
-    });
-
-    const onThumbClick = useCallback(
-        (index) => {
-            if (!emblaMainApi || !emblaThumbsApi) return;
-            emblaMainApi.scrollTo(index);
-        },
-        [emblaMainApi, emblaThumbsApi]
-    );
-
-    const onSelect = useCallback(() => {
-        if (!emblaMainApi || !emblaThumbsApi) return;
-        setSelectedIndex(emblaMainApi.selectedScrollSnap());
-        emblaThumbsApi.scrollTo(emblaMainApi.selectedScrollSnap());
-    }, [emblaMainApi, emblaThumbsApi, setSelectedIndex]);
-
-    useEffect(() => {
-        if (!emblaMainApi) return;
-        onSelect();
-        emblaMainApi.on('select', onSelect);
-        emblaMainApi.on('reInit', onSelect);
-    }, [emblaMainApi, onSelect]);
+    const [mainSwiper, setMainSwiper] = useState(null);
+    const [thumbsSwiper, setThumbsSwiper] = useState(null);
 
     if (!images || images.length === 0) {
         return (
@@ -49,12 +25,36 @@ export default function ProductGallery({ images }) {
         .map(normalizeProductImage)
         .filter(Boolean);
 
+    const thumbnailSlidesPerView = Math.min(Math.max(normalizedImages.length, 2), 4);
+
+    const handleThumbnailClick = (index) => {
+        if (!mainSwiper || mainSwiper.destroyed) return;
+        if (typeof mainSwiper.slideToLoop === 'function') {
+            mainSwiper.slideToLoop(index);
+        } else {
+            mainSwiper.slideTo(index);
+        }
+    };
+
     return (
         <div className="flex flex-col gap-3 w-full">
-            <div className="surface-card relative aspect-square overflow-hidden rounded-xl" ref={emblaMainRef}>
-                <div className="flex h-full touch-pan-y">
+            <div className="surface-card relative aspect-square overflow-hidden rounded-xl">
+                <Swiper
+                    {...SHARED_SWIPER_PROPS}
+                    onSwiper={setMainSwiper}
+                    loop={normalizedImages.length > 1}
+                    onSlideChange={(swiper) => {
+                        const nextIndex = swiper.realIndex;
+                        setSelectedIndex(nextIndex);
+                        if (thumbsSwiper && !thumbsSwiper.destroyed) {
+                            thumbsSwiper.slideTo(nextIndex);
+                        }
+                    }}
+                    className="h-full touch-pan-y"
+                >
                     {normalizedImages.map((image, index) => (
-                        <div className="relative flex-[0_0_100%] min-w-0 h-full" key={index}>
+                        <SwiperSlide key={index} className="!h-full">
+                            <div className="relative h-full min-h-0 w-full">
                             <Image
                                 src={image.url}
                                 alt={`Product Image ${index + 1}`}
@@ -63,20 +63,31 @@ export default function ProductGallery({ images }) {
                                 {...getBlurPlaceholderProps(image.blurDataURL)}
                                 preload={index === 0}
                             />
-                        </div>
+                            </div>
+                        </SwiperSlide>
                     ))}
-                </div>
+                </Swiper>
             </div>
 
-            {/* Thumbnails */}
             {normalizedImages.length > 1 && (
-                <div className="overflow-hidden" ref={emblaThumbsRef}>
-                    <div className="flex gap-2">
-                        {normalizedImages.map((image, index) => (
-                            <div
-                                key={index}
-                                onClick={() => onThumbClick(index)}
-                                className={`relative aspect-square flex-[0_0_23.5%] min-w-0 cursor-pointer overflow-hidden rounded-lg border transition-all duration-300 ease-out ${
+                <Swiper
+                    {...SHARED_SWIPER_PROPS}
+                    modules={[FreeMode]}
+                    slidesPerView={thumbnailSlidesPerView}
+                    spaceBetween={12}
+                    freeMode
+                    watchSlidesProgress
+                    onSwiper={setThumbsSwiper}
+                    className="w-full overflow-hidden"
+                >
+                    {normalizedImages.map((image, index) => (
+                        <SwiperSlide key={index}>
+                            <button
+                                type="button"
+                                onClick={() => handleThumbnailClick(index)}
+                                aria-label={`Show product image ${index + 1}`}
+                                aria-pressed={index === selectedIndex}
+                                className={`relative block aspect-square w-full min-w-0 cursor-pointer overflow-hidden rounded-lg border transition-all duration-300 ease-out ${
                                     index === selectedIndex ? 'border-primary shadow-sm opacity-100' : 'border-border opacity-60 hover:scale-[1.02] hover:opacity-100'
                                 }`}
                             >
@@ -88,10 +99,10 @@ export default function ProductGallery({ images }) {
                                     className="object-cover"
                                     {...getBlurPlaceholderProps(image.blurDataURL)}
                                 />
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                            </button>
+                        </SwiperSlide>
+                    ))}
+                </Swiper>
             )}
         </div>
     );

@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-function ProductsHeaderSkeleton() {
+export function ProductsHeaderSkeleton() {
   return (
     <div>
       <div className="fixed inset-x-0 top-24 z-30 border-y border-border/70 bg-card/95 backdrop-blur">
@@ -23,7 +23,7 @@ function ProductsHeaderSkeleton() {
   );
 }
 
-function ProductsToolbarSkeleton() {
+export function ProductsToolbarSkeleton() {
   return (
     <div className="mx-auto max-w-7xl px-4 pt-5">
       <div className="surface-card rounded-xl p-4">
@@ -36,7 +36,7 @@ function ProductsToolbarSkeleton() {
   );
 }
 
-function ProductsGridSkeleton() {
+export function ProductsGridSkeleton() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-6">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -63,12 +63,20 @@ function ProductsGridSkeleton() {
   );
 }
 
+export function ProductsResultsSkeleton() {
+  return (
+    <>
+      <ProductsToolbarSkeleton />
+      <ProductsGridSkeleton />
+    </>
+  );
+}
+
 export default function ProductsPageSkeleton() {
   return (
     <>
       <ProductsHeaderSkeleton />
-      <ProductsToolbarSkeleton />
-      <ProductsGridSkeleton />
+      <ProductsResultsSkeleton />
     </>
   );
 }

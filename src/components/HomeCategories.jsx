@@ -24,11 +24,16 @@ export default function HomeCategories({ sections = [] }) {
           index % 2 === 0 ? 'bg-[color:color-mix(in_oklab,var(--color-primary)_10%,white)]' : 'bg-white';
 
         return (
-          <section key={section.category.id} className={`py-8 md:py-12 ${sectionClassName}`}>
+          <section
+            key={section.category.id}
+            className={`home-section py-8 md:py-12 ${sectionClassName}`}
+            style={{ '--home-section-delay': `${index * 90}ms` }}
+          >
             <div className="mx-auto w-full max-w-[1240px] px-4">
               <CategoryProductSlider
                 categoryId={section.category.id}
                 categoryLabel={section.category.label}
+                iconName={section.category.iconName}
                 products={section.products}
                 skipFilter
                 onViewAll={(categoryId) => router.push(`/products?category=${categoryId}`)}

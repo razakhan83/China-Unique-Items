@@ -1,81 +1,108 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Toast({ message, isVisible, onClose, type = 'success', action = null }) {
+    const [shouldRender, setShouldRender] = useState(isVisible);
+    const [isExiting, setIsExiting] = useState(false);
+    const hideTimerRef = useRef(null);
+    const exitTimerRef = useRef(null);
+
     useEffect(() => {
-        if (isVisible) {
-            const timer = setTimeout(() => {
-                onClose();
-            }, 3000); 
-            return () => clearTimeout(timer);
+        if (hideTimerRef.current) {
+            clearTimeout(hideTimerRef.current);
         }
-    }, [isVisible, onClose, message]);
+        if (exitTimerRef.current) {
+            clearTimeout(exitTimerRef.current);
+        }
+
+        if (isVisible) {
+            setShouldRender(true);
+            setIsExiting(false);
+            hideTimerRef.current = setTimeout(() => {
+                onClose();
+            }, 3000);
+        } else if (shouldRender) {
+            setIsExiting(true);
+            exitTimerRef.current = setTimeout(() => {
+                setShouldRender(false);
+                setIsExiting(false);
+            }, 180);
+        }
+
+        return () => {
+            if (hideTimerRef.current) {
+                clearTimeout(hideTimerRef.current);
+            }
+            if (exitTimerRef.current) {
+                clearTimeout(exitTimerRef.current);
+            }
+        };
+    }, [isVisible, onClose, message, shouldRender]);
+
+    if (!shouldRender) {
+        return null;
+    }
+
+    const toastKey = message?._trigger || message || 'toast';
+
+    const handleActionClick = (event) => {
+        event.stopPropagation();
+        action?.onClick();
+        onClose();
+    };
+
+    const handleClose = () => {
+        onClose();
+    };
 
     const isSuccess = type === 'success';
 
     return (
-        <>
-            {isVisible && (
-                <div key={message?._trigger || message} className="fixed md:bottom-10 md:right-10 md:top-auto md:left-auto top-4 left-1/2 -translate-x-1/2 md:translate-x-0 z-[100] w-[90%] md:w-80 pointer-events-none transition-all duration-500">
-                    <div
-                        className={`
-                            pointer-events-auto
-                            flex items-center gap-4 p-4 rounded-2xl border
-                            bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)]
-                            ${isSuccess 
-                                ? 'border-emerald-100 text-gray-800' 
-                                : 'border-red-100 text-gray-800'}
-                        `}
-                    >
-                        <div className={`
-                            w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
-                            ${isSuccess ? 'bg-emerald-500/10' : 'bg-red-500/10'}
-                        `}>
-                            <i className={`fa-solid ${isSuccess ? 'fa-check' : 'fa-trash-can'} ${isSuccess ? 'text-emerald-500 drop-shadow-sm' : 'text-red-500 drop-shadow-sm'}`}></i>
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-bold tracking-tight">
-                                {isSuccess ? 'Success' : 'Notification'}
-                            </h4>
-                            <p className="text-xs opacity-90 font-medium mt-0.5">
-                                {message?.title || message}
-                            </p>
-                        </div>
-
-                        {action && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    action.onClick();
-                                    onClose(); // Optional: close toast after clicking action
-                                }}
-                                className="px-3 py-1.5 bg-[#0A3D2E] hover:bg-[#10b981] text-white text-xs font-bold rounded-lg transition-colors whitespace-nowrap shadow-sm"
-                            >
-                                {action.label}
-                            </button>
-                        )}
-
-                        <button
-                            onClick={onClose}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-black/5 transition-colors ml-1"
-                        >
-                            <i className="fa-solid fa-xmark text-sm opacity-50"></i>
-                        </button>
-
-                        <div 
-                            className={`
-                                absolute bottom-0 left-0 right-0 h-1 rounded-full
-                                ${isSuccess ? 'bg-emerald-500/40' : 'bg-red-500/40'}
-                            `}
-                            style={{
-                                transformOrigin: 'left',
-                                animation: 'toast-progress 3s linear forwards',
-                            }}
-                        />
-                    </div>
+        <div
+            key={toastKey}
+            className="fixed left-1/2 top-4 z-[100] w-[90%] -translate-x-1/2 pointer-events-none md:left-auto md:right-10 md:top-auto md:bottom-10 md:w-80 md:translate-x-0"
+        >
+            <div
+                className={`toast-shell ${isExiting ? 'toast-shell-exit' : 'toast-shell-enter'} ${
+                    isSuccess ? 'border-emerald-100 text-gray-800' : 'border-red-100 text-gray-800'
+                }`}
+            >
+                <div
+                    className={`toast-icon ${isSuccess ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}
+                >
+                    <i className={`fa-solid ${isSuccess ? 'fa-check text-emerald-500' : 'fa-trash-can text-red-500'} drop-shadow-sm`}></i>
                 </div>
-            )}
-        </>
+
+                <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-bold tracking-tight">
+                        {isSuccess ? 'Success' : 'Notification'}
+                    </h4>
+                    <p className="mt-0.5 text-xs font-medium opacity-90">
+                        {message?.title || message}
+                    </p>
+                </div>
+
+                {action ? (
+                    <button
+                        onClick={handleActionClick}
+                        className="whitespace-nowrap rounded-lg bg-[#0A3D2E] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#10b981]"
+                    >
+                        {action.label}
+                    </button>
+                ) : null}
+
+                <button
+                    onClick={handleClose}
+                    className="ml-1 flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-black/5"
+                >
+                    <i className="fa-solid fa-xmark text-sm opacity-50"></i>
+                </button>
+
+                <div
+                    key={`progress-${toastKey}`}
+                    className={`toast-progress ${isSuccess ? 'bg-emerald-500/40' : 'bg-red-500/40'}`}
+                />
+            </div>
+        </div>
     );
 }

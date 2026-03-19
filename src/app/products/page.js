@@ -1,9 +1,13 @@
 import { Suspense } from 'react';
 
 import ProductGridClient from '@/components/ProductGridClient';
+import {
+  ProductsNavigationFeedbackProvider,
+  ProductsPendingResults,
+} from '@/components/ProductsNavigationFeedback';
 import ProductsPageHeader from '@/components/ProductsPageHeader';
-import ProductsPageSkeleton from '@/components/ProductsPageSkeleton';
-import { getProductsList } from '@/lib/data';
+import { ProductsResultsSkeleton } from '@/components/ProductsPageSkeleton';
+import { getProductsList, getStoreCategories } from '@/lib/data';
 
 function buildSuspenseKey(searchParams) {
   return JSON.stringify({
@@ -41,15 +45,27 @@ export async function generateMetadata({ searchParams }) {
 
 export default async function ProductsPage({ searchParams }) {
   const resolvedSearchParams = (await searchParams) || {};
+  const categories = await getStoreCategories();
 
   return (
-    <Suspense key={buildSuspenseKey(resolvedSearchParams)} fallback={<ProductsPageSkeleton />}>
-      <ProductsContent searchParams={resolvedSearchParams} />
-    </Suspense>
+    <ProductsNavigationFeedbackProvider>
+      <div>
+        <ProductsPageHeader
+          categories={categories}
+          activeCategory={resolvedSearchParams.category || 'all'}
+          searchTerm={resolvedSearchParams.search || ''}
+        />
+        <ProductsPendingResults>
+          <Suspense key={buildSuspenseKey(resolvedSearchParams)} fallback={<ProductsResultsSkeleton />}>
+            <ProductsResultsContent searchParams={resolvedSearchParams} />
+          </Suspense>
+        </ProductsPendingResults>
+      </div>
+    </ProductsNavigationFeedbackProvider>
   );
 }
 
-async function ProductsContent({ searchParams }) {
+async function ProductsResultsContent({ searchParams }) {
   const data = await getProductsList({
     category: searchParams.category || 'all',
     search: searchParams.search || '',
@@ -59,18 +75,11 @@ async function ProductsContent({ searchParams }) {
   });
 
   return (
-    <div>
-      <ProductsPageHeader
-        categories={data.categories}
-        activeCategory={data.activeCategory}
-        searchTerm={data.searchTerm}
-      />
-      <ProductGridClient
-        initialProducts={data.items}
-        hideCategoryBar
-        activeCategoryOverride={data.activeCategory}
-        forceSearchTerm={data.searchTerm}
-      />
-    </div>
+    <ProductGridClient
+      initialProducts={data.items}
+      hideCategoryBar
+      activeCategoryOverride={data.activeCategory}
+      forceSearchTerm={data.searchTerm}
+    />
   );
 }

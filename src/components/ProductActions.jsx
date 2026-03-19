@@ -2,13 +2,16 @@
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Share2, Minus, Plus, Loader2 } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
+import { ShoppingCart, Share2, Minus, Plus } from 'lucide-react';
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 import { toast } from 'sonner';
 
 export default function ProductActions({ product }) {
     const { addToCart } = useCart();
     const [isAdding, setIsAdding] = useState(false);
+    const [didJustAdd, setDidJustAdd] = useState(false);
     const [quantity, setQuantity] = useState(1);
 
     const increment = () => setQuantity(q => q + 1);
@@ -16,10 +19,19 @@ export default function ProductActions({ product }) {
 
     const handleAddToCart = async () => {
         setIsAdding(true);
-        // Small delay to allow react to render the spinner
-        await new Promise(resolve => setTimeout(resolve, 300));
-        addToCart(product, quantity);
-        setIsAdding(false);
+        const startedAt = performance.now();
+        try {
+            await addToCart(product, quantity);
+            setDidJustAdd(true);
+            const elapsed = performance.now() - startedAt;
+            const remaining = Math.max(140 - elapsed, 0);
+            if (remaining > 0) {
+                await new Promise((resolve) => window.setTimeout(resolve, remaining));
+            }
+        } finally {
+            setIsAdding(false);
+            window.setTimeout(() => setDidJustAdd(false), 650);
+        }
     };
 
     const handleWhatsApp = () => {
@@ -78,14 +90,24 @@ export default function ProductActions({ product }) {
                 <Button
                     onClick={handleAddToCart}
                     disabled={isAdding || isOutOfStock}
-                    className="flex-1"
+                    className="add-to-cart-button flex-1 active:scale-[0.96]"
                     size="lg"
                 >
-                    {isAdding ? (
-                        <Loader2 className="animate-spin" data-icon="inline-start" />
-                    ) : (
-                        <ShoppingCart data-icon="inline-start" />
-                    )}
+                    <span className="relative inline-flex size-5 items-center justify-center">
+                        <Spinner
+                            className={cn(
+                                "add-to-cart-icon absolute size-5",
+                                isAdding ? "is-visible" : ""
+                            )}
+                        />
+                        <ShoppingCart
+                            className={cn(
+                                "add-to-cart-icon absolute size-5",
+                                !isAdding ? "is-visible" : "",
+                                didJustAdd ? "text-primary-foreground" : ""
+                            )}
+                        />
+                    </span>
                     Add to Cart
                 </Button>
                 <Button
@@ -119,13 +141,23 @@ export default function ProductActions({ product }) {
                 <Button
                     onClick={handleAddToCart}
                     disabled={isAdding}
-                    className="flex-1"
+                    className="add-to-cart-button flex-1 active:scale-[0.96]"
                 >
-                    {isAdding ? (
-                        <Loader2 className="animate-spin" data-icon="inline-start" />
-                    ) : (
-                        <ShoppingCart data-icon="inline-start" />
-                    )}
+                    <span className="relative inline-flex size-5 items-center justify-center">
+                        <Spinner
+                            className={cn(
+                                "add-to-cart-icon absolute size-5",
+                                isAdding ? "is-visible" : ""
+                            )}
+                        />
+                        <ShoppingCart
+                            className={cn(
+                                "add-to-cart-icon absolute size-5",
+                                !isAdding ? "is-visible" : "",
+                                didJustAdd ? "text-primary-foreground" : ""
+                            )}
+                        />
+                    </span>
                     Add to Cart
                 </Button>
                 <Button
@@ -138,4 +170,3 @@ export default function ProductActions({ product }) {
         </div>
     );
 }
-

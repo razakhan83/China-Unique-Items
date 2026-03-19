@@ -7,7 +7,8 @@ import { useCart } from "@/context/CartContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Loader2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import { ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPrimaryProductImage } from "@/lib/productImages";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
@@ -87,6 +88,7 @@ function getStatusBadge(product) {
 export default function ProductCard({ product, className = "" }) {
   const { addToCart } = useCart();
   const [isAdding, setIsAdding] = useState(false);
+  const [didJustAdd, setDidJustAdd] = useState(false);
 
   const productName = product.Name || product.name || "Unknown";
   const productDescription = product.Description || product.description || "";
@@ -208,17 +210,37 @@ export default function ProductCard({ product, className = "" }) {
             onClick={async (e) => {
               e.preventDefault();
               setIsAdding(true);
+              const startedAt = performance.now();
               try {
                 await addToCart(product);
-                // Simulate network delay for UX if addToCart is extremely fast
-                await new Promise(resolve => setTimeout(resolve, 300));
+                setDidJustAdd(true);
+                const elapsed = performance.now() - startedAt;
+                const remaining = Math.max(140 - elapsed, 0);
+                if (remaining > 0) {
+                  await new Promise((resolve) => window.setTimeout(resolve, remaining));
+                }
               } finally {
                 setIsAdding(false);
+                window.setTimeout(() => setDidJustAdd(false), 650);
               }
             }}
-            className="size-10 cursor-pointer shadow-none transition-all duration-300 hover:scale-110 hover:border-primary/30 hover:bg-primary/12 hover:text-primary hover:shadow-sm disabled:opacity-50 disabled:pointer-events-none"
+            className="add-to-cart-button size-10 cursor-pointer shadow-none hover:border-primary/30 hover:bg-primary/12 hover:text-primary hover:shadow-sm disabled:pointer-events-none disabled:opacity-50"
           >
-            {isAdding ? <Loader2 className="size-5 animate-spin text-muted-foreground" /> : <ShoppingCart className="size-5" />}
+            <span className="relative inline-flex size-5 items-center justify-center">
+              <Spinner
+                className={cn(
+                  "add-to-cart-icon absolute size-5 text-muted-foreground",
+                  isAdding ? "is-visible" : ""
+                )}
+              />
+              <ShoppingCart
+                className={cn(
+                  "add-to-cart-icon absolute size-5",
+                  !isAdding ? "is-visible" : "",
+                  didJustAdd ? "text-primary" : ""
+                )}
+              />
+            </span>
           </Button>
         </div>
       </CardContent>

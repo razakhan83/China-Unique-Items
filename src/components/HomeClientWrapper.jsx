@@ -65,9 +65,11 @@ export default function HomeClientWrapper({ products, heroSlides, categories = [
   return (
     <>
       <HeroSlider slides={heroSlides} />
-      <CategoryIconCarousel categories={categories} />
+      <div className="home-enter" style={{ "--home-enter-delay": "80ms" }}>
+        <CategoryIconCarousel categories={categories} />
+      </div>
 
-      <div ref={wrapperRef} className="mx-auto max-w-3xl px-4 py-6 md:hidden">
+      <div ref={wrapperRef} className="home-enter mx-auto max-w-3xl px-4 py-6 md:hidden" style={{ "--home-enter-delay": "140ms" }}>
         <SearchField
           value={searchTerm}
           onChange={(event) => {

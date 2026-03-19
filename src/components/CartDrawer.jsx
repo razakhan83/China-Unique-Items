@@ -48,18 +48,18 @@ export default function CartDrawer() {
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
       <SheetContent side="right" className="w-[min(70vw,28rem)] min-w-[18rem]">
-        <SheetHeader>
+        <SheetHeader className="sheet-stagger-item">
           <SheetTitle>Your Cart</SheetTitle>
           <SheetDescription>{cart.length ? `${cart.length} item${cart.length > 1 ? 's' : ''} ready for checkout.` : 'Add products to start your order.'}</SheetDescription>
         </SheetHeader>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
+        <div className="sheet-stagger flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
           {cart.length ? (
             <>
               {cart.map((item, index) => (
                 <div
-                  key={item.slug || item._id || item.id || item.Name || item.name || index}
-                  className="surface-card rounded-xl p-3"
+                  key={item.id || item.slug || item._id || item.Name || item.name || index}
+                  className="surface-card rounded-xl p-3 transition-shadow duration-200 hover:shadow-sm"
                 >
                 <div className="flex gap-3">
                   <div className="relative size-20 overflow-hidden rounded-lg border border-border bg-muted">
@@ -93,7 +93,9 @@ export default function CartDrawer() {
                       <div className="inline-flex items-center rounded-lg border border-border bg-background">
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item, item.quantity - 1)}
+                          onClick={() => {
+                            updateQuantity(item, item.quantity - 1);
+                          }}
                           className="inline-flex size-9 items-center justify-center rounded-l-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         >
                           <Minus className="size-4" />
@@ -126,7 +128,7 @@ export default function CartDrawer() {
         </div>
 
         {cart.length ? (
-          <SheetFooter className="border-t border-border pt-4">
+          <SheetFooter className="sheet-stagger-item border-t border-border pt-4">
             <div className="surface-card rounded-xl p-4">
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>Subtotal</span>

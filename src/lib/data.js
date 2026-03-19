@@ -537,6 +537,33 @@ export async function getProductBySlug(slug) {
   }
 }
 
+export async function getProductPrerenderParams(limit = 1) {
+  'use cache';
+  cacheLife('hours');
+  cacheTag('products');
+
+  const safeLimit = Math.max(1, Number(limit) || 1);
+
+  try {
+    await mongooseConnect();
+    const products = await Product.find({ isLive: true })
+      .sort({ createdAt: -1 })
+      .select('slug')
+      .limit(safeLimit)
+      .lean();
+
+    const params = products
+      .map((product) => String(product?.slug || '').trim())
+      .filter(Boolean)
+      .map((id) => ({ id }));
+
+    return params.length > 0 ? params : [{ id: '__placeholder__' }];
+  } catch (error) {
+    console.error('❌ [DATA] getProductPrerenderParams failed:', error.message);
+    return [{ id: '__placeholder__' }];
+  }
+}
+
 export async function getRelatedProducts({ category = '', excludeSlug = '', limit = 8 } = {}) {
   'use cache';
   cacheLife('max');

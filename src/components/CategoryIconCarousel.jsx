@@ -1,11 +1,14 @@
 "use client";
 
-import { useMemo, useCallback, useEffect, useState } from "react";
-import useEmblaCarousel from "embla-carousel-react";
+import { useCallback, useRef } from "react";
 import Image from "next/image";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { FreeMode } from "swiper/modules";
 import {
   Armchair,
   Beef,
+  ChevronLeft,
+  ChevronRight,
   Bolt,
   Car,
   Dumbbell,
@@ -22,6 +25,7 @@ import { useRouter } from "next/navigation";
 
 import { getCategoryColor } from "@/lib/categoryColors";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
+import { CATEGORY_ICON_BREAKPOINTS, SHARED_SWIPER_PROPS } from "@/components/swiper/swiperConfig";
 
 const CATEGORY_ICONS = {
   "kitchen accessories": UtensilsCrossed,
@@ -45,35 +49,10 @@ function getCategoryIcon(name) {
 
 export default function CategoryIconCarousel({ categories }) {
   const router = useRouter();
-  const displayCategories = useMemo(() => {
-    if (!categories?.length) return [];
-    return [...categories, ...categories, ...categories];
-  }, [categories]);
+  const swiperRef = useRef(null);
 
-  const [emblaRef, emblaApi] = useEmblaCarousel(
-    {
-      loop: true,
-      align: "start",
-      dragFree: true,
-      containScroll: false,
-      slidesToScroll: 1,
-    }
-  );
-  
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [scrollSnaps, setScrollSnaps] = useState([]);
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setSelectedIndex(emblaApi.selectedScrollSnap() % categories.length);
-  }, [emblaApi, categories.length]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    setScrollSnaps(emblaApi.scrollSnapList().slice(0, categories.length));
-    emblaApi.on("select", onSelect);
-    emblaApi.on("reInit", onSelect);
-  }, [emblaApi, onSelect, categories.length]);
+  const scrollPrev = useCallback(() => swiperRef.current?.slidePrev(), []);
+  const scrollNext = useCallback(() => swiperRef.current?.slideNext(), []);
 
   if (!categories?.length) return null;
 
@@ -88,55 +67,68 @@ export default function CategoryIconCarousel({ categories }) {
           className="pointer-events-none absolute inset-y-0 right-4 z-10 w-12 md:w-20"
           style={{ background: "linear-gradient(to left, var(--color-card), transparent)" }}
         />
-        <div ref={emblaRef} className="overflow-hidden">
-          <div className="flex gap-4 md:gap-6">
-            {displayCategories.map((category, index) => {
+        <button
+          type="button"
+          onClick={scrollPrev}
+          className="absolute left-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-sm transition-colors hover:bg-card"
+          aria-label="Previous categories"
+        >
+          <ChevronLeft className="size-5" />
+        </button>
+        <button
+          type="button"
+          onClick={scrollNext}
+          className="absolute right-4 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-sm transition-colors hover:bg-card"
+          aria-label="Next categories"
+        >
+          <ChevronRight className="size-5" />
+        </button>
+        <Swiper
+          {...SHARED_SWIPER_PROPS}
+          modules={[FreeMode]}
+          breakpoints={CATEGORY_ICON_BREAKPOINTS}
+          freeMode
+          onSwiper={(swiper) => {
+            swiperRef.current = swiper;
+          }}
+          className="overflow-hidden px-16"
+        >
+          {categories.map((category, index) => {
               const colors = getCategoryColor(category.label);
               const Icon = getCategoryIcon(category.label);
               return (
-                <button
-                  key={`${category.id}-${index}`}
-                  onClick={() => router.push(`/products?category=${category.id}`)}
-                  className="group flex min-w-[110px] flex-[0_0_auto] cursor-pointer flex-col items-center gap-3 rounded-xl px-1 py-1 text-center md:min-w-[140px]"
-                >
-                  <div
-                    className={`relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border ${colors.border} bg-white transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-md md:h-28 md:w-28`}
+                <SwiperSlide key={`${category.id}-${index}`} className="!h-auto">
+                  <button
+                    onClick={() => router.push(`/products?category=${category.id}`)}
+                    className="home-category-card group flex h-full min-w-0 cursor-pointer flex-col items-center gap-3 rounded-xl px-1 py-1 text-center"
+                    style={{ "--home-category-delay": `${Math.min(index, 7) * 48}ms` }}
                   >
-                    {category.image ? (
-                      <Image
-                        src={category.image}
-                        alt={category.label}
-                        fill
-                        sizes="112px"
-                        className="object-cover"
-                        {...getBlurPlaceholderProps(category.blurDataURL)}
-                      />
-                    ) : (
-                      <div className={`flex size-full items-center justify-center rounded-full ${colors.bg}`}>
-                        <Icon className={`${colors.text} size-7 md:size-9`} />
-                      </div>
-                    )}
-                  </div>
-                  <span className="line-clamp-2 max-w-[110px] text-sm font-medium leading-tight text-muted-foreground transition-colors group-hover:text-foreground md:max-w-[140px]">
-                    {category.label}
-                  </span>
-                </button>
+                    <div
+                      className={`relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border ${colors.border} bg-white transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:shadow-md md:h-28 md:w-28`}
+                    >
+                      {category.image ? (
+                        <Image
+                          src={category.image}
+                          alt={category.label}
+                          fill
+                          sizes="112px"
+                          className="object-cover"
+                          {...getBlurPlaceholderProps(category.blurDataURL)}
+                        />
+                      ) : (
+                        <div className={`flex size-full items-center justify-center rounded-full ${colors.bg}`}>
+                          <Icon className={`${colors.text} size-7 md:size-9`} />
+                        </div>
+                      )}
+                    </div>
+                    <span className="line-clamp-2 max-w-[110px] text-sm font-medium leading-tight text-muted-foreground transition-colors group-hover:text-foreground md:max-w-[140px]">
+                      {category.label}
+                    </span>
+                  </button>
+                </SwiperSlide>
               );
             })}
-          </div>
-        </div>
-        
-        {/* Mobile Dot Indicators */}
-        <div className="mt-4 flex justify-center gap-1.5 md:hidden">
-          {scrollSnaps.map((_, index) => (
-            <div
-              key={index}
-              className={`h-1 w-4 rounded-full transition-all duration-300 ${
-                index === selectedIndex ? "bg-primary w-6" : "bg-primary/20"
-              }`}
-            />
-          ))}
-        </div>
+        </Swiper>
       </div>
     </div>
   );

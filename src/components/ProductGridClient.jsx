@@ -191,7 +191,7 @@ function ProductGridContent({
       ) : null}
 
       {!hideSearch ? (
-        <div className="mx-auto max-w-7xl px-4 pt-5">
+        <div className="products-page-toolbar mx-auto max-w-7xl px-4 pt-5">
           <div className="surface-card rounded-xl p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
               <div className="min-w-0 flex-1">
@@ -235,8 +235,8 @@ function ProductGridContent({
       ) : null}
 
       <section className="mx-auto max-w-7xl px-4 py-6">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
+        <div className="products-page-results-meta mb-4 flex items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground tabular-nums">
             Showing <span className="font-semibold text-foreground">{displayedProducts.length}</span> of{" "}
             <span className="font-semibold text-foreground">{filteredProducts.length}</span> products
           </p>
@@ -246,11 +246,17 @@ function ProductGridContent({
         {displayedProducts.length ? (
           <div className="grid auto-rows-max grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
             {displayedProducts.map((product, index) => (
-              <ProductCard key={`${product.slug || product._id || product.id || "product"}-${index}`} product={product} />
+              <div
+                key={`${product.slug || product._id || product.id || "product"}-${index}`}
+                className="products-grid-card"
+                style={{ "--products-card-delay": `${Math.min(index, 7) * 48}ms` }}
+              >
+                <ProductCard product={product} />
+              </div>
             ))}
           </div>
         ) : (
-          <div className="surface-card flex flex-col items-center justify-center rounded-xl px-6 py-16 text-center">
+          <div className="products-page-empty surface-card flex flex-col items-center justify-center rounded-xl px-6 py-16 text-center">
             <div className="mb-4 flex size-16 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <PackageOpen className="size-7" />
             </div>
@@ -260,11 +266,15 @@ function ProductGridContent({
         )}
 
         {displayedProducts.length ? (
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <p className="text-sm text-muted-foreground">
+          <div className="products-page-footer mt-8 flex flex-col items-center gap-3">
+            <p className="text-sm text-muted-foreground tabular-nums">
               {displayedProducts.length} of {filteredProducts.length} products loaded
             </p>
-            {hasMore ? <Button onClick={() => setCurrentPage((previous) => previous + 1)}>Load More Products</Button> : null}
+            {hasMore ? (
+              <Button className="active:scale-[0.96]" onClick={() => setCurrentPage((previous) => previous + 1)}>
+                Load More Products
+              </Button>
+            ) : null}
           </div>
         ) : null}
 

@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { A11y, Autoplay, EffectFade, Pagination } from 'swiper/modules';
 
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
+import { SHARED_SWIPER_PROPS } from '@/components/swiper/swiperConfig';
 
 function resolveViewport() {
   if (typeof window === 'undefined') return 'desktop';
@@ -38,114 +41,84 @@ function getActiveAsset(slide, viewport) {
 }
 
 export default function HeroSlider({ slides = [] }) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [previousIndex, setPreviousIndex] = useState(null);
   const [viewport, setViewport] = useState('desktop');
-  const [imageLoaded, setImageLoaded] = useState(false);
-
-  const activeSlide = slides[selectedIndex] || null;
-  const activeAsset = getActiveAsset(activeSlide, viewport);
-  const previousSlide = previousIndex === null ? null : slides[previousIndex] || null;
-  const previousAsset = getActiveAsset(previousSlide, viewport);
 
   useEffect(() => {
     const syncViewport = () => setViewport(resolveViewport());
-
     syncViewport();
     window.addEventListener('resize', syncViewport);
     return () => window.removeEventListener('resize', syncViewport);
   }, []);
 
-  useEffect(() => {
-    if (!slides || slides.length <= 1) return;
-    const interval = setInterval(() => {
-      setSelectedIndex((prev) => {
-        setPreviousIndex(prev);
-        return (prev + 1) % slides.length;
-      });
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [slides, selectedIndex]);
+  const resolvedSlides = useMemo(
+    () =>
+      slides
+        .map((slide, index) => ({
+          ...slide,
+          asset: getActiveAsset(slide, viewport),
+          alt: slide?.alt || `Slide ${index + 1}`,
+        }))
+        .filter((slide) => slide.asset?.src),
+    [slides, viewport]
+  );
 
-  useEffect(() => {
-    if (previousIndex === null) return undefined;
-    const timer = window.setTimeout(() => setPreviousIndex(null), 1100);
-    return () => window.clearTimeout(timer);
-  }, [previousIndex, selectedIndex, viewport]);
-
-  useEffect(() => {
-    setImageLoaded(false);
-  }, [selectedIndex, viewport, activeAsset.src]);
-
-  const scrollTo = useCallback((index) => {
-    if (index === selectedIndex) return;
-    setPreviousIndex(selectedIndex);
-    setSelectedIndex(index);
-  }, [selectedIndex]);
-
-  if (!slides || slides.length === 0 || !activeAsset.src) return null;
+  if (resolvedSlides.length === 0) return null;
 
   return (
-    <section
-      data-testid="hero-main-slider"
-      className="relative w-full overflow-hidden bg-black"
-    >
+    <section data-testid="hero-main-slider" className="relative w-full overflow-hidden bg-black">
       <div className="relative h-[54vh] min-h-[320px] w-full overflow-hidden bg-black md:h-[460px] lg:h-[560px]">
-        {previousAsset.src ? (
-          <div className="absolute inset-0 animate-fadeOutHero">
-            <Image
-              src={previousAsset.src}
-              alt={previousSlide?.alt || `Slide ${previousIndex + 1}`}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              {...getBlurPlaceholderProps(previousAsset.blurDataURL)}
-            />
-          </div>
-        ) : null}
-
-        <div
-          key={`${selectedIndex}-${viewport}-${activeAsset.src}`}
-          className={`absolute inset-0 ${previousAsset.src ? 'animate-fadeInHero' : ''}`}
+        <Swiper
+          {...SHARED_SWIPER_PROPS}
+          modules={[A11y, Autoplay, EffectFade, Pagination]}
+          effect="fade"
+          fadeEffect={{ crossFade: true }}
+          speed={900}
+          loop={resolvedSlides.length > 1}
+          autoplay={
+            resolvedSlides.length > 1
+              ? {
+                  delay: 5000,
+                  disableOnInteraction: false,
+                  pauseOnMouseEnter: true,
+                }
+              : false
+          }
+          pagination={{
+            clickable: true,
+            bulletClass: 'hero-swiper-bullet',
+            bulletActiveClass: 'hero-swiper-bullet-active',
+          }}
+          className="hero-swiper h-full w-full"
         >
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-500 ease-out"
-            style={{
-              backgroundImage: `url("${activeAsset.blurDataURL}")`,
-              opacity: imageLoaded ? 0 : 1,
-              filter: 'blur(18px)',
-              transform: 'scale(1.08)',
-            }}
-          />
-          <Image
-            src={activeAsset.src}
-            alt={activeSlide?.alt || `Slide ${selectedIndex + 1}`}
-            fill
-            sizes="100vw"
-            priority={selectedIndex === 0}
-            className={`object-cover transition-opacity duration-500 ease-out ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-            onLoad={() => setImageLoaded(true)}
-            {...getBlurPlaceholderProps(activeAsset.blurDataURL)}
-          />
-        </div>
+          {resolvedSlides.map((slide, index) => (
+            <SwiperSlide key={slide.id || `${slide.asset.src}-${viewport}-${index}`}>
+              <div className="relative h-full w-full">
+                {slide.asset.blurDataURL ? (
+                  <div
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                    style={{
+                      backgroundImage: `url("${slide.asset.blurDataURL}")`,
+                      filter: 'blur(18px)',
+                      transform: 'scale(1.08)',
+                    }}
+                  />
+                ) : null}
 
-      </div>
+                <Image
+                  src={slide.asset.src}
+                  alt={slide.alt}
+                  fill
+                  sizes="100vw"
+                  priority={index === 0}
+                  className="hero-swiper-image object-cover"
+                  {...getBlurPlaceholderProps(slide.asset.blurDataURL)}
+                />
 
-      <div className="absolute bottom-5 left-1/2 z-10 flex -translate-x-1/2 gap-2">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => scrollTo(index)}
-            className={`rounded-full transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-              selectedIndex === index
-                ? 'h-2 w-5 bg-white shadow-[0_8px_20px_rgba(255,255,255,0.22)]'
-                : 'h-2 w-2 bg-white/45 hover:bg-white/65'
-            }`}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.16))]" />
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
       </div>
     </section>
   );

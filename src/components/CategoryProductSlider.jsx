@@ -1,34 +1,36 @@
 'use client';
 
-import { useCallback } from 'react';
-import useEmblaCarousel from 'embla-carousel-react';
+import { useCallback, useRef } from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { hasProductCategory } from '@/lib/productCategories';
-import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, Flame, Sparkles, Trophy, Tag } from 'lucide-react';
+import { CATEGORY_PRODUCT_BREAKPOINTS, SHARED_SWIPER_PROPS } from '@/components/swiper/swiperConfig';
 
-export default function CategoryProductSlider({ categoryId, categoryLabel, products, onViewAll, skipFilter = false }) {
+const ICON_MAP = {
+    Flame: Flame,
+    Sparkles: Sparkles,
+    Trophy: Trophy,
+    Tag: Tag,
+};
+
+export default function CategoryProductSlider({ categoryId, categoryLabel, products, onViewAll, skipFilter = false, iconName }) {
     const categoryProducts = skipFilter ? products : products.filter((product) => hasProductCategory(product, categoryId));
 
-    const [emblaRef, emblaApi] = useEmblaCarousel(
-        {
-            loop: true,
-            align: 'start',
-            slidesToScroll: 1,
-            containScroll: 'trimSnaps',
-            dragFree: false,
-        }
-    );
+    const HeaderIcon = iconName ? ICON_MAP[iconName] : null;
+    const swiperRef = useRef(null);
 
-    const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-    const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
+    const scrollPrev = useCallback(() => swiperRef.current?.slidePrev(), []);
+    const scrollNext = useCallback(() => swiperRef.current?.slideNext(), []);
 
     if (categoryProducts.length === 0) return null;
 
     return (
         <div className="mx-auto mb-4 w-full">
-            <div className="mb-6 flex items-center justify-between px-4">
+            <div className="home-section-item mb-6 flex items-center justify-between px-4">
                 <h2 className="text-2xl md:text-3xl font-bold text-primary tracking-tight">
+                    {HeaderIcon ? <HeaderIcon className="mr-2 inline-flex size-6 align-[-0.15em]" /> : null}
                     {categoryLabel}
                 </h2>
                 {onViewAll && (
@@ -43,7 +45,7 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
                 )}
             </div>
 
-            <div className="group/slider relative mx-auto w-full px-4">
+            <div className="home-section-item group/slider relative mx-auto w-full px-4">
                 <button
                     onClick={scrollPrev}
                     className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg border border-border bg-card/95 text-foreground transition-all duration-300 md:left-0 md:-translate-x-1/2 md:opacity-0 md:group-hover/slider:translate-x-0 md:group-hover/slider:opacity-100 will-change-transform"
@@ -60,18 +62,22 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
                     <ChevronRight className="size-5" />
                 </button>
 
-                <div ref={emblaRef} className="overflow-hidden -my-4">
-                    <div className="flex gap-4 py-4">
-                        {categoryProducts.map((p, idx) => (
-                            <div
-                                key={`${p.slug || p._id || p.id || 'item'}-${idx}`}
-                                className="min-w-0 flex-[0_0_calc(50%-0.5rem)] md:flex-[0_0_22vw] md:max-w-[280px]"
-                            >
+                <Swiper
+                    {...SHARED_SWIPER_PROPS}
+                    breakpoints={CATEGORY_PRODUCT_BREAKPOINTS}
+                    onSwiper={(swiper) => {
+                        swiperRef.current = swiper;
+                    }}
+                    className="-my-4"
+                >
+                    {categoryProducts.map((p, idx) => (
+                        <SwiperSlide key={`${p.slug || p._id || p.id || 'item'}-${idx}`} className="!h-auto py-4">
+                            <div className="h-full min-w-0">
                                 <ProductCard product={p} />
                             </div>
-                        ))}
-                    </div>
-                </div>
+                        </SwiperSlide>
+                    ))}
+                </Swiper>
             </div>
         </div>
     );
