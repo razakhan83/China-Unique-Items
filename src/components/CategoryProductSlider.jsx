@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { FreeMode, Virtual } from 'swiper/modules';
+import { FreeMode } from 'swiper/modules';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { hasProductCategory } from '@/lib/productCategories';
@@ -65,10 +65,9 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
 
                 <Swiper
                     {...SHARED_SWIPER_PROPS}
-                    modules={[FreeMode, Virtual]}
+                    modules={[FreeMode]}
                     breakpoints={CATEGORY_PRODUCT_BREAKPOINTS}
                     freeMode
-                    virtual={categoryProducts.length > 6}
                     onSwiper={(swiper) => {
                         swiperRef.current = swiper;
                     }}
@@ -77,7 +76,6 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
                     {categoryProducts.map((p, idx) => (
                         <SwiperSlide
                             key={`${p.slug || p._id || p.id || 'item'}-${idx}`}
-                            virtualIndex={idx}
                             className="!h-auto py-4"
                         >
                             <div className="h-full min-w-0">
