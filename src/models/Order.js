@@ -69,8 +69,8 @@ const OrderSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ['Pending', 'Confirmed', 'In Process', 'Delivered', 'Delivery Address Issue', 'Returned'],
-            default: 'Pending',
+            enum: ['Confirmed', 'In Process', 'Delivered', 'Returned'],
+            default: 'Confirmed',
         },
         courierName: {
             type: String,

@@ -240,7 +240,7 @@ export async function submitOrderAction(input) {
     landmark,
     items: normalizedItems,
     totalAmount,
-    status: 'Pending',
+    status: 'Confirmed',
     notes,
   });
 

@@ -20,11 +20,9 @@ import { updateOrderAction } from '@/app/actions';
 import { toast } from 'sonner';
 
 const statusVariant = {
-  Pending: 'accent',
   Confirmed: 'primary',
   'In Process': 'secondary',
   Delivered: 'emerald',
-  'Delivery Address Issue': 'destructive',
   Returned: 'outline',
 };
 
@@ -37,7 +35,7 @@ const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString('en-PK', { 
 export default function AdminOrdersClient({ initialOrders }) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('Confirmed');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrders, setSelectedOrders] = useState([]);
   
@@ -60,7 +58,12 @@ export default function AdminOrdersClient({ initialOrders }) {
     let result = initialOrders;
 
     if (statusFilter !== 'all') {
-      result = result.filter(order => order.status === statusFilter);
+      result = result.filter(order => {
+        if (statusFilter === 'Confirmed') {
+          return order.status === 'Confirmed' || order.status === 'Pending';
+        }
+        return order.status === statusFilter;
+      });
     }
 
     if (searchQuery.trim()) {
@@ -75,11 +78,13 @@ export default function AdminOrdersClient({ initialOrders }) {
   }, [initialOrders, statusFilter, searchQuery]);
 
   // Pagination Logic
+  const isPaginatedStatus = ['all', 'Delivered'].includes(statusFilter);
   const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
-  const paginatedOrders = useMemo(() => {
+  const displayOrders = useMemo(() => {
+    if (!isPaginatedStatus) return filteredOrders; // Show all (scrollable) for Confirmed/In Process
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredOrders.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredOrders, currentPage]);
+  }, [filteredOrders, currentPage, isPaginatedStatus]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -88,21 +93,21 @@ export default function AdminOrdersClient({ initialOrders }) {
 
   const clearFilters = () => {
     setSearchQuery('');
-    setStatusFilter('all');
+    setStatusFilter('Confirmed');
     setCurrentPage(1);
   };
 
-  const isAllPaginatedSelected = paginatedOrders.length > 0 && paginatedOrders.every(o => o && selectedOrders.includes(o._id));
+  const isAllPaginatedSelected = displayOrders.length > 0 && displayOrders.every(o => o && selectedOrders.includes(o._id));
 
   const handleSelectAll = (checked) => {
     if (checked) {
       const newSelected = new Set(selectedOrders);
-      paginatedOrders.forEach(o => {
+      displayOrders.forEach(o => {
         if (o?._id) newSelected.add(o._id);
       });
       setSelectedOrders(Array.from(newSelected));
     } else {
-      setSelectedOrders(selectedOrders.filter(id => !paginatedOrders.find(o => o?._id === id)));
+      setSelectedOrders(selectedOrders.filter(id => !displayOrders.find(o => o?._id === id)));
     }
   };
 
@@ -274,8 +279,34 @@ export default function AdminOrdersClient({ initialOrders }) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">Orders</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Track and manage customer orders ({filteredOrders.length} found).</p>
         </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
+        {[
+          { id: 'Confirmed', label: 'All Confirmed' },
+          { id: 'In Process', label: 'In Progress' },
+          { id: 'Delivered', label: 'Delivered' },
+          { id: 'Returned', label: 'Returned' },
+          { id: 'all', label: 'All Orders' },
+        ].map((tab) => (
+          <Button
+            key={tab.id}
+            variant={statusFilter === tab.id ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              setStatusFilter(tab.id);
+              setCurrentPage(1);
+            }}
+            className={cn(
+              "rounded-full px-5 h-9 font-medium transition-all",
+              statusFilter === tab.id ? "shadow-md scale-105" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {tab.label}
+          </Button>
+        ))}
       </div>
 
       {/* Filters Bar */}
@@ -311,11 +342,9 @@ export default function AdminOrdersClient({ initialOrders }) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
               <SelectItem value="Confirmed">Confirmed</SelectItem>
               <SelectItem value="In Process">In Process</SelectItem>
               <SelectItem value="Delivered">Delivered</SelectItem>
-              <SelectItem value="Delivery Address Issue">Address Issue</SelectItem>
               <SelectItem value="Returned">Returned</SelectItem>
             </SelectContent>
           </Select>
@@ -349,6 +378,7 @@ export default function AdminOrdersClient({ initialOrders }) {
                 </th>
                 <th className="px-6 py-4">Order ID</th>
                 <th className="px-6 py-4">Customer</th>
+                <th className="px-6 py-4">City</th>
                 <th className="px-6 py-4">Date & Time</th>
                 <th className="px-6 py-4">Total</th>
                 <th className="px-6 py-4">Status</th>
@@ -356,13 +386,13 @@ export default function AdminOrdersClient({ initialOrders }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {paginatedOrders.length === 0 ? (
+              {displayOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center">
+                  <td colSpan={7} className="px-6 py-20 text-center">
                     <Receipt className="mx-auto mb-4 size-10 text-muted-foreground/40" />
                     <p className="text-lg font-semibold text-foreground">No orders found</p>
                     <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or filters.</p>
-                    {(searchQuery || statusFilter !== 'all') && (
+                    {(searchQuery || statusFilter !== 'Confirmed') && (
                       <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
                         Clear all filters
                       </Button>
@@ -370,7 +400,7 @@ export default function AdminOrdersClient({ initialOrders }) {
                   </td>
                 </tr>
               ) : (
-                paginatedOrders.map((order) => {
+                displayOrders.map((order) => {
                   if (!order) return null;
                   return (
                     <tr key={order._id} className="transition-colors hover:bg-muted/35">
@@ -387,6 +417,11 @@ export default function AdminOrdersClient({ initialOrders }) {
                         <span className="text-sm font-semibold text-foreground">{order.customerName}</span>
                         <span className="text-xs text-muted-foreground">{order.customerPhone}</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
+                        {order.customerCity || 'N/A'}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
@@ -617,7 +652,7 @@ export default function AdminOrdersClient({ initialOrders }) {
       </Dialog>
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {isPaginatedStatus && totalPages > 1 && (
         <div className="flex items-center justify-between px-2 py-4">
           <p className="text-sm text-muted-foreground">
             Showing <span className="font-medium text-foreground">{((currentPage - 1) * ITEMS_PER_PAGE) + 1}</span> to{' '}
