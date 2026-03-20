@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Virtual } from 'swiper/modules';
+import { FreeMode, Virtual } from 'swiper/modules';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { hasProductCategory } from '@/lib/productCategories';
@@ -65,8 +65,9 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
 
                 <Swiper
                     {...SHARED_SWIPER_PROPS}
-                    modules={[Virtual]}
+                    modules={[FreeMode, Virtual]}
                     breakpoints={CATEGORY_PRODUCT_BREAKPOINTS}
+                    freeMode
                     virtual={categoryProducts.length > 6}
                     onSwiper={(swiper) => {
                         swiperRef.current = swiper;
