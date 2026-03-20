@@ -607,9 +607,8 @@
   .home-enter,
   .home-section,
   .home-section-item,
-  .home-category-card,
-  .products-grid-card {
-    animation: none !important;
+  .home-category-card {
+    /* animation: none !important; */
     opacity: 1 !important;
     transform: none !important;
     filter: none !important;
