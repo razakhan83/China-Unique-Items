@@ -4,17 +4,21 @@ import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { ClipboardList } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useCart } from '@/context/CartContext';
 import AuthModal from './AuthModal';
 import { cn } from '@/lib/utils';
 
 export default function MyOrdersButton({ className, isMobile = false }) {
   const { data: session } = useSession();
+  const { setIsSidebarOpen } = useCart() || {};
   const router = useRouter();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const handleClick = () => {
     if (session) {
+      if (typeof setIsSidebarOpen === 'function') {
+        setIsSidebarOpen(false);
+      }
       router.push('/orders');
     } else {
       setIsAuthModalOpen(true);

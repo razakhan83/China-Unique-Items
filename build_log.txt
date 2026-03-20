@@ -1,0 +1,912 @@
+﻿
+> kifayatly-next@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.2.0 (Turbopack)
+- Environments: .env.local
+- Cache Components enabled
+- Experiments (use with caution):
+  Γ£ô appNewScrollHandler
+  Γ£ô cachedNavigations
+  Γ£ô turbopackFileSystemCacheForBuild
+
+  Creating an optimized production build ...
+node.exe : 
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (:String) [],    
+ RemoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+> Build error occurred
+Error: Turbopack build 
+failed with 10 errors:
+./src/components/HeroSl
+ider.jsx:7:1
+Export A11y doesn't 
+exist in target module
+  [90m 5 |[0m 
+[36mimport[0m 
+[33mImage[0m 
+[36mfrom[0m 
+[32m'next/image'[0m;
+  [90m 6 |[0m 
+[36mimport[0m { 
+[33mSwiper[0m, 
+[33mSwiperSlide[0m } 
+[36mfrom[0m [32m'swi
+per/react'[0m;
+[31m[1m>[0m [90m 7 
+|[0m [36mimport[0m 
+{ [33mA11y[0m, 
+[33mAutoplay[0m, 
+[33mEffectFade[0m, 
+[33mPagination[0m } 
+[36mfrom[0m 
+[32m'swiper'[0m;
+  [90m   |[0m [31m[
+1m^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^[0
+m
+  [90m 8 |[0m 
+[36mimport[0m { getBl
+urPlaceholderProps } 
+[36mfrom[0m [32m'@/l
+ib/imagePlaceholder'[0
+m;
+  [90m 9 |[0m 
+[36mimport[0m { [33m
+SHARED_SWIPER_PROPS[0m
+ } [36mfrom[0m [32m'
+@/components/swiper/swi
+perConfig'[0m;
+  [90m10 |[0m 
+[36mfunction[0m 
+resolveViewport() {
+
+The export A11y was 
+not found in module [pr
+oject]/node_modules/swi
+per/swiper.mjs 
+[app-client] 
+(ecmascript).
+Did you mean to import 
+default?
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/components/He
+roSlider.jsx [Client 
+Component Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component 
+Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+  Client Component SSR:
+    ./src/components/He
+roSlider.jsx [Client 
+Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+
+./src/components/HeroSl
+ider.jsx:6:1
+Export A11y doesn't 
+exist in target module
+  [90m4 |[0m 
+[36mimport[0m 
+[33mImage[0m 
+[36mfrom[0m 
+[32m'next/image'[0m;
+  [90m5 |[0m 
+[36mimport[0m { 
+[33mSwiper[0m, 
+[33mSwiperSlide[0m } 
+[36mfrom[0m [32m'swi
+per/react'[0m;
+[31m[1m>[0m [90m6 
+|[0m [36mimport[0m 
+{ [33mA11y[0m, 
+[33mAutoplay[0m, 
+[33mEffectFade[0m, 
+[33mPagination[0m } 
+[36mfrom[0m 
+[32m'swiper'[0m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m
+  [90m8 |[0m 
+[36mimport[0m { getBl
+urPlaceholderProps } 
+[36mfrom[0m [32m'@/l
+ib/imagePlaceholder'[0
+m;
+  [90m9 |[0m 
+[36mimport[0m { [33m
+SHARED_SWIPER_PROPS[0m
+ } [36mfrom[0m [32m'
+@/components/swiper/swi
+perConfig'[0m;
+
+The export A11y was 
+not found in module [pr
+oject]/node_modules/swi
+per/swiper.mjs 
+[app-ssr] (ecmascript).
+Did you mean to import 
+default?
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/components/He
+roSlider.jsx [Client 
+Component Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component 
+Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+  Client Component SSR:
+    ./src/components/He
+roSlider.jsx [Client 
+Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+
+./src/components/HeroSl
+ider.jsx:7:1
+Export Autoplay 
+doesn't exist in 
+target module
+  [90m 5 |[0m 
+[36mimport[0m 
+[33mImage[0m 
+[36mfrom[0m 
+[32m'next/image'[0m;
+  [90m 6 |[0m 
+[36mimport[0m { 
+[33mSwiper[0m, 
+[33mSwiperSlide[0m } 
+[36mfrom[0m [32m'swi
+per/react'[0m;
+[31m[1m>[0m [90m 7 
+|[0m [36mimport[0m 
+{ [33mA11y[0m, 
+[33mAutoplay[0m, 
+[33mEffectFade[0m, 
+[33mPagination[0m } 
+[36mfrom[0m 
+[32m'swiper'[0m;
+  [90m   |[0m [31m[
+1m^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^[0
+m
+  [90m 8 |[0m 
+[36mimport[0m { getBl
+urPlaceholderProps } 
+[36mfrom[0m [32m'@/l
+ib/imagePlaceholder'[0
+m;
+  [90m 9 |[0m 
+[36mimport[0m { [33m
+SHARED_SWIPER_PROPS[0m
+ } [36mfrom[0m [32m'
+@/components/swiper/swi
+perConfig'[0m;
+  [90m10 |[0m 
+[36mfunction[0m 
+resolveViewport() {
+
+The export Autoplay 
+was not found in 
+module [project]/node_m
+odules/swiper/swiper.mj
+s [app-client] 
+(ecmascript).
+Did you mean to import 
+default?
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/components/He
+roSlider.jsx [Client 
+Component Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component 
+Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+  Client Component SSR:
+    ./src/components/He
+roSlider.jsx [Client 
+Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+
+./src/components/HeroSl
+ider.jsx:6:1
+Export Autoplay 
+doesn't exist in 
+target module
+  [90m4 |[0m 
+[36mimport[0m 
+[33mImage[0m 
+[36mfrom[0m 
+[32m'next/image'[0m;
+  [90m5 |[0m 
+[36mimport[0m { 
+[33mSwiper[0m, 
+[33mSwiperSlide[0m } 
+[36mfrom[0m [32m'swi
+per/react'[0m;
+[31m[1m>[0m [90m6 
+|[0m [36mimport[0m 
+{ [33mA11y[0m, 
+[33mAutoplay[0m, 
+[33mEffectFade[0m, 
+[33mPagination[0m } 
+[36mfrom[0m 
+[32m'swiper'[0m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m
+  [90m8 |[0m 
+[36mimport[0m { getBl
+urPlaceholderProps } 
+[36mfrom[0m [32m'@/l
+ib/imagePlaceholder'[0
+m;
+  [90m9 |[0m 
+[36mimport[0m { [33m
+SHARED_SWIPER_PROPS[0m
+ } [36mfrom[0m [32m'
+@/components/swiper/swi
+perConfig'[0m;
+
+The export Autoplay 
+was not found in 
+module [project]/node_m
+odules/swiper/swiper.mj
+s [app-ssr] 
+(ecmascript).
+Did you mean to import 
+default?
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/components/He
+roSlider.jsx [Client 
+Component Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component 
+Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+  Client Component SSR:
+    ./src/components/He
+roSlider.jsx [Client 
+Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+
+./src/components/HeroSl
+ider.jsx:7:1
+Export EffectFade 
+doesn't exist in 
+target module
+  [90m 5 |[0m 
+[36mimport[0m 
+[33mImage[0m 
+[36mfrom[0m 
+[32m'next/image'[0m;
+  [90m 6 |[0m 
+[36mimport[0m { 
+[33mSwiper[0m, 
+[33mSwiperSlide[0m } 
+[36mfrom[0m [32m'swi
+per/react'[0m;
+[31m[1m>[0m [90m 7 
+|[0m [36mimport[0m 
+{ [33mA11y[0m, 
+[33mAutoplay[0m, 
+[33mEffectFade[0m, 
+[33mPagination[0m } 
+[36mfrom[0m 
+[32m'swiper'[0m;
+  [90m   |[0m [31m[
+1m^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^[0
+m
+  [90m 8 |[0m 
+[36mimport[0m { getBl
+urPlaceholderProps } 
+[36mfrom[0m [32m'@/l
+ib/imagePlaceholder'[0
+m;
+  [90m 9 |[0m 
+[36mimport[0m { [33m
+SHARED_SWIPER_PROPS[0m
+ } [36mfrom[0m [32m'
+@/components/swiper/swi
+perConfig'[0m;
+  [90m10 |[0m 
+[36mfunction[0m 
+resolveViewport() {
+
+The export EffectFade 
+was not found in 
+module [project]/node_m
+odules/swiper/swiper.mj
+s [app-client] 
+(ecmascript).
+Did you mean to import 
+default?
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/components/He
+roSlider.jsx [Client 
+Component Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component 
+Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+  Client Component SSR:
+    ./src/components/He
+roSlider.jsx [Client 
+Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+
+./src/components/HeroSl
+ider.jsx:6:1
+Export EffectFade 
+doesn't exist in 
+target module
+  [90m4 |[0m 
+[36mimport[0m 
+[33mImage[0m 
+[36mfrom[0m 
+[32m'next/image'[0m;
+  [90m5 |[0m 
+[36mimport[0m { 
+[33mSwiper[0m, 
+[33mSwiperSlide[0m } 
+[36mfrom[0m [32m'swi
+per/react'[0m;
+[31m[1m>[0m [90m6 
+|[0m [36mimport[0m 
+{ [33mA11y[0m, 
+[33mAutoplay[0m, 
+[33mEffectFade[0m, 
+[33mPagination[0m } 
+[36mfrom[0m 
+[32m'swiper'[0m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m
+  [90m8 |[0m 
+[36mimport[0m { getBl
+urPlaceholderProps } 
+[36mfrom[0m [32m'@/l
+ib/imagePlaceholder'[0
+m;
+  [90m9 |[0m 
+[36mimport[0m { [33m
+SHARED_SWIPER_PROPS[0m
+ } [36mfrom[0m [32m'
+@/components/swiper/swi
+perConfig'[0m;
+
+The export EffectFade 
+was not found in 
+module [project]/node_m
+odules/swiper/swiper.mj
+s [app-ssr] 
+(ecmascript).
+Did you mean to import 
+default?
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/components/He
+roSlider.jsx [Client 
+Component Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component 
+Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+  Client Component SSR:
+    ./src/components/He
+roSlider.jsx [Client 
+Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+
+./src/components/Catego
+ryProductSlider.jsx:6:1
+Export FreeMode 
+doesn't exist in 
+target module
+  [90m4 |[0m 
+[36mimport[0m { 
+useCallback, useRef } 
+[36mfrom[0m 
+[32m'react'[0m;
+  [90m5 |[0m 
+[36mimport[0m { 
+[33mSwiper[0m, 
+[33mSwiperSlide[0m } 
+[36mfrom[0m [32m'swi
+per/react'[0m;
+[31m[1m>[0m [90m6 
+|[0m [36mimport[0m 
+{ [33mFreeMode[0m } 
+[36mfrom[0m 
+[32m'swiper'[0m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^[0m
+  [90m7 |[0m 
+[36mimport[0m 
+[33mProductCard[0m 
+[36mfrom[0m [32m'@/c
+omponents/ProductCard'
+[0m;
+  [90m8 |[0m 
+[36mimport[0m { 
+[33mButton[0m } 
+[36mfrom[0m [32m'@/c
+omponents/ui/button'[0
+m;
+  [90m9 |[0m 
+[36mimport[0m { 
+hasProductCategory } 
+[36mfrom[0m [32m'@/l
+ib/productCategories'[
+0m;
+
+The export FreeMode 
+was not found in 
+module [project]/node_m
+odules/swiper/swiper.mj
+s [app-client] 
+(ecmascript).
+Did you mean to import 
+Swiper?
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import trace:
+  Server Component:
+    ./src/components/Ca
+tegoryProductSlider.jsx
+    ./src/app/products/
+[id]/page.jsx
+
+
+./src/components/Catego
+ryProductSlider.jsx:5:1
+Export FreeMode 
+doesn't exist in 
+target module
+  [90m3 |[0m 
+[36mimport[0m { 
+useCallback, useRef } 
+[36mfrom[0m 
+[32m'react'[0m;
+  [90m4 |[0m 
+[36mimport[0m { 
+[33mSwiper[0m, 
+[33mSwiperSlide[0m } 
+[36mfrom[0m [32m'swi
+per/react'[0m;
+[31m[1m>[0m [90m5 
+|[0m [36mimport[0m 
+{ [33mFreeMode[0m } 
+[36mfrom[0m 
+[32m'swiper'[0m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^[0m
+  [90m6 |[0m 
+[36mimport[0m 
+[33mProductCard[0m 
+[36mfrom[0m [32m'@/c
+omponents/ProductCard'
+[0m;
+  [90m7 |[0m 
+[36mimport[0m { 
+[33mButton[0m } 
+[36mfrom[0m [32m'@/c
+omponents/ui/button'[0
+m;
+  [90m8 |[0m 
+[36mimport[0m { 
+hasProductCategory } 
+[36mfrom[0m [32m'@/l
+ib/productCategories'[
+0m;
+
+The export FreeMode 
+was not found in 
+module [project]/node_m
+odules/swiper/swiper.mj
+s [app-ssr] 
+(ecmascript).
+Did you mean to import 
+Swiper?
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import trace:
+  Server Component:
+    ./src/components/Ca
+tegoryProductSlider.jsx
+    ./src/app/products/
+[id]/page.jsx
+
+
+./src/components/HeroSl
+ider.jsx:7:1
+Export Pagination 
+doesn't exist in 
+target module
+  [90m 5 |[0m 
+[36mimport[0m 
+[33mImage[0m 
+[36mfrom[0m 
+[32m'next/image'[0m;
+  [90m 6 |[0m 
+[36mimport[0m { 
+[33mSwiper[0m, 
+[33mSwiperSlide[0m } 
+[36mfrom[0m [32m'swi
+per/react'[0m;
+[31m[1m>[0m [90m 7 
+|[0m [36mimport[0m 
+{ [33mA11y[0m, 
+[33mAutoplay[0m, 
+[33mEffectFade[0m, 
+[33mPagination[0m } 
+[36mfrom[0m 
+[32m'swiper'[0m;
+  [90m   |[0m [31m[
+1m^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^[0
+m
+  [90m 8 |[0m 
+[36mimport[0m { getBl
+urPlaceholderProps } 
+[36mfrom[0m [32m'@/l
+ib/imagePlaceholder'[0
+m;
+  [90m 9 |[0m 
+[36mimport[0m { [33m
+SHARED_SWIPER_PROPS[0m
+ } [36mfrom[0m [32m'
+@/components/swiper/swi
+perConfig'[0m;
+  [90m10 |[0m 
+[36mfunction[0m 
+resolveViewport() {
+
+The export Pagination 
+was not found in 
+module [project]/node_m
+odules/swiper/swiper.mj
+s [app-client] 
+(ecmascript).
+Did you mean to import 
+default?
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/components/He
+roSlider.jsx [Client 
+Component Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component 
+Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+  Client Component SSR:
+    ./src/components/He
+roSlider.jsx [Client 
+Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+
+./src/components/HeroSl
+ider.jsx:6:1
+Export Pagination 
+doesn't exist in 
+target module
+  [90m4 |[0m 
+[36mimport[0m 
+[33mImage[0m 
+[36mfrom[0m 
+[32m'next/image'[0m;
+  [90m5 |[0m 
+[36mimport[0m { 
+[33mSwiper[0m, 
+[33mSwiperSlide[0m } 
+[36mfrom[0m [32m'swi
+per/react'[0m;
+[31m[1m>[0m [90m6 
+|[0m [36mimport[0m 
+{ [33mA11y[0m, 
+[33mAutoplay[0m, 
+[33mEffectFade[0m, 
+[33mPagination[0m } 
+[36mfrom[0m 
+[32m'swiper'[0m;
+  [90m  |[0m [31m[1
+m^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^[0m
+  [90m7 |[0m
+  [90m8 |[0m 
+[36mimport[0m { getBl
+urPlaceholderProps } 
+[36mfrom[0m [32m'@/l
+ib/imagePlaceholder'[0
+m;
+  [90m9 |[0m 
+[36mimport[0m { [33m
+SHARED_SWIPER_PROPS[0m
+ } [36mfrom[0m [32m'
+@/components/swiper/swi
+perConfig'[0m;
+
+The export Pagination 
+was not found in 
+module [project]/node_m
+odules/swiper/swiper.mj
+s [app-ssr] 
+(ecmascript).
+Did you mean to import 
+default?
+All exports of the 
+module are statically 
+known (It doesn't have 
+dynamic exports). So 
+it's known statically 
+that the requested 
+export doesn't exist.
+
+Import traces:
+  Client Component 
+Browser:
+    ./src/components/He
+roSlider.jsx [Client 
+Component Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component 
+Browser]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+  Client Component SSR:
+    ./src/components/He
+roSlider.jsx [Client 
+Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Client Component SSR]
+    ./src/components/Ho
+meClientWrapper.jsx 
+[Server Component]
+    ./src/app/page.js 
+[Server Component]
+
+
+    at <unknown> (./src
+/components/HeroSlider.
+jsx:7:1)
+    at <unknown> (./src
+/components/HeroSlider.
+jsx:6:1)
+    at <unknown> (./src
+/components/HeroSlider.
+jsx:7:1)
+    at <unknown> (./src
+/components/HeroSlider.
+jsx:6:1)
+    at <unknown> (./src
+/components/HeroSlider.
+jsx:7:1)
+    at <unknown> (./src
+/components/HeroSlider.
+jsx:6:1)
+    at <unknown> (./src
+/components/CategoryPro
+ductSlider.jsx:6:1)
+    at <unknown> (./src
+/components/CategoryPro
+ductSlider.jsx:5:1)
+    at <unknown> (./src
+/components/HeroSlider.
+jsx:7:1)
+    at <unknown> (./src
+/components/HeroSlider.
+jsx:6:1)

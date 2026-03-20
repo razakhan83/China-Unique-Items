@@ -7,6 +7,7 @@ import { isAdminEmail, normalizeEmail, normalizePhone, getPhoneRegex } from '@/l
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import Order from '@/models/Order';
+import OrderLog from '@/models/OrderLog';
 import Product from '@/models/Product';
 import Settings from '@/models/Settings';
 import User from '@/models/User';
@@ -240,7 +241,7 @@ export async function submitOrderAction(input) {
     landmark,
     items: normalizedItems,
     totalAmount,
-    status: 'Pending',
+    status: 'Confirmed',
     notes,
   });
 
@@ -446,6 +447,9 @@ export async function updateOrderAction(id, updates) {
     if (updates.landmark !== undefined) order.landmark = updates.landmark;
     if (updates.customerEmail !== undefined) order.customerEmail = updates.customerEmail;
     
+    const hasStatusChanged = updates.status !== undefined && updates.status !== order.status;
+    const oldStatus = order.status;
+    
     if (updates.status !== undefined) order.status = updates.status;
     if (updates.trackingNumber !== undefined) order.trackingNumber = updates.trackingNumber;
     if (updates.courierName !== undefined) order.courierName = updates.courierName;
@@ -459,6 +463,33 @@ export async function updateOrderAction(id, updates) {
     }
 
     await order.save();
+
+    // Log the change
+    try {
+      const session = await getServerSession(authOptions);
+      let details = 'Order updated';
+      let action = 'UPDATE';
+
+      if (hasStatusChanged) {
+        action = 'STATUS_CHANGE';
+        details = `Status changed from ${oldStatus} to ${order.status}`;
+      } else if (updates.trackingNumber !== undefined) {
+        action = 'TRACKING_UPDATE';
+        details = `Tracking Number set to ${order.trackingNumber}`;
+      }
+
+      await OrderLog.create({
+        orderId: order._id,
+        action,
+        details,
+        previousStatus: hasStatusChanged ? oldStatus : undefined,
+        newStatus: hasStatusChanged ? order.status : undefined,
+        adminName: session?.user?.name,
+        adminEmail: session?.user?.email,
+      });
+    } catch (logError) {
+      console.error('Failed to create order log:', logError);
+    }
     
     revalidateTag('orders');
     revalidateTag('admin-dashboard');

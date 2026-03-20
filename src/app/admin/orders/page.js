@@ -1,11 +1,11 @@
 import { getOrdersList } from '@/lib/data';
 import { requireAdmin } from '@/lib/requireAdmin';
-import AdminOrdersClient from './AdminOrdersClient';
+import AdminOrdersWrapper from './AdminOrdersWrapper';
 
 export default async function AdminOrdersPage() {
   await requireAdmin();
 
   const orders = await getOrdersList();
 
-  return <AdminOrdersClient initialOrders={orders} />;
+  return <AdminOrdersWrapper initialOrders={orders} />;
 }

@@ -20,11 +20,9 @@ import { updateOrderAction } from '@/app/actions';
 import { toast } from 'sonner';
 
 const statusVariant = {
-  Pending: 'accent',
   Confirmed: 'primary',
   'In Process': 'secondary',
   Delivered: 'emerald',
-  'Delivery Address Issue': 'destructive',
   Returned: 'outline',
 };
 
@@ -37,9 +35,11 @@ const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString('en-PK', { 
 export default function AdminOrdersClient({ initialOrders }) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('Confirmed');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrders, setSelectedOrders] = useState([]);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   
   // Modals & Popovers State
   const [editingOrder, setEditingOrder] = useState(null);
@@ -52,7 +52,6 @@ export default function AdminOrdersClient({ initialOrders }) {
   const [quickTracking, setQuickTracking] = useState('');
   const [isQuickUpdating, setIsQuickUpdating] = useState(false);
   
-  // City Search State (for Modal)
   const [cityOpen, setCityOpen] = useState(false);
 
   // Filtering Logic
@@ -60,26 +59,46 @@ export default function AdminOrdersClient({ initialOrders }) {
     let result = initialOrders;
 
     if (statusFilter !== 'all') {
-      result = result.filter(order => order.status === statusFilter);
+      result = result.filter(order => {
+        if (statusFilter === 'Confirmed') {
+          return order.status === 'Confirmed' || order.status === 'Pending';
+        }
+        return order.status === statusFilter;
+      });
     }
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(order => 
         order.orderId.toLowerCase().includes(query) ||
-        order.customerName.toLowerCase().includes(query)
+        order.customerName.toLowerCase().includes(query) ||
+        (order.customerPhone && order.customerPhone.includes(query))
       );
     }
 
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      result = result.filter(order => new Date(order.createdAt) >= start);
+    }
+
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      result = result.filter(order => new Date(order.createdAt) <= end);
+    }
+
     return result;
-  }, [initialOrders, statusFilter, searchQuery]);
+  }, [initialOrders, statusFilter, searchQuery, startDate, endDate]);
 
   // Pagination Logic
+  const isPaginatedStatus = ['all', 'Delivered'].includes(statusFilter);
   const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
-  const paginatedOrders = useMemo(() => {
+  const displayOrders = useMemo(() => {
+    if (!isPaginatedStatus) return filteredOrders; // Show all (scrollable) for Confirmed/In Process
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredOrders.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredOrders, currentPage]);
+  }, [filteredOrders, currentPage, isPaginatedStatus]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -88,21 +107,23 @@ export default function AdminOrdersClient({ initialOrders }) {
 
   const clearFilters = () => {
     setSearchQuery('');
-    setStatusFilter('all');
+    setStatusFilter('Confirmed');
+    setStartDate('');
+    setEndDate('');
     setCurrentPage(1);
   };
 
-  const isAllPaginatedSelected = paginatedOrders.length > 0 && paginatedOrders.every(o => o && selectedOrders.includes(o._id));
+  const isAllPaginatedSelected = displayOrders.length > 0 && displayOrders.every(o => o && selectedOrders.includes(o._id));
 
   const handleSelectAll = (checked) => {
     if (checked) {
       const newSelected = new Set(selectedOrders);
-      paginatedOrders.forEach(o => {
+      displayOrders.forEach(o => {
         if (o?._id) newSelected.add(o._id);
       });
       setSelectedOrders(Array.from(newSelected));
     } else {
-      setSelectedOrders(selectedOrders.filter(id => !paginatedOrders.find(o => o?._id === id)));
+      setSelectedOrders(selectedOrders.filter(id => !displayOrders.find(o => o?._id === id)));
     }
   };
 
@@ -220,6 +241,138 @@ export default function AdminOrdersClient({ initialOrders }) {
     setSelectedOrders([]);
   };
 
+  const handleDownloadPDF = async () => {
+    const ordersToExport = initialOrders.filter(o => selectedOrders.includes(o._id));
+    if (ordersToExport.length === 0) return;
+
+    // Dynamically import jspdf to avoid SSR errors with Node-specific modules
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+
+    const doc = new jsPDF();
+    doc.text('Order Data Export', 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+
+    const tableData = ordersToExport.map(o => [
+      o.orderId,
+      o.customerName,
+      o.customerCity,
+      o.status,
+      o.totalAmount,
+      new Date(o.createdAt).toLocaleDateString()
+    ]);
+
+    autoTable(doc, {
+      head: [['ID', 'Customer', 'City', 'Status', 'Amount', 'Date']],
+      body: tableData,
+      startY: 30,
+    });
+
+    doc.save(`Orders_Export_${new Date().toISOString().slice(0, 10)}.pdf`);
+    setSelectedOrders([]);
+  };
+
+  const handleExportMonthlySales = async (format) => {
+    // Filter orders by the selected date range for monthly report
+    const reportOrders = filteredOrders;
+    if (reportOrders.length === 0) {
+      toast.error('No orders found in the current filtered range for report.');
+      return;
+    }
+
+    const totalRevenue = reportOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+    const statusCounts = reportOrders.reduce((acc, o) => {
+      acc[o.status] = (acc[o.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    if (format === 'excel') {
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet('Monthly Sales');
+      
+      sheet.addRow(['Monthly Sales Report']);
+      sheet.addRow([`Period: ${startDate || 'All'} to ${endDate || 'All'}`]);
+      sheet.addRow([]);
+      sheet.addRow(['Summary']);
+      sheet.addRow(['Total Orders', reportOrders.length]);
+      sheet.addRow(['Total Revenue', totalRevenue]);
+      sheet.addRow([]);
+      sheet.addRow(['Status Breakdown']);
+      Object.entries(statusCounts).forEach(([status, count]) => {
+        sheet.addRow([status, count]);
+      });
+      sheet.addRow([]);
+      sheet.addRow(['Order Details']);
+      sheet.addRow(['Date', 'Order ID', 'Customer', 'City', 'Amount', 'Status']);
+      
+      reportOrders.forEach(o => {
+        sheet.addRow([
+          new Date(o.createdAt).toLocaleDateString(),
+          o.orderId,
+          o.customerName,
+          o.customerCity,
+          o.totalAmount,
+          o.status
+        ]);
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Monthly_Sales_Report_${new Date().toISOString().slice(0, 7)}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } else {
+      // Dynamically import jspdf to avoid SSR errors with Node-specific modules
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
+
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text('Monthly Sales Report', 14, 20);
+      doc.setFontSize(12);
+      doc.text(`Period: ${startDate || 'All'} to ${endDate || 'All'}`, 14, 30);
+      
+      doc.text('Summary', 14, 45);
+      autoTable(doc, {
+        body: [
+          ['Total Orders', reportOrders.length],
+          ['Total Revenue', `PKR ${totalRevenue.toLocaleString()}`],
+        ],
+        startY: 50,
+        theme: 'grid',
+      });
+
+      doc.text('Status Breakdown', 14, doc.lastAutoTable?.finalY + 15 || 80);
+      autoTable(doc, {
+        body: Object.entries(statusCounts),
+        startY: doc.lastAutoTable?.finalY + 20 || 85,
+        theme: 'grid',
+      });
+
+      doc.text('Order details', 14, doc.lastAutoTable?.finalY + 15 || 120);
+      autoTable(doc, {
+        head: [['Date', 'ID', 'Customer', 'City', 'Amount', 'Status']],
+        body: reportOrders.map(o => [
+          new Date(o.createdAt).toLocaleDateString(),
+          o.orderId,
+          o.customerName,
+          o.customerCity,
+          o.totalAmount,
+          o.status
+        ]),
+        startY: doc.lastAutoTable?.finalY + 20 || 125,
+      });
+
+      doc.save(`Monthly_Sales_Report_${new Date().toISOString().slice(0, 7)}.pdf`);
+    }
+  };
+
   const handleQuickUpdate = async (id) => {
     setIsQuickUpdating(true);
     const res = await updateOrderAction(id, { 
@@ -274,8 +427,34 @@ export default function AdminOrdersClient({ initialOrders }) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">Orders</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Track and manage customer orders ({filteredOrders.length} found).</p>
         </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
+        {[
+          { id: 'Confirmed', label: 'All Confirmed' },
+          { id: 'In Process', label: 'In Progress' },
+          { id: 'Delivered', label: 'Delivered' },
+          { id: 'Returned', label: 'Returned' },
+          { id: 'all', label: 'All Orders' },
+        ].map((tab) => (
+          <Button
+            key={tab.id}
+            variant={statusFilter === tab.id ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              setStatusFilter(tab.id);
+              setCurrentPage(1);
+            }}
+            className={cn(
+              "rounded-full px-5 h-9 font-medium transition-all",
+              statusFilter === tab.id ? "shadow-md scale-105" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {tab.label}
+          </Button>
+        ))}
       </div>
 
       {/* Filters Bar */}
@@ -283,7 +462,7 @@ export default function AdminOrdersClient({ initialOrders }) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Search by Order ID or Customer Name..."
+            placeholder="Search by Order ID, Name, or Phone..."
             className="pl-10 h-10"
             value={searchQuery}
             onChange={(e) => {
@@ -292,35 +471,80 @@ export default function AdminOrdersClient({ initialOrders }) {
             }}
           />
         </div>
+
+        {/* Date Range Filters */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-lg border border-border/50">
+            <Label htmlFor="startDate" className="text-xs font-bold text-muted-foreground uppercase">From</Label>
+            <Input
+              id="startDate"
+              type="date"
+              className="h-8 w-[130px] text-xs bg-background"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-2 bg-muted/30 px-3 py-1.5 rounded-lg border border-border/50">
+            <Label htmlFor="endDate" className="text-xs font-bold text-muted-foreground uppercase">To</Label>
+            <Input
+              id="endDate"
+              type="date"
+              className="h-8 w-[130px] text-xs bg-background"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+        </div>
+
         <div className="flex items-center gap-2">
           {selectedOrders.length > 0 && (
-            <Button onClick={handleDownloadExcel} className="h-10 px-3 gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
-              <Download className="size-4" />
-              Download {selectedOrders.length} Selected (Excel)
-            </Button>
+            <div className="flex items-center gap-1.5 p-1 bg-primary/5 border border-primary/20 rounded-lg">
+              <Button onClick={handleDownloadExcel} size="sm" className="h-8 px-2.5 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
+                <Download className="size-3.5" />
+                XLSX ({selectedOrders.length})
+              </Button>
+              <Button onClick={handleDownloadPDF} size="sm" variant="outline" className="h-8 px-2.5 gap-1.5 text-xs font-bold border-red-200 text-red-600 hover:bg-red-50">
+                <Download className="size-3.5" />
+                PDF ({selectedOrders.length})
+              </Button>
+            </div>
           )}
-          <Select 
-            value={statusFilter} 
-            onValueChange={(val) => {
-              setStatusFilter(val);
-              setCurrentPage(1);
-            }}
-          >
-            <SelectTrigger className="h-10 w-[180px]">
-              <SelectValue placeholder="Filter by Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Confirmed">Confirmed</SelectItem>
-              <SelectItem value="In Process">In Process</SelectItem>
-              <SelectItem value="Delivered">Delivered</SelectItem>
-              <SelectItem value="Delivery Address Issue">Address Issue</SelectItem>
-              <SelectItem value="Returned">Returned</SelectItem>
-            </SelectContent>
-          </Select>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="h-10 gap-2 font-bold text-xs uppercase tracking-wider">
+                <Zap className="size-4 text-amber-500" />
+                Reports
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-3" align="end">
+              <div className="space-y-3">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest pl-1">Monthly Sales Records</div>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="justify-start gap-2 h-9 text-xs font-medium border-emerald-100 hover:bg-emerald-50 text-emerald-700"
+                    onClick={() => handleExportMonthlySales('excel')}
+                  >
+                    <Download className="size-3.5" />
+                    Export to Excel (.xlsx)
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="justify-start gap-2 h-9 text-xs font-medium border-red-100 hover:bg-red-50 text-red-700"
+                    onClick={() => handleExportMonthlySales('pdf')}
+                  >
+                    <Download className="size-3.5" />
+                    Export to PDF (.pdf)
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
 
-          {(searchQuery || statusFilter !== 'all') && (
+          {(searchQuery || statusFilter !== 'Confirmed' || startDate || endDate) && (
             <Button 
               variant="ghost" 
               size="sm" 
@@ -349,6 +573,7 @@ export default function AdminOrdersClient({ initialOrders }) {
                 </th>
                 <th className="px-6 py-4">Order ID</th>
                 <th className="px-6 py-4">Customer</th>
+                <th className="px-6 py-4">City</th>
                 <th className="px-6 py-4">Date & Time</th>
                 <th className="px-6 py-4">Total</th>
                 <th className="px-6 py-4">Status</th>
@@ -356,13 +581,13 @@ export default function AdminOrdersClient({ initialOrders }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {paginatedOrders.length === 0 ? (
+              {displayOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center">
+                  <td colSpan={7} className="px-6 py-20 text-center">
                     <Receipt className="mx-auto mb-4 size-10 text-muted-foreground/40" />
                     <p className="text-lg font-semibold text-foreground">No orders found</p>
                     <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or filters.</p>
-                    {(searchQuery || statusFilter !== 'all') && (
+                    {(searchQuery || statusFilter !== 'Confirmed') && (
                       <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
                         Clear all filters
                       </Button>
@@ -370,7 +595,7 @@ export default function AdminOrdersClient({ initialOrders }) {
                   </td>
                 </tr>
               ) : (
-                paginatedOrders.map((order) => {
+                displayOrders.map((order) => {
                   if (!order) return null;
                   return (
                     <tr key={order._id} className="transition-colors hover:bg-muted/35">
@@ -387,6 +612,11 @@ export default function AdminOrdersClient({ initialOrders }) {
                         <span className="text-sm font-semibold text-foreground">{order.customerName}</span>
                         <span className="text-xs text-muted-foreground">{order.customerPhone}</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
+                        {order.customerCity || 'N/A'}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
@@ -617,7 +847,7 @@ export default function AdminOrdersClient({ initialOrders }) {
       </Dialog>
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {isPaginatedStatus && totalPages > 1 && (
         <div className="flex items-center justify-between px-2 py-4">
           <p className="text-sm text-muted-foreground">
             Showing <span className="font-medium text-foreground">{((currentPage - 1) * ITEMS_PER_PAGE) + 1}</span> to{' '}
