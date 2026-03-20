@@ -126,7 +126,7 @@ export default function ProductCard({ product, className = "" }) {
               "absolute left-2.5 top-2.5 z-10",
               "rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider",
               "bg-secondary text-secondary-foreground border-border",
-              "backdrop-blur-sm shadow-sm"
+              "shadow-sm md:backdrop-blur-sm"
             )}
           >
             {discountLabel}
@@ -139,7 +139,7 @@ export default function ProductCard({ product, className = "" }) {
             className={cn(
               "absolute right-2.5 top-2.5 z-10",
               "rounded-md px-2 py-1 text-[10px] font-bold tracking-wider",
-              "backdrop-blur-sm shadow-sm",
+              "shadow-sm md:backdrop-blur-sm",
               statusBadge.className
             )}
           >

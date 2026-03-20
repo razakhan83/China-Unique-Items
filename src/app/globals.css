@@ -595,6 +595,15 @@
   will-change: opacity, transform, filter;
 }
 
+@supports (content-visibility: auto) {
+  @media (hover: none), (pointer: coarse) {
+    .home-section {
+      content-visibility: auto;
+      contain-intrinsic-size: auto 640px;
+    }
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .home-enter {
     opacity: 0;

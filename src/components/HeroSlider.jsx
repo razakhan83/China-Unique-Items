@@ -42,6 +42,7 @@ function getActiveAsset(slide, viewport) {
 
 export default function HeroSlider({ slides = [] }) {
   const [viewport, setViewport] = useState('desktop');
+  const isMobileViewport = viewport === 'mobile';
 
   useEffect(() => {
     const syncViewport = () => setViewport(resolveViewport());
@@ -93,7 +94,7 @@ export default function HeroSlider({ slides = [] }) {
           {resolvedSlides.map((slide, index) => (
             <SwiperSlide key={slide.id || `${slide.asset.src}-${viewport}-${index}`}>
               <div className="relative h-full w-full">
-                {slide.asset.blurDataURL ? (
+                {!isMobileViewport && slide.asset.blurDataURL ? (
                   <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                     style={{
@@ -111,7 +112,7 @@ export default function HeroSlider({ slides = [] }) {
                   sizes="100vw"
                   priority={index === 0}
                   className="hero-swiper-image object-cover"
-                  {...getBlurPlaceholderProps(slide.asset.blurDataURL)}
+                  {...(isMobileViewport ? {} : getBlurPlaceholderProps(slide.asset.blurDataURL))}
                 />
 
                 <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.16))]" />

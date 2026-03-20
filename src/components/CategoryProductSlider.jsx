@@ -29,40 +29,32 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
 
     return (
         <div className="mx-auto mb-4 w-full">
-            <div className="home-section-item mb-6 flex items-center justify-between px-4">
-                <h2 className="text-2xl md:text-3xl font-bold text-primary tracking-tight">
+            <div className="home-section-item mb-6 flex items-center justify-between gap-4 px-4 md:items-end">
+                <h2 className="min-w-0 flex-1 text-2xl font-bold tracking-tight text-primary [text-wrap:balance] md:text-3xl">
                     {HeaderIcon ? <HeaderIcon className="mr-2 inline-flex size-6 align-[-0.15em]" /> : null}
                     {categoryLabel}
                 </h2>
-                {onViewAll && (
-                    <Button
-                        variant="ghost"
-                        onClick={() => onViewAll(categoryId)}
-                        className="bg-primary/10 text-primary font-semibold hover:bg-primary/18 hover:text-primary text-sm cursor-pointer"
+
+                <div className="flex shrink-0 items-center gap-2">
+                    <button
+                        onClick={scrollPrev}
+                        className="flex size-10 items-center justify-center rounded-lg border border-primary/15 bg-primary/10 text-primary shadow-[0_10px_30px_rgba(10,61,46,0.08)] transition-[transform,background-color,color,box-shadow] duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-[0_14px_34px_rgba(10,61,46,0.14)] active:scale-[0.96]"
+                        aria-label="Previous products"
                     >
-                        View All
-                        <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                )}
+                        <ChevronLeft className="size-5" />
+                    </button>
+
+                    <button
+                        onClick={scrollNext}
+                        className="flex size-10 items-center justify-center rounded-lg border border-primary/15 bg-primary/10 text-primary shadow-[0_10px_30px_rgba(10,61,46,0.08)] transition-[transform,background-color,color,box-shadow] duration-300 hover:bg-primary hover:text-primary-foreground hover:shadow-[0_14px_34px_rgba(10,61,46,0.14)] active:scale-[0.96]"
+                        aria-label="Next products"
+                    >
+                        <ChevronRight className="size-5" />
+                    </button>
+                </div>
             </div>
 
-            <div className="home-section-item group/slider relative mx-auto w-full px-4">
-                <button
-                    onClick={scrollPrev}
-                    className="absolute left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg border border-border bg-card/95 text-foreground transition-all duration-300 md:left-0 md:-translate-x-1/2 md:opacity-0 md:group-hover/slider:translate-x-0 md:group-hover/slider:opacity-100 will-change-transform"
-                    aria-label="Previous products"
-                >
-                    <ChevronLeft className="size-5" />
-                </button>
-
-                <button
-                    onClick={scrollNext}
-                    className="absolute right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg border border-border bg-card/95 text-foreground transition-all duration-300 md:right-0 md:translate-x-1/2 md:opacity-0 md:group-hover/slider:translate-x-0 md:group-hover/slider:opacity-100 will-change-transform"
-                    aria-label="Next products"
-                >
-                    <ChevronRight className="size-5" />
-                </button>
-
+            <div className="home-section-item mx-auto w-full px-4">
                 <Swiper
                     {...SHARED_SWIPER_PROPS}
                     modules={[FreeMode]}
@@ -85,6 +77,19 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
                     ))}
                 </Swiper>
             </div>
+
+            {onViewAll && (
+                <div className="home-section-item mt-6 flex justify-center px-4">
+                    <Button
+                        variant="ghost"
+                        onClick={() => onViewAll(categoryId)}
+                        className="h-10 rounded-lg border border-primary/15 bg-background/80 px-5 text-sm font-semibold text-primary shadow-[0_12px_30px_rgba(10,61,46,0.08)] transition-[transform,background-color,color,box-shadow] duration-300 md:backdrop-blur-sm hover:bg-primary hover:text-primary-foreground hover:shadow-[0_16px_36px_rgba(10,61,46,0.14)] active:scale-[0.96] cursor-pointer"
+                    >
+                        View All
+                        <ArrowRight className="ml-1 size-4" />
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
