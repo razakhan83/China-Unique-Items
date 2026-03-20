@@ -7,6 +7,7 @@ import { cacheTag } from 'next/cache';
 import Category from '@/models/Category';
 import CoverPhoto from '@/models/CoverPhoto';
 import Order from '@/models/Order';
+import OrderLog from '@/models/OrderLog';
 import Product from '@/models/Product';
 import Settings from '@/models/Settings';
 import User from '@/models/User';
@@ -624,6 +625,20 @@ export async function getOrderById(id) {
   await mongooseConnect();
   const order = await Order.findById(String(id || '')).lean();
   return order ? toOrderSummaryRow(order) : null;
+}
+
+export async function getOrderLogs(orderId) {
+  await mongooseConnect();
+  const logs = await OrderLog.find({ orderId: String(orderId || '') })
+    .sort({ createdAt: -1 })
+    .lean();
+  
+  return logs.map(log => ({
+    ...log,
+    _id: log._id.toString(),
+    orderId: log.orderId.toString(),
+    createdAt: log.createdAt.toISOString(),
+  }));
 }
 
 export async function getAdminDashboardData() {
