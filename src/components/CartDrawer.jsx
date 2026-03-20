@@ -15,6 +15,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { getPrimaryProductImage } from '@/lib/productImages';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
 
@@ -53,79 +54,82 @@ export default function CartDrawer() {
           <SheetDescription>{cart.length ? `${cart.length} item${cart.length > 1 ? 's' : ''} ready for checkout.` : 'Add products to start your order.'}</SheetDescription>
         </SheetHeader>
 
-        <div className="sheet-stagger flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto pr-1">
-          {cart.length ? (
-            <>
-              {cart.map((item, index) => (
-                <div
-                  key={item.id || item.slug || item._id || item.Name || item.name || index}
-                  className="surface-card rounded-xl p-3 transition-shadow duration-200 hover:shadow-sm"
-                >
-                <div className="flex gap-3">
-                  <div className="relative size-20 overflow-hidden rounded-lg border border-border bg-muted">
-                    {getPrimaryProductImage(item)?.url ? (
-                      <Image
-                        src={getPrimaryProductImage(item).url}
-                        alt={item.Name || item.name || 'product'}
-                        fill
-                        sizes="80px"
-                        className="object-cover"
-                        {...getBlurPlaceholderProps(getPrimaryProductImage(item).blurDataURL)}                      />
-                    ) : null}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="line-clamp-2 text-sm font-semibold text-foreground">{item.Name || item.name}</p>
-                        <p className="mt-1 text-sm font-medium text-primary">{formatPriceLabel(item.discountedPrice != null ? item.discountedPrice : item.Price || item.price)}</p>
+        <ScrollArea className="sheet-stagger min-h-0 flex-1 pr-2">
+          <div className="flex flex-col gap-4">
+            {cart.length ? (
+              <>
+                {cart.map((item, index) => (
+                  <div
+                    key={item.id || item.slug || item._id || item.Name || item.name || index}
+                    className="surface-card rounded-xl p-3 transition-shadow duration-200 hover:shadow-sm"
+                  >
+                    <div className="flex gap-3">
+                      <div className="relative size-20 overflow-hidden rounded-lg border border-border bg-muted">
+                        {getPrimaryProductImage(item)?.url ? (
+                          <Image
+                            src={getPrimaryProductImage(item).url}
+                            alt={item.Name || item.name || 'product'}
+                            fill
+                            sizes="80px"
+                            className="object-cover"
+                            {...getBlurPlaceholderProps(getPrimaryProductImage(item).blurDataURL)}
+                          />
+                        ) : null}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removeFromCart(item)}
-                        className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
-                        aria-label="Remove item"
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
-                    </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="line-clamp-2 text-sm font-semibold text-foreground">{item.Name || item.name}</p>
+                            <p className="mt-1 text-sm font-medium text-primary">{formatPriceLabel(item.discountedPrice != null ? item.discountedPrice : item.Price || item.price)}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeFromCart(item)}
+                            className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                            aria-label="Remove item"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
 
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="inline-flex items-center rounded-lg border border-border bg-background">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            updateQuantity(item, item.quantity - 1);
-                          }}
-                          className="inline-flex size-9 items-center justify-center rounded-l-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        >
-                          <Minus className="size-4" />
-                        </button>
-                        <span className="inline-flex min-w-10 items-center justify-center text-sm font-semibold">{item.quantity}</span>
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(item, item.quantity + 1)}
-                          className="inline-flex size-9 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        >
-                          <Plus className="size-4" />
-                        </button>
+                        <div className="mt-4 flex items-center justify-between">
+                          <div className="inline-flex items-center rounded-lg border border-border bg-background">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateQuantity(item, item.quantity - 1);
+                              }}
+                              className="inline-flex size-9 items-center justify-center rounded-l-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                              <Minus className="size-4" />
+                            </button>
+                            <span className="inline-flex min-w-10 items-center justify-center text-sm font-semibold">{item.quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item, item.quantity + 1)}
+                              className="inline-flex size-9 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                              <Plus className="size-4" />
+                            </button>
+                          </div>
+                          <span className="hidden text-sm text-muted-foreground sm:inline-flex">Ready to ship</span>
+                        </div>
                       </div>
-                      <span className="hidden text-sm text-muted-foreground sm:inline-flex">Ready to ship</span>
                     </div>
                   </div>
+                ))}
+              </>
+            ) : (
+              <div className="surface-card flex min-h-[16rem] flex-col items-center justify-center rounded-xl px-6 py-12 text-center">
+                <div className="mb-4 flex size-16 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <ShoppingBag className="size-7" />
                 </div>
-                </div>
-              ))}
-            </>
-          ) : (
-            <div className="surface-card flex flex-1 flex-col items-center justify-center rounded-xl px-6 py-12 text-center">
-              <div className="mb-4 flex size-16 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <ShoppingBag className="size-7" />
+                <h3 className="text-lg font-semibold text-foreground">Your cart is empty</h3>
+                <p className="mt-2 max-w-xs text-sm text-muted-foreground">Start adding premium kitchenware and decor to build your order.</p>
               </div>
-              <h3 className="text-lg font-semibold text-foreground">Your cart is empty</h3>
-              <p className="mt-2 max-w-xs text-sm text-muted-foreground">Start adding premium kitchenware and decor to build your order.</p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </ScrollArea>
 
         {cart.length ? (
           <SheetFooter className="sheet-stagger-item border-t border-border pt-4">

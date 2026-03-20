@@ -28,7 +28,7 @@ export default function MyOrdersButton({ className, isMobile = false }) {
           type="button"
           onClick={handleClick}
           className={cn(
-            'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors bg-muted/60 text-foreground hover:bg-muted w-full',
+            'flex w-full items-center justify-start gap-3 rounded-xl bg-muted/60 px-3.5 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted',
             className
           )}
         >

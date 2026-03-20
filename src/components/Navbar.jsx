@@ -52,6 +52,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 function NavbarContent({ categories }) {
@@ -122,6 +123,8 @@ function NavbarContent({ categories }) {
     { href: '/', label: 'Home', icon: Store },
     { href: '/products', label: 'All Products', icon: LayoutGrid },
   ];
+  const mobileSidebarButtonClass =
+    'flex w-full min-h-10 items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-[background-color,transform,color] duration-200 active:scale-[0.96]';
 
   return (
     <div className="sticky top-0 z-40 border-b border-border/60 bg-card/95 backdrop-blur">
@@ -323,128 +326,141 @@ function NavbarContent({ categories }) {
       </div>
 
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="left" className="w-[min(70vw,22rem)] min-w-[16rem]">
-          <SheetHeader className="sheet-stagger-item">
+        <SheetContent side="left" className="w-[min(76vw,22rem)] min-w-[16rem] px-4 pb-4 pt-5">
+          <SheetHeader className="sheet-stagger-item px-1">
             <SheetTitle>Browse the store</SheetTitle>
             <SheetDescription>Navigation and category shortcuts in one place.</SheetDescription>
           </SheetHeader>
 
-          <div className="sheet-stagger flex flex-col gap-6 pt-2">
-            <div className="flex flex-col gap-2">
-              {mobileItems.map(({ href, label, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
-                    pathname === href ? 'bg-primary text-primary-foreground' : 'bg-muted/60 text-foreground hover:bg-muted'
-                  )}
-                >
-                  <Icon className="size-4" />
-                  {label}
-                </Link>
-              ))}
-            </div>
+          <ScrollArea className="sheet-stagger min-h-0 flex-1 pr-2">
+            <div className="flex min-h-full flex-col gap-2.5 pt-3">
+              <div className="flex flex-col gap-1.5">
+                {mobileItems.map(({ href, label, icon: Icon }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setIsSidebarOpen(false)}
+                    className={cn(
+                      mobileSidebarButtonClass,
+                      pathname === href
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted/55 text-foreground hover:bg-muted'
+                    )}
+                  >
+                    <Icon className="size-4" />
+                    {label}
+                  </Link>
+                ))}
+              </div>
 
-            <div className="flex flex-col gap-2">
-              <Accordion className="w-full">
-                <AccordionItem value="categories" className="border-none">
-                  <AccordionTrigger className="bg-muted/60 px-3 py-3 hover:bg-muted hover:no-underline [&[data-state=open]]:bg-muted/80">
-                    <div className="flex items-center gap-3">
-                      <LayoutGrid className="size-4" />
-                      <span className="text-sm font-medium">Shop by Category</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-0">
-                    <div className="flex flex-col gap-1.5 pl-4">
-                      <button
-                        type="button"
-                        onClick={() => handleCategoryClick('new-arrivals')}
-                        className={cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors',
-                          activeCategory === 'new-arrivals' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
-                        )}
-                      >
-                        <Sparkles className="size-4" />
-                        New Arrivals
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleCategoryClick('special-offers')}
-                        className={cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors',
-                          activeCategory === 'special-offers' ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
-                        )}
-                      >
-                        <Tag className="size-4" />
-                        Special Offers
-                      </button>
-                      {categories.filter(c => c.id !== 'special-offers' && c.id !== 'new-arrivals').map((category) => (
+              <div className="flex flex-col gap-1.5">
+                <Accordion className="w-full">
+                  <AccordionItem value="categories" className="border-none">
+                    <AccordionTrigger className="rounded-xl bg-muted/55 px-3.5 py-2.5 hover:bg-muted hover:no-underline [&[data-state=open]]:bg-muted/80">
+                      <div className="flex items-center gap-3">
+                        <LayoutGrid className="size-4" />
+                        <span className="text-sm font-medium">Shop by Category</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-0 pt-1.5 pb-0">
+                      <div className="flex flex-col gap-1.5">
                         <button
-                          key={category.id}
                           type="button"
-                          onClick={() => handleCategoryClick(category.id)}
+                          onClick={() => handleCategoryClick('new-arrivals')}
                           className={cn(
-                            'flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors',
-                            activeCategory === category.id ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-muted'
+                            mobileSidebarButtonClass,
+                            activeCategory === 'new-arrivals'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted/55 text-foreground hover:bg-muted'
+                          )}
+                        >
+                          <Sparkles className="size-4" />
+                          New Arrivals
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleCategoryClick('special-offers')}
+                          className={cn(
+                            mobileSidebarButtonClass,
+                            activeCategory === 'special-offers'
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted/55 text-foreground hover:bg-muted'
                           )}
                         >
                           <Tag className="size-4" />
-                          {category.label}
+                          Special Offers
                         </button>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
-
-            <div className="pt-2">
-              <MyOrdersButton isMobile />
-            </div>
-
-            {session && (
-              <div className="flex flex-col gap-2 pt-2">
-                <div className="flex items-center gap-3 rounded-lg bg-muted/40 px-3 py-3">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={session.user?.image} alt={session.user?.name || 'User'} />
-                    <AvatarFallback>{(session.user?.name || 'U').charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col min-w-0">
-                    <p className="truncate text-sm font-semibold">{session.user?.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{session.user?.email}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSidebarOpen(false);
-                    router.push('/settings');
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors bg-muted/60 text-foreground hover:bg-muted"
-                >
-                  <Settings className="size-4" />
-                  Account Settings
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSidebarOpen(false);
-                    signOut();
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors bg-destructive/10 text-destructive hover:bg-destructive/20"
-                >
-                  <LogOut className="size-4" />
-                  Logout
-                </button>
+                        {categories.filter(c => c.id !== 'special-offers' && c.id !== 'new-arrivals').map((category) => (
+                          <button
+                            key={category.id}
+                            type="button"
+                            onClick={() => handleCategoryClick(category.id)}
+                            className={cn(
+                              mobileSidebarButtonClass,
+                              activeCategory === category.id
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted/55 text-foreground hover:bg-muted'
+                            )}
+                          >
+                            <Tag className="size-4" />
+                            {category.label}
+                          </button>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </div>
-            )}
 
-            <div className="mt-auto pt-6">
-              {!session ? <GoogleSignInButton /> : null}
+              <MyOrdersButton
+                isMobile
+                className="min-h-10 rounded-xl bg-muted/55 px-3.5 py-2.5 hover:bg-muted"
+              />
+
+              {session && (
+                <div className="flex flex-col gap-1.5 pt-2">
+                  <div className="flex items-center gap-3 rounded-xl bg-muted/40 px-3.5 py-3">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={session.user?.image} alt={session.user?.name || 'User'} />
+                      <AvatarFallback>{(session.user?.name || 'U').charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex min-w-0 flex-col">
+                      <p className="truncate text-sm font-semibold">{session.user?.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{session.user?.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSidebarOpen(false);
+                      router.push('/settings');
+                    }}
+                    className="flex min-h-10 items-center gap-3 rounded-xl bg-muted/55 px-3.5 py-2.5 text-sm font-medium text-foreground transition-[background-color,transform] duration-200 hover:bg-muted active:scale-[0.96]"
+                  >
+                    <Settings className="size-4" />
+                    Account Settings
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSidebarOpen(false);
+                      signOut();
+                    }}
+                    className="flex min-h-10 items-center gap-3 rounded-xl bg-destructive/10 px-3.5 py-2.5 text-sm font-medium text-destructive transition-[background-color,transform] duration-200 hover:bg-destructive/20 active:scale-[0.96]"
+                  >
+                    <LogOut className="size-4" />
+                    Logout
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-auto pt-2">
+                {!session ? (
+                  <GoogleSignInButton className="min-h-10 rounded-xl py-2.5 shadow-none" />
+                ) : null}
+              </div>
             </div>
-          </div>
+          </ScrollArea>
         </SheetContent>
       </Sheet>
     </div>

@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Loader2, Search, Sparkles, Tag } from "lucide-react";
+import { Loader2, Search, Sparkles, Tag } from "lucide-react";
 import { useLinkStatus } from "next/link";
 
 import { useProductsNavigationFeedback } from "@/components/ProductsNavigationFeedback";
@@ -89,6 +89,12 @@ export default function ProductsPageHeader({
   const { pendingCategoryId } = useProductsNavigationFeedback();
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
+  const dragStateRef = useRef({
+    isPointerDown: false,
+    isDragging: false,
+    startX: 0,
+    startScrollLeft: 0,
+  });
   const categoryButtons = [
     { id: "all", label: "All Items", icon: Search},
     { id: "new-arrivals", label: "New Arrivals", icon: Sparkles},
@@ -101,6 +107,42 @@ export default function ProductsPageHeader({
   const pageTitle = buildTitle(optimisticCategory, categories, searchTerm);
 
   const categoryNavRef = useRef(null);
+
+  useEffect(() => {
+    const handleMouseMove = (event) => {
+      const nav = categoryNavRef.current;
+      const dragState = dragStateRef.current;
+      if (!nav || !dragState.isPointerDown) return;
+
+      const deltaX = event.clientX - dragState.startX;
+
+      if (!dragState.isDragging && Math.abs(deltaX) > 6) {
+        dragState.isDragging = true;
+      }
+
+      if (!dragState.isDragging) return;
+
+      nav.scrollLeft = dragState.startScrollLeft - deltaX;
+      event.preventDefault();
+    };
+
+    const handleMouseUp = () => {
+      const dragState = dragStateRef.current;
+      dragState.isPointerDown = false;
+
+      window.requestAnimationFrame(() => {
+        dragState.isDragging = false;
+      });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
 
   useEffect(() => {
     const nav = categoryNavRef.current;
@@ -136,14 +178,20 @@ export default function ProductsPageHeader({
     }
   }, [optimisticCategory]);
 
-  function scrollCategories(direction) {
+  function handleCategoryNavMouseDown(event) {
     const nav = categoryNavRef.current;
-    if (!nav) return;
+    if (!nav || event.button !== 0) return;
 
-    nav.scrollBy({
-      left: direction * Math.max(nav.clientWidth * 0.75, 180),
-      behavior: "smooth",
-    });
+    dragStateRef.current.isPointerDown = true;
+    dragStateRef.current.isDragging = false;
+    dragStateRef.current.startX = event.clientX;
+    dragStateRef.current.startScrollLeft = nav.scrollLeft;
+  }
+
+  function handleCategoryLinkClick(event) {
+    if (dragStateRef.current.isDragging) {
+      event.preventDefault();
+    }
   }
 
   return (
@@ -166,35 +214,10 @@ export default function ProductsPageHeader({
             )}
             style={{ background: "linear-gradient(to left, var(--color-card), transparent)" }}
           />
-          <button
-            type="button"
-            onClick={() => scrollCategories(-1)}
-            disabled={!canScrollPrev}
-            className={cn(
-              "absolute left-4 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-sm transition-[opacity,transform,background-color] duration-200",
-              canScrollPrev ? "opacity-100" : "pointer-events-none opacity-0",
-              "active:scale-[0.96]"
-            )}
-            aria-label="Previous categories"
-          >
-            <ChevronLeft className="size-5" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollCategories(1)}
-            disabled={!canScrollNext}
-            className={cn(
-              "absolute right-4 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-sm transition-[opacity,transform,background-color] duration-200",
-              canScrollNext ? "opacity-100" : "pointer-events-none opacity-0",
-              "active:scale-[0.96]"
-            )}
-            aria-label="Next categories"
-          >
-            <ChevronRight className="size-5" />
-          </button>
           <div
             ref={categoryNavRef}
-            className="relative flex gap-2 overflow-x-auto px-12 py-4 hide-scrollbar md:px-14"
+            onMouseDown={handleCategoryNavMouseDown}
+            className="relative flex cursor-grab gap-2 overflow-x-auto py-4 hide-scrollbar active:cursor-grabbing"
           >
             {categoryButtons.map((category) => {
               const Icon = category.icon;
@@ -205,10 +228,12 @@ export default function ProductsPageHeader({
                   href={buildCategoryHref(category.id, searchTerm)}
                   prefetch={false}
                   scroll={false}
+                  draggable={false}
                   data-active={isActive}
+                  onClick={handleCategoryLinkClick}
                   className={cn(
                     buttonVariants({ variant: isActive ? "default" : "outline", size: "sm" }),
-                    "shrink-0"
+                    "shrink-0 select-none"
                   )}
                 >
                   <CategoryLinkContent categoryId={category.id} Icon={Icon} label={category.label} />

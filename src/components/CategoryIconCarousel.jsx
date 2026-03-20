@@ -64,6 +64,7 @@ function buildMarqueeCategories(categories) {
 export default function CategoryIconCarousel({ categories }) {
   const router = useRouter();
   const isDraggingRef = useRef(false);
+  const pointerStartRef = useRef({ x: 0, y: 0 });
 
   if (!categories?.length) return null;
 
@@ -110,7 +111,7 @@ export default function CategoryIconCarousel({ categories }) {
               slidesPerView="auto"
               freeMode={{
                 enabled: true,
-                momentum: false,
+                momentum: true,
                 momentumBounce: false,
                 sticky: false,
               }}
@@ -136,14 +137,16 @@ export default function CategoryIconCarousel({ categories }) {
               touchRatio={1}
               touchAngle={45}
               grabCursor
+              preventClicks
+              preventClicksPropagation
               className="category-icon-swiper overflow-visible"
               onSwiper={(swiper) => {
                 if (baseCount > 1) {
                   swiper.slideTo(middleIndex, 0, false);
                 }
               }}
-              onSliderFirstMove={() => {
-                isDraggingRef.current = true;
+              onTouchStart={() => {
+                isDraggingRef.current = false;
               }}
               onSlideChange={normalizeInfinitePosition}
               onTouchEnd={(swiper) => {
@@ -165,14 +168,32 @@ export default function CategoryIconCarousel({ categories }) {
                     className="!h-auto !w-[96px] md:!w-[132px]"
                   >
                     <button
+                      onPointerDown={(event) => {
+                        pointerStartRef.current = { x: event.clientX, y: event.clientY };
+                        isDraggingRef.current = false;
+                      }}
+                      onPointerMove={(event) => {
+                        const deltaX = Math.abs(event.clientX - pointerStartRef.current.x);
+                        const deltaY = Math.abs(event.clientY - pointerStartRef.current.y);
+                        if (deltaX > 6 || deltaY > 6) {
+                          isDraggingRef.current = true;
+                        }
+                      }}
+                      onPointerUp={() => {
+                        window.setTimeout(() => {
+                          isDraggingRef.current = false;
+                        }, 0);
+                      }}
+                      onDragStart={(event) => event.preventDefault()}
                       onClick={(event) => {
                         if (isDraggingRef.current) {
                           event.preventDefault();
+                          event.stopPropagation();
                           return;
                         }
                         router.push(`/products?category=${category.id}`);
                       }}
-                      className="home-category-card group flex h-full w-full min-w-0 cursor-pointer flex-col items-center gap-3 rounded-xl px-1 py-1 text-center"
+                      className="home-category-card group flex h-full w-full min-w-0 cursor-pointer flex-col items-center gap-3 rounded-xl px-1 py-1 text-center select-none"
                       style={{ "--home-category-delay": `${Math.min(index, 7) * 48}ms` }}
                     >
                       <div
@@ -193,7 +214,7 @@ export default function CategoryIconCarousel({ categories }) {
                           </div>
                         )}
                       </div>
-                      <span className="line-clamp-2 max-w-[110px] text-sm font-medium leading-tight text-muted-foreground transition-colors group-hover:text-foreground md:max-w-[140px]">
+                      <span className="line-clamp-2 max-w-[110px] select-none text-sm font-medium leading-tight text-muted-foreground transition-colors group-hover:text-foreground md:max-w-[140px]">
                         {category.label}
                       </span>
                     </button>
