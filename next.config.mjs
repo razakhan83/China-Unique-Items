@@ -1,4 +1,7 @@
 const nextConfig = {
+  logging: {
+    browserToTerminal: true,
+  },
   cacheComponents: true,
   reactCompiler: true,
   experimental: {
