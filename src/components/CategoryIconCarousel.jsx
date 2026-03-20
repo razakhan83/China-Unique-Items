@@ -1,14 +1,12 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { FreeMode } from "swiper/modules";
+import { Autoplay, FreeMode, Mousewheel } from "swiper/modules";
 import {
   Armchair,
   Beef,
-  ChevronLeft,
-  ChevronRight,
   Bolt,
   Car,
   Dumbbell,
@@ -25,7 +23,7 @@ import { useRouter } from "next/navigation";
 
 import { getCategoryColor } from "@/lib/categoryColors";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
-import { CATEGORY_ICON_BREAKPOINTS, SHARED_SWIPER_PROPS } from "@/components/swiper/swiperConfig";
+import { SHARED_SWIPER_PROPS } from "@/components/swiper/swiperConfig";
 
 const CATEGORY_ICONS = {
   "kitchen accessories": UtensilsCrossed,
@@ -47,54 +45,134 @@ function getCategoryIcon(name) {
   return CATEGORY_ICONS[(name || "").toLowerCase().trim()] || Tag;
 }
 
+const CATEGORY_CIRCLE_BREAKPOINTS = {
+  0: { slidesPerView: "auto", spaceBetween: 16 },
+  768: { slidesPerView: "auto", spaceBetween: 20 },
+  1024: { slidesPerView: "auto", spaceBetween: 24 },
+};
+
+function buildMarqueeCategories(categories) {
+  const repeatCount = Math.max(5, Math.ceil(18 / categories.length));
+  return Array.from({ length: repeatCount }, (_, repeatIndex) =>
+    categories.map((category) => ({
+      ...category,
+      _marqueeKey: `${category.id}-${repeatIndex}`,
+    }))
+  ).flat();
+}
+
 export default function CategoryIconCarousel({ categories }) {
   const router = useRouter();
-  const swiperRef = useRef(null);
-
-  const scrollPrev = useCallback(() => swiperRef.current?.slidePrev(), []);
-  const scrollNext = useCallback(() => swiperRef.current?.slideNext(), []);
+  const isDraggingRef = useRef(false);
 
   if (!categories?.length) return null;
 
+  const marqueeCategories = useMemo(
+    () => (categories.length > 1 ? buildMarqueeCategories(categories) : categories),
+    [categories]
+  );
+  const baseCount = categories.length;
+  const middleIndex = categories.length > 1 ? baseCount * 2 : 0;
+
+  const normalizeInfinitePosition = useCallback((swiper) => {
+    if (!swiper || baseCount <= 1) return;
+
+    const minIndex = baseCount;
+    const maxIndex = baseCount * 4;
+
+    if (swiper.activeIndex < minIndex) {
+      swiper.slideTo(swiper.activeIndex + baseCount * 2, 0, false);
+    } else if (swiper.activeIndex >= maxIndex) {
+      swiper.slideTo(swiper.activeIndex - baseCount * 2, 0, false);
+    }
+  }, [baseCount]);
+
   return (
     <div className="w-full border-b border-border bg-card/70 py-4 md:py-5">
-      <div className="mx-auto flex w-full max-w-[1240px] items-center gap-1 px-2 md:gap-2 md:px-4">
-        <button
-          type="button"
-          onClick={scrollPrev}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-sm transition-colors hover:bg-card"
-          aria-label="Previous categories"
-        >
-          <ChevronLeft className="size-5" />
-        </button>
-
-        <div className="relative min-w-0 flex-1 overflow-hidden">
-          <div
-            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 md:w-10"
-            style={{ background: "linear-gradient(to right, var(--color-card), transparent)" }}
-          />
-          <div
-            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 md:w-10"
-            style={{ background: "linear-gradient(to left, var(--color-card), transparent)" }}
-          />
-          <Swiper
-            {...SHARED_SWIPER_PROPS}
-            modules={[FreeMode]}
-            breakpoints={CATEGORY_ICON_BREAKPOINTS}
-            freeMode
-            onSwiper={(swiper) => {
-              swiperRef.current = swiper;
-            }}
-            className="overflow-hidden"
-          >
-            {categories.map((category, index) => {
+      <div className="mx-auto w-full max-w-7xl px-4">
+        <div className="overflow-hidden">
+          <div className="relative">
+            <div
+              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 md:w-10"
+              style={{ background: "linear-gradient(to right, var(--color-card), transparent)" }}
+            />
+            <div
+              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 md:w-10"
+              style={{ background: "linear-gradient(to left, var(--color-card), transparent)" }}
+            />
+            <Swiper
+              {...SHARED_SWIPER_PROPS}
+              modules={[Autoplay, FreeMode, Mousewheel]}
+              breakpoints={CATEGORY_CIRCLE_BREAKPOINTS}
+              watchOverflow={false}
+              preventInteractionOnTransition={false}
+              initialSlide={middleIndex}
+              slidesPerView="auto"
+              freeMode={{
+                enabled: true,
+                momentum: false,
+                momentumBounce: false,
+                sticky: false,
+              }}
+              mousewheel={{
+                enabled: true,
+                releaseOnEdges: false,
+                sensitivity: 0.8,
+                thresholdDelta: 4,
+              }}
+              speed={4200}
+              autoplay={
+                marqueeCategories.length > 1
+                  ? {
+                      delay: 1,
+                      disableOnInteraction: false,
+                      pauseOnMouseEnter: false,
+                      waitForTransition: true,
+                    }
+                  : false
+              }
+              allowTouchMove
+              simulateTouch
+              touchRatio={1}
+              touchAngle={45}
+              grabCursor
+              className="category-icon-swiper overflow-visible"
+              onSwiper={(swiper) => {
+                if (baseCount > 1) {
+                  swiper.slideTo(middleIndex, 0, false);
+                }
+              }}
+              onSliderFirstMove={() => {
+                isDraggingRef.current = true;
+              }}
+              onSlideChange={normalizeInfinitePosition}
+              onTouchEnd={(swiper) => {
+                requestAnimationFrame(() => normalizeInfinitePosition(swiper));
+                window.setTimeout(() => {
+                  isDraggingRef.current = false;
+                }, 0);
+              }}
+              onTransitionEnd={() => {
+                isDraggingRef.current = false;
+              }}
+            >
+              {marqueeCategories.map((category, index) => {
                 const colors = getCategoryColor(category.label);
                 const Icon = getCategoryIcon(category.label);
                 return (
-                  <SwiperSlide key={`${category.id}-${index}`} className="!h-auto">
+                  <SwiperSlide
+                    key={category._marqueeKey || `${category.id}-${index}`}
+                    className="!h-auto !w-[96px] md:!w-[132px]"
+                  >
                     <button
-                      onClick={() => router.push(`/products?category=${category.id}`)}
-                      className="home-category-card group flex h-full min-w-0 cursor-pointer flex-col items-center gap-3 rounded-xl px-1 py-1 text-center"
+                      onClick={(event) => {
+                        if (isDraggingRef.current) {
+                          event.preventDefault();
+                          return;
+                        }
+                        router.push(`/products?category=${category.id}`);
+                      }}
+                      className="home-category-card group flex h-full w-full min-w-0 cursor-pointer flex-col items-center gap-3 rounded-xl px-1 py-1 text-center"
                       style={{ "--home-category-delay": `${Math.min(index, 7) * 48}ms` }}
                     >
                       <div
@@ -122,17 +200,9 @@ export default function CategoryIconCarousel({ categories }) {
                   </SwiperSlide>
                 );
               })}
-          </Swiper>
+            </Swiper>
+          </div>
         </div>
-
-        <button
-          type="button"
-          onClick={scrollNext}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-sm transition-colors hover:bg-card"
-          aria-label="Next categories"
-        >
-          <ChevronRight className="size-5" />
-        </button>
       </div>
     </div>
   );

@@ -205,22 +205,30 @@ function NavbarContent({ categories }) {
           </div>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2 self-center">
           <Button
-            variant={isSearchOpen ? 'secondary' : 'ghost'}
-            size="icon"
+            variant="ghost"
+            size="icon-lg"
             onClick={() => setIsSearchOpen((value) => !value)}
             aria-label="Toggle search"
+            aria-expanded={isSearchOpen}
+            className={cn(
+              'nav-icon-button nav-search-toggle relative overflow-hidden rounded-2xl border border-transparent bg-transparent text-muted-foreground',
+              isSearchOpen && 'is-open border-primary/15 bg-primary/8 text-primary'
+            )}
           >
-            {isSearchOpen ? <X /> : <Search />}
+            <span className="relative flex size-5 items-center justify-center">
+              <Search className={cn('navbar-toggle-icon navbar-toggle-icon-search', isSearchOpen && 'is-hidden')} />
+              <X className={cn('navbar-toggle-icon navbar-toggle-icon-close', isSearchOpen && 'is-visible')} />
+            </span>
           </Button>
           <button
             type="button"
             onClick={openCart}
-            className="relative inline-flex size-10 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition-colors hover:bg-muted"
+            className="nav-cart-button relative inline-flex size-11 items-center justify-center rounded-2xl border border-border/75 bg-background/95 text-foreground shadow-[0_12px_28px_rgba(10,61,46,0.08),0_2px_6px_rgba(10,61,46,0.05)] transition-[transform,background-color,border-color,box-shadow] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_34px_rgba(10,61,46,0.12),0_3px_8px_rgba(10,61,46,0.06)] active:scale-[0.96]"
             aria-label="Open cart"
           >
-            <ShoppingBag className="size-4" />
+            <ShoppingBag className="size-[1.05rem]" />
             {cartCount > 0 ? (
               <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-md bg-primary px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary-foreground">
                 {cartCount}
@@ -232,8 +240,12 @@ function NavbarContent({ categories }) {
             <div className="hidden md:block">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
-                    <Avatar className="h-10 w-10">
+                  <Button
+                    variant="ghost"
+                    size="icon-lg"
+                    className="nav-icon-button nav-profile-button relative flex items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-card/85 p-0 text-foreground shadow-[0_10px_24px_rgba(10,61,46,0.06)] transition-[transform,background-color,border-color,box-shadow] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:shadow-[0_16px_30px_rgba(10,61,46,0.1)] active:scale-[0.96]"
+                  >
+                    <Avatar className="size-9">
                       <AvatarImage src={session.user?.image} alt={session.user?.name || 'User'} />
                       <AvatarFallback>{(session.user?.name || 'U').charAt(0)}</AvatarFallback>
                     </Avatar>
@@ -269,9 +281,9 @@ function NavbarContent({ categories }) {
             <div className="hidden md:block">
               <Button
                 variant="ghost"
-                size="icon"
+                size="icon-lg"
                 onClick={() => setIsAuthModalOpen(true)}
-                className="text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="nav-icon-button nav-profile-button rounded-2xl border border-border/60 bg-card/85 text-muted-foreground shadow-[0_10px_24px_rgba(10,61,46,0.06)] transition-[transform,background-color,border-color,box-shadow,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:text-foreground hover:shadow-[0_16px_30px_rgba(10,61,46,0.1)] active:scale-[0.96]"
               >
                 <User />
               </Button>
@@ -282,9 +294,16 @@ function NavbarContent({ categories }) {
         </div>
       </header>
 
-      {isSearchOpen ? (
-        <div className="border-t border-border/70 bg-background/85">
-          <div className="mx-auto max-w-4xl px-4 py-4">
+      <div
+        data-state={isSearchOpen ? 'open' : 'closed'}
+        aria-hidden={!isSearchOpen}
+        className={cn(
+          'navbar-search-shell grid overflow-hidden border-t bg-background/80 backdrop-blur transition-[grid-template-rows,opacity,border-color] duration-300 ease-[cubic-bezier(0.2,0,0,1)]',
+          isSearchOpen ? 'grid-rows-[1fr] border-border/70 opacity-100' : 'pointer-events-none grid-rows-[0fr] border-transparent opacity-0'
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="navbar-search-inner mx-auto max-w-4xl px-4 py-4">
             <SearchField
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
@@ -301,7 +320,7 @@ function NavbarContent({ categories }) {
             />
           </div>
         </div>
-      ) : null}
+      </div>
 
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <SheetContent side="left" className="w-[min(70vw,22rem)] min-w-[16rem]">

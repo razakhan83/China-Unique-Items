@@ -113,11 +113,15 @@ export default function ProductCard({ product, className = "" }) {
         "py-0",
         className
       )}
+      draggable={false}
+      onDragStart={(event) => event.preventDefault()}
     >
       {/* Image Section */}
       <Link
         href={productHref}
         className="relative block aspect-square w-full overflow-hidden bg-muted/30"
+        draggable={false}
+        onDragStart={(event) => event.preventDefault()}
       >
         {/* Discount Badge — top left */}
         {discountLabel && (
@@ -153,8 +157,10 @@ export default function ProductCard({ product, className = "" }) {
             src={primaryImage.url}
             alt={productName}
             fill
+            draggable={false}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover transition-transform duration-500 ease-out md:group-hover:scale-105"
+            onDragStart={(event) => event.preventDefault()}
             {...getBlurPlaceholderProps(primaryImage.blurDataURL)}
           />
         ) : (
@@ -167,10 +173,17 @@ export default function ProductCard({ product, className = "" }) {
       {/* Content Section — white background */}
       <CardContent className="flex flex-col gap-1.5 bg-card p-3 pt-3">
         {/* Product Title */}
-        <Link href={productHref} className="block text-left">
+        <Link
+          href={productHref}
+          className="block text-left"
+          draggable={false}
+          onDragStart={(event) => event.preventDefault()}
+        >
           <h3
             className="line-clamp-1 text-sm font-semibold leading-tight text-primary"
             title={productName}
+            draggable={false}
+            onDragStart={(event) => event.preventDefault()}
           >
             {productName}
           </h3>
@@ -178,7 +191,11 @@ export default function ProductCard({ product, className = "" }) {
 
         {/* Description */}
         {productDescription ? (
-          <p className="line-clamp-2 text-xs text-muted-foreground">
+          <p
+            className="line-clamp-2 text-xs text-muted-foreground"
+            draggable={false}
+            onDragStart={(event) => event.preventDefault()}
+          >
             {productDescription}
           </p>
         ) : (
@@ -190,15 +207,27 @@ export default function ProductCard({ product, className = "" }) {
           <div className="flex flex-col gap-0.5">
             {hasRealDiscount ? (
               <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="text-xs font-medium text-muted-foreground line-through">
+                <p
+                  className="text-xs font-medium text-muted-foreground line-through"
+                  draggable={false}
+                  onDragStart={(event) => event.preventDefault()}
+                >
                   {formatPrice(productPrice)}
                 </p>
-                <p className="text-base font-bold tracking-tight text-red-600 dark:text-red-500">
+                <p
+                  className="text-base font-bold tracking-tight text-red-600 dark:text-red-500"
+                  draggable={false}
+                  onDragStart={(event) => event.preventDefault()}
+                >
                   {formatPrice(discountedPrice)}
                 </p>
               </div>
             ) : (
-              <p className="text-base font-bold tracking-tight text-foreground">
+              <p
+                className="text-base font-bold tracking-tight text-foreground"
+                draggable={false}
+                onDragStart={(event) => event.preventDefault()}
+              >
                 {formatPrice(productPrice)}
               </p>
             )}

@@ -192,43 +192,40 @@ function ProductGridContent({
 
       {!hideSearch ? (
         <div className="products-page-toolbar mx-auto max-w-7xl px-4 pt-5">
-          <div className="surface-card rounded-xl p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-              <div className="min-w-0 flex-1">
-                <SearchField
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    setIsFocused(false);
-                  }}
-                  onClear={() => {
-                    setSearchTerm("");
-                    setIsFocused(false);
-                  }}
-                  onFocus={() => setIsFocused(true)}
-                  isFocused={isFocused}
-                  suggestions={suggestions}
-                  buttonLabel="Apply"
-                  showSuggestions={false}
-                />
-              </div>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div className="min-w-0 flex-1">
+              <SearchField
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  setIsFocused(false);
+                }}
+                onClear={() => {
+                  setSearchTerm("");
+                  setIsFocused(false);
+                }}
+                onFocus={() => setIsFocused(true)}
+                isFocused={isFocused}
+                suggestions={suggestions}
+                showSuggestions={false}
+              />
+            </div>
 
-              <div className="flex items-center gap-2 lg:w-60">
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-full">
-                    <ArrowDownWideNarrow className="size-4 text-muted-foreground" />
-                    <SelectValue placeholder="Sort products" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex items-center gap-2 lg:w-64">
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="h-12 rounded-[calc(var(--radius-xl)+2px)] border-border/70 bg-background/80 px-4 text-sm font-medium shadow-[0_14px_36px_rgba(10,61,46,0.08),0_2px_6px_rgba(10,61,46,0.05)] transition-none hover:bg-background/80 focus:border-border/70 focus:ring-0">
+                  <ArrowDownWideNarrow className="size-4 text-muted-foreground" />
+                  <SelectValue placeholder="Sort products" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>

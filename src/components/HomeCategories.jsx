@@ -29,7 +29,7 @@ export default function HomeCategories({ sections = [] }) {
             className={`home-section py-8 md:py-12 ${sectionClassName}`}
             style={{ '--home-section-delay': `${index * 90}ms` }}
           >
-            <div className="mx-auto w-full max-w-[1240px] px-4">
+            <div className="mx-auto w-full max-w-7xl px-4">
               <CategoryProductSlider
                 categoryId={section.category.id}
                 categoryLabel={section.category.label}

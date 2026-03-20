@@ -20,8 +20,8 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
     if (categoryProducts.length === 0) return null;
 
     return (
-        <div className="mx-auto mb-4 w-full">
-            <div className="home-section-item mb-6 flex items-center justify-between gap-4 px-4 md:items-end">
+        <div className="mb-4 w-full">
+            <div className="home-section-item mb-6 flex items-center justify-between gap-4 md:items-end">
                 <h2 className="min-w-0 flex-1 text-2xl font-bold tracking-tight text-primary [text-wrap:balance] md:text-3xl">
                     {categoryLabel}
                 </h2>
@@ -45,7 +45,7 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
                 </div>
             </div>
 
-            <div className="home-section-item mx-auto w-full px-4">
+            <div className="home-section-item w-full">
                 <Swiper
                     {...SHARED_SWIPER_PROPS}
                     modules={[FreeMode]}
@@ -70,7 +70,7 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
             </div>
 
             {onViewAll && (
-                <div className="home-section-item mt-6 flex justify-center px-4">
+                <div className="home-section-item mt-6 flex justify-center">
                     <Button
                         variant="ghost"
                         onClick={() => onViewAll(categoryId)}

@@ -86,7 +86,6 @@ export default function HomeClientWrapper({ products, heroSlides, categories = [
           onFocus={() => setIsFocused(true)}
           isFocused={isFocused}
           suggestions={suggestions}
-          buttonLabel="Find"
           emptyLabel={`No products found for "${debouncedSearch}"`}
         />
       </div>

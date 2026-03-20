@@ -3,8 +3,13 @@
 import Image from "next/image";
 import { ArrowRight, Search, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+} from "@/components/ui/input-group";
 import { getProductCategoryNames } from "@/lib/productCategories";
 import { cn } from "@/lib/utils";
 import { getPrimaryProductImage } from "@/lib/productImages";
@@ -26,33 +31,60 @@ export default function SearchField({
 }) {
   return (
     <div className={cn("relative", className)}>
-      <form onSubmit={onSubmit} className="flex items-center gap-2">
-        <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+      <form onSubmit={onSubmit} className="flex items-center">
+        <InputGroup
+          className={cn(
+            "min-h-12 rounded-[calc(var(--radius-xl)+2px)] border-border/70 bg-background/80 shadow-[0_14px_36px_rgba(10,61,46,0.08),0_2px_6px_rgba(10,61,46,0.05)]"
+          )}
+        >
+          <InputGroupInput
             type="text"
             value={value}
             onChange={onChange}
             onFocus={onFocus}
-            className={cn("pl-10 pr-10", inputClassName)}
+            className={cn(
+              "h-12 min-w-0 border-0 bg-transparent px-4 text-sm text-foreground shadow-none outline-none ring-0 transition-none placeholder:text-muted-foreground/80",
+              "hover:border-0 hover:bg-transparent hover:shadow-none",
+              "focus-visible:border-0 focus-visible:bg-transparent focus-visible:shadow-none focus-visible:ring-0",
+              "aria-invalid:border-0 aria-invalid:bg-transparent aria-invalid:shadow-none aria-invalid:ring-0",
+              "md:text-[0.95rem]",
+              inputClassName
+            )}
             placeholder="Search for premium products"
           />
-          {value ? (
-            <button
-              type="button"
-              onClick={onClear}
-              className="absolute right-2.5 top-1/2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label="Clear search"
+          <InputGroupAddon align="inline-start" className="pl-4 text-primary/75">
+            <InputGroupText>
+              <Search className="size-4" />
+            </InputGroupText>
+          </InputGroupAddon>
+          <InputGroupAddon align="inline-end" className="gap-1.5 pr-2">
+            {value ? (
+              <InputGroupButton
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                onClick={onClear}
+                aria-label="Clear search"
+                className="rounded-xl text-muted-foreground hover:bg-muted"
+              >
+                <X />
+              </InputGroupButton>
+            ) : null}
+            <InputGroupButton
+              type="submit"
+              size="sm"
+              variant="default"
+              className="h-9 rounded-xl px-3.5 text-sm"
             >
-              <X className="size-4" />
-            </button>
-          ) : null}
-        </div>
-        <Button type="submit">{buttonLabel}</Button>
+              {buttonLabel}
+              <ArrowRight data-icon="inline-end" />
+            </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
       </form>
 
       {showSuggestions && isFocused && value.trim() ? (
-        <div className="absolute top-full z-40 mt-2 w-full overflow-hidden rounded-xl border border-border bg-popover shadow-[0_22px_60px_rgba(10,61,46,0.12)]">
+        <div className="absolute top-full z-40 mt-3 w-full overflow-hidden rounded-[calc(var(--radius-xl)+2px)] border border-border/80 bg-popover/98 shadow-[0_24px_60px_rgba(10,61,46,0.14),0_4px_10px_rgba(10,61,46,0.06)] backdrop-blur">
           {suggestions.length ? (
             <ul className="divide-y divide-border/70">
               {suggestions.map((product, index) => (
@@ -60,9 +92,9 @@ export default function SearchField({
                   <button
                     type="button"
                     onClick={() => product.onSelect?.(product)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-muted"
                   >
-                    <div className="relative size-12 overflow-hidden rounded-lg border border-border bg-muted">
+                    <div className="relative size-12 overflow-hidden rounded-xl border border-border/80 bg-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]">
                       {getPrimaryProductImage(product)?.url ? (
                         <Image
                           src={getPrimaryProductImage(product).url}
