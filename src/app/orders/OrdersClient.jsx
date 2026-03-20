@@ -57,6 +57,9 @@ export default function OrdersClient({ initialOrders }) {
     orders.forEach(order => {
       const allReviewed = order.items.every(item => item.isReviewed);
       if (allReviewed) {
+        localStorage.removeItem(`review_never_${order.orderId}`);
+        sessionStorage.removeItem(`review_later_${order.orderId}`);
+        // Legacy cleanup
         localStorage.removeItem(`review_popup_count_${order.orderId}`);
       }
     });
@@ -68,15 +71,17 @@ export default function OrdersClient({ initialOrders }) {
     );
 
     for (const order of deliveredUnreviewedOrders) {
-      const storageKey = `review_popup_count_${order.orderId}`;
-      const count = parseInt(localStorage.getItem(storageKey) || '0', 10);
+      const neverKey = `review_never_${order.orderId}`;
+      const laterKey = `review_later_${order.orderId}`;
+      
+      const neverShow = localStorage.getItem(neverKey) === 'true';
+      const showLater = sessionStorage.getItem(laterKey) === 'true';
 
-      if (count < 2) {
+      if (!neverShow && !showLater) {
         // Trigger popup for the first qualifying order
         const timer = setTimeout(() => {
           setSelectedOrder(order);
           setIsReviewModalOpen(true);
-          localStorage.setItem(storageKey, (count + 1).toString());
         }, 1500);
         return () => clearTimeout(timer);
       }
@@ -86,6 +91,21 @@ export default function OrdersClient({ initialOrders }) {
   const handleReviewClick = (order) => {
     setSelectedOrder(order);
     setIsReviewModalOpen(true);
+  };
+
+  const handleReviewAction = (action) => {
+    if (!selectedOrder) return;
+
+    const neverKey = `review_never_${selectedOrder.orderId}`;
+    const laterKey = `review_later_${selectedOrder.orderId}`;
+
+    if (action === 'submit' || action === 'dismiss') {
+      // Never show again for this order
+      localStorage.setItem(neverKey, 'true');
+    } else if (action === 'later') {
+      // Show again on next session (sessionStorage lasts until tab/window closes)
+      sessionStorage.setItem(laterKey, 'true');
+    }
   };
 
   const handleReviewComplete = () => {
@@ -296,6 +316,7 @@ export default function OrdersClient({ initialOrders }) {
         onOpenChange={setIsReviewModalOpen}
         order={selectedOrder}
         onComplete={handleReviewComplete}
+        onAction={handleReviewAction}
       />
     </>
   );

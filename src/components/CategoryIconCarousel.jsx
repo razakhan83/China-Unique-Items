@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useRef } from "react";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, FreeMode, Mousewheel } from "swiper/modules";
+import { Autoplay, FreeMode, Mousewheel } from 'swiper/modules';
 import {
   Armchair,
   Beef,

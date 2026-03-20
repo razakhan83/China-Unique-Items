@@ -16,10 +16,23 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
-export default function ReviewModal({ isOpen, onOpenChange, order, onComplete }) {
+export default function ReviewModal({ isOpen, onOpenChange, order, onComplete, onAction }) {
   const [reviews, setReviews] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [actionTaken, setActionTaken] = useState(null);
+
+  // Reset actionTaken when modal opens
+  useEffect(() => {
+    if (isOpen) setActionTaken(null);
+  }, [isOpen]);
+
+  const handleOpenChange = (open) => {
+    if (!open && !actionTaken) {
+      onAction?.('dismiss');
+    }
+    onOpenChange(open);
+  };
 
   // Initialize reviews for items that haven't been reviewed
   useEffect(() => {
@@ -75,6 +88,8 @@ export default function ReviewModal({ isOpen, onOpenChange, order, onComplete })
 
       if (data.success) {
         toast.success('Thank you for your feedback!');
+        setActionTaken('submit');
+        onAction?.('submit');
         onComplete();
         onOpenChange(false);
       } else {
@@ -101,7 +116,7 @@ export default function ReviewModal({ isOpen, onOpenChange, order, onComplete })
   const itemsToReview = Object.values(reviews);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto sm:rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
@@ -162,7 +177,15 @@ export default function ReviewModal({ isOpen, onOpenChange, order, onComplete })
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
+          <Button 
+            variant="ghost" 
+            onClick={() => {
+              setActionTaken('later');
+              onAction?.('later');
+              onOpenChange(false);
+            }} 
+            disabled={submitting}
+          >
             Maybe Later
           </Button>
           <Button onClick={handleSubmit} disabled={submitting || itemsToReview.length === 0}>
