@@ -49,6 +49,16 @@
     border-color: var(--color-border);
   }
 
+  ::selection {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+
+  ::-moz-selection {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+
   html {
     scroll-behavior: smooth;
   }
@@ -473,6 +483,11 @@
 
 .swiper .swiper-slide {
   height: auto;
+}
+
+.swiper-slide img {
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .swiper.swiper-thumbs .swiper-slide-thumb-active {

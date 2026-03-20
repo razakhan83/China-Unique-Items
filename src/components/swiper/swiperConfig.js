@@ -6,6 +6,7 @@ export const SHARED_SWIPER_PROPS = {
   roundLengths: true,
   touchStartPreventDefault: false,
   touchReleaseOnEdges: true,
+  preventInteractionOnTransition: true,
 };
 
 export const CATEGORY_ICON_BREAKPOINTS = {

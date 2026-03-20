@@ -6,20 +6,12 @@ import { FreeMode } from 'swiper/modules';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { hasProductCategory } from '@/lib/productCategories';
-import { ChevronLeft, ChevronRight, ArrowRight, Flame, Sparkles, Trophy, Tag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { CATEGORY_PRODUCT_BREAKPOINTS, SHARED_SWIPER_PROPS } from '@/components/swiper/swiperConfig';
 
-const ICON_MAP = {
-    Flame: Flame,
-    Sparkles: Sparkles,
-    Trophy: Trophy,
-    Tag: Tag,
-};
-
-export default function CategoryProductSlider({ categoryId, categoryLabel, products, onViewAll, skipFilter = false, iconName }) {
+export default function CategoryProductSlider({ categoryId, categoryLabel, products, onViewAll, skipFilter = false }) {
     const categoryProducts = skipFilter ? products : products.filter((product) => hasProductCategory(product, categoryId));
 
-    const HeaderIcon = iconName ? ICON_MAP[iconName] : null;
     const swiperRef = useRef(null);
 
     const scrollPrev = useCallback(() => swiperRef.current?.slidePrev(), []);
@@ -31,7 +23,6 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
         <div className="mx-auto mb-4 w-full">
             <div className="home-section-item mb-6 flex items-center justify-between gap-4 px-4 md:items-end">
                 <h2 className="min-w-0 flex-1 text-2xl font-bold tracking-tight text-primary [text-wrap:balance] md:text-3xl">
-                    {HeaderIcon ? <HeaderIcon className="mr-2 inline-flex size-6 align-[-0.15em]" /> : null}
                     {categoryLabel}
                 </h2>
 
@@ -68,9 +59,9 @@ export default function CategoryProductSlider({ categoryId, categoryLabel, produ
                     {categoryProducts.map((p, idx) => (
                         <SwiperSlide
                             key={`${p.slug || p._id || p.id || 'item'}-${idx}`}
-                            className="!h-auto py-4"
+                            className="!h-auto select-none py-4"
                         >
-                            <div className="h-full min-w-0">
+                            <div className="h-full min-w-0" draggable={false}>
                                 <ProductCard product={p} />
                             </div>
                         </SwiperSlide>
