@@ -622,6 +622,32 @@
   }
 }
 
+@media (hover: none), (pointer: coarse) {
+  .home-enter,
+  .home-section,
+  .home-section-item,
+  .home-category-card,
+  .products-grid-card {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    will-change: auto;
+  }
+
+  .products-page-bar,
+  .products-page-meta,
+  .products-page-heading,
+  .products-page-toolbar,
+  .products-page-results-meta,
+  .products-page-empty,
+  .products-page-footer,
+  .add-to-cart-button,
+  .add-to-cart-icon {
+    will-change: auto;
+  }
+}
+
 [data-sonner-toaster] {
   --normal-bg: #ffffff;
   --normal-border: var(--color-border);

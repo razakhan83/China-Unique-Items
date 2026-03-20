@@ -3,8 +3,9 @@ export const SHARED_SWIPER_PROPS = {
   grabCursor: true,
   threshold: 4,
   resistanceRatio: 0.82,
-  observer: true,
-  observeParents: true,
+  roundLengths: true,
+  touchStartPreventDefault: false,
+  touchReleaseOnEdges: true,
 };
 
 export const CATEGORY_ICON_BREAKPOINTS = {

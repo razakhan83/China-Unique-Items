@@ -109,7 +109,7 @@ export default function ProductCard({ product, className = "" }) {
   return (
     <Card
       className={cn(
-        "group relative flex flex-col gap-0 overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-300 hover:shadow-md",
+        "group relative flex flex-col gap-0 overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-300 md:hover:shadow-md",
         "py-0",
         className
       )}
@@ -154,7 +154,7 @@ export default function ProductCard({ product, className = "" }) {
             alt={productName}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            className="object-cover transition-transform duration-500 ease-out md:group-hover:scale-105"
             {...getBlurPlaceholderProps(primaryImage.blurDataURL)}
           />
         ) : (
@@ -224,7 +224,7 @@ export default function ProductCard({ product, className = "" }) {
                 window.setTimeout(() => setDidJustAdd(false), 650);
               }
             }}
-            className="add-to-cart-button size-10 cursor-pointer shadow-none hover:border-primary/30 hover:bg-primary/12 hover:text-primary hover:shadow-sm disabled:pointer-events-none disabled:opacity-50"
+            className="add-to-cart-button size-10 cursor-pointer shadow-none md:hover:border-primary/30 md:hover:bg-primary/12 md:hover:text-primary md:hover:shadow-sm disabled:pointer-events-none disabled:opacity-50"
           >
             <span className="relative inline-flex size-5 items-center justify-center">
               <Spinner

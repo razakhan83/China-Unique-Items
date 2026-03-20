@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, Search, Sparkles, Tag } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Search, Sparkles, Tag } from "lucide-react";
 import { useLinkStatus } from "next/link";
 
 import { useProductsNavigationFeedback } from "@/components/ProductsNavigationFeedback";
@@ -87,6 +87,8 @@ export default function ProductsPageHeader({
   searchTerm = "",
 }) {
   const { pendingCategoryId } = useProductsNavigationFeedback();
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
   const categoryButtons = [
     { id: "all", label: "All Items", icon: Search},
     { id: "new-arrivals", label: "New Arrivals", icon: Sparkles},
@@ -101,40 +103,119 @@ export default function ProductsPageHeader({
   const categoryNavRef = useRef(null);
 
   useEffect(() => {
-    if (categoryNavRef.current) {
-      const activePill = categoryNavRef.current.querySelector("[data-active='true']");
+    const nav = categoryNavRef.current;
+    if (!nav) return;
+
+    const updateScrollState = () => {
+      const maxScrollLeft = nav.scrollWidth - nav.clientWidth;
+      setCanScrollPrev(nav.scrollLeft > 4);
+      setCanScrollNext(maxScrollLeft - nav.scrollLeft > 4);
+    };
+
+    updateScrollState();
+
+    nav.addEventListener("scroll", updateScrollState, { passive: true });
+    window.addEventListener("resize", updateScrollState);
+
+    return () => {
+      nav.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [categoryButtons.length]);
+
+  useEffect(() => {
+    const nav = categoryNavRef.current;
+    if (nav) {
+      const activePill = nav.querySelector("[data-active='true']");
       if (activePill) {
-        categoryNavRef.current.scrollTo({
-          left: activePill.offsetLeft - categoryNavRef.current.clientWidth / 2 + activePill.clientWidth / 2,
+        nav.scrollTo({
+          left: activePill.offsetLeft - nav.clientWidth / 2 + activePill.clientWidth / 2,
           behavior: "smooth",
         });
       }
     }
   }, [optimisticCategory]);
 
+  function scrollCategories(direction) {
+    const nav = categoryNavRef.current;
+    if (!nav) return;
+
+    nav.scrollBy({
+      left: direction * Math.max(nav.clientWidth * 0.75, 180),
+      behavior: "smooth",
+    });
+  }
+
   return (
     <div>
       <div className="products-page-bar fixed inset-x-0 top-24 z-30 border-y border-border/70 bg-card/95 backdrop-blur">
-        <div ref={categoryNavRef} className="relative mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-4 hide-scrollbar">
-          {categoryButtons.map((category) => {
-            const Icon = category.icon;
-            const isActive = optimisticCategory === category.id;
-            return (
-              <Link
-                key={category.id}
-                href={buildCategoryHref(category.id, searchTerm)}
-                prefetch={false}
-                scroll={false}
-                data-active={isActive}
-                className={cn(
-                  buttonVariants({ variant: isActive ? "default" : "outline", size: "sm" }),
-                  "shrink-0"
-                )}
-              >
-                <CategoryLinkContent categoryId={category.id} Icon={Icon} label={category.label} />
-              </Link>
-            );
-          })}
+        <div className="relative mx-auto max-w-7xl px-4">
+          <div
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute inset-y-4 left-4 z-10 w-10 transition-opacity duration-200",
+              canScrollPrev ? "opacity-100" : "opacity-0"
+            )}
+            style={{ background: "linear-gradient(to right, var(--color-card), transparent)" }}
+          />
+          <div
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute inset-y-4 right-4 z-10 w-10 transition-opacity duration-200",
+              canScrollNext ? "opacity-100" : "opacity-0"
+            )}
+            style={{ background: "linear-gradient(to left, var(--color-card), transparent)" }}
+          />
+          <button
+            type="button"
+            onClick={() => scrollCategories(-1)}
+            disabled={!canScrollPrev}
+            className={cn(
+              "absolute left-4 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-sm transition-[opacity,transform,background-color] duration-200",
+              canScrollPrev ? "opacity-100" : "pointer-events-none opacity-0",
+              "active:scale-[0.96]"
+            )}
+            aria-label="Previous categories"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollCategories(1)}
+            disabled={!canScrollNext}
+            className={cn(
+              "absolute right-4 top-1/2 z-20 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-sm transition-[opacity,transform,background-color] duration-200",
+              canScrollNext ? "opacity-100" : "pointer-events-none opacity-0",
+              "active:scale-[0.96]"
+            )}
+            aria-label="Next categories"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+          <div
+            ref={categoryNavRef}
+            className="relative flex gap-2 overflow-x-auto px-12 py-4 hide-scrollbar md:px-14"
+          >
+            {categoryButtons.map((category) => {
+              const Icon = category.icon;
+              const isActive = optimisticCategory === category.id;
+              return (
+                <Link
+                  key={category.id}
+                  href={buildCategoryHref(category.id, searchTerm)}
+                  prefetch={false}
+                  scroll={false}
+                  data-active={isActive}
+                  className={cn(
+                    buttonVariants({ variant: isActive ? "default" : "outline", size: "sm" }),
+                    "shrink-0"
+                  )}
+                >
+                  <CategoryLinkContent categoryId={category.id} Icon={Icon} label={category.label} />
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
 
