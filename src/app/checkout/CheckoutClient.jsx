@@ -316,7 +316,7 @@ export default function CheckoutClient({ settings }) {
                         />
                       </div>
                     </div>
-                    <div className="space-y-2 md:col-span-2">
+                    <div className="space-y-2">
                        <Label htmlFor="phone">Phone Number *</Label>
                        <Input id="phone" type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="e.g. 0300 1234567" aria-invalid={Boolean(errors.phone)} />
                        {errors.phone ? <p className="text-xs text-destructive">{errors.phone}</p> : null}
@@ -343,35 +343,51 @@ export default function CheckoutClient({ settings }) {
                             role="combobox"
                             aria-expanded={cityOpen}
                             aria-invalid={Boolean(errors.city)}
-                            className={cn("w-full justify-between font-normal bg-input", !formData.city && "text-muted-foreground", errors.city && "border-destructive")}
+                            className={cn(
+                              "h-11 w-full justify-between rounded-xl border px-3.5 text-sm font-normal shadow-[0_1px_0_color-mix(in_oklab,var(--color-background)_65%,white)] transition-[border-color,background-color,box-shadow,color] duration-200",
+                              "border-[color:color-mix(in_oklab,var(--color-border)_82%,white)] bg-[color:color-mix(in_oklab,var(--color-input)_88%,white)] text-foreground",
+                              "hover:border-[color:color-mix(in_oklab,var(--color-primary)_16%,var(--color-border))] hover:bg-[color:color-mix(in_oklab,var(--color-input)_94%,white)]",
+                              "focus-visible:border-[color:color-mix(in_oklab,var(--color-primary)_34%,var(--color-border))] focus-visible:bg-[color:color-mix(in_oklab,var(--color-input)_96%,white)] focus-visible:ring-4 focus-visible:ring-[color:color-mix(in_oklab,var(--color-primary)_14%,transparent)] focus-visible:shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-primary)_18%,transparent),0_10px_24px_-18px_color-mix(in_oklab,var(--color-primary)_45%,transparent)]",
+                              !formData.city && "text-muted-foreground",
+                              errors.city && "border-destructive bg-[color:color-mix(in_oklab,var(--color-destructive)_6%,white)] ring-4 ring-[color:color-mix(in_oklab,var(--color-destructive)_16%,transparent)]"
+                            )}
                           >
                             {formData.city || "Select City"}
                             <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                          <Command>
-                            <CommandInput placeholder="Search city..." />
-                            <CommandList className="max-h-60 overflow-y-auto">
+                        <PopoverContent
+                          className="w-[var(--radix-popover-trigger-width)] rounded-xl border border-[color:color-mix(in_oklab,var(--color-border)_82%,white)] bg-[color:color-mix(in_oklab,var(--color-popover)_96%,white)] p-0 shadow-[0_18px_50px_rgba(10,61,46,0.12)]"
+                          align="start"
+                          sideOffset={8}
+                        >
+                          <Command className="rounded-xl! bg-transparent p-2">
+                            <CommandInput placeholder="Search city..." className="text-sm" />
+                            <CommandList className="max-h-60 overflow-y-auto pt-2">
                               <CommandEmpty>No city found.</CommandEmpty>
-                              <CommandGroup>
+                              <CommandGroup className="flex flex-col gap-1.5 p-1">
                                 {PAKISTAN_CITIES.map((city) => (
                                   <CommandItem
                                     key={city}
                                     value={city}
+                                    className="justify-between rounded-lg px-3.5 py-2.5 text-sm font-semibold tracking-[-0.01em] text-foreground transition-[background-color,color] duration-200 data-selected:bg-[color:color-mix(in_oklab,var(--color-muted)_58%,white)]"
                                     onSelect={(currentValue) => {
                                       const exactCity = PAKISTAN_CITIES.find(c => c.toLowerCase() === currentValue.toLowerCase()) || currentValue;
                                       handleChange({ target: { name: 'city', value: exactCity === formData.city ? "" : exactCity } });
                                       setCityOpen(false);
                                     }}
                                   >
-                                    <Check
+                                    <span className="truncate leading-5">{city}</span>
+                                    <span
                                       className={cn(
-                                        "mr-2 size-4",
-                                        formData.city === city ? "opacity-100" : "opacity-0"
+                                        "inline-flex size-5 items-center justify-center rounded-full border transition-[opacity,transform,background-color,border-color,color] duration-200",
+                                        formData.city === city
+                                          ? "border-[color:color-mix(in_oklab,var(--color-primary)_20%,white)] bg-primary/10 text-primary opacity-100 scale-100"
+                                          : "border-transparent bg-transparent text-transparent opacity-0 scale-75"
                                       )}
-                                    />
-                                    {city}
+                                    >
+                                      <Check className="size-3.5" />
+                                    </span>
                                   </CommandItem>
                                 ))}
                               </CommandGroup>

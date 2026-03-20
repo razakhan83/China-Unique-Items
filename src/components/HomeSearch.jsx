@@ -11,7 +11,7 @@ export default function HomeSearch() {
     const handleSearch = (e) => {
         e.preventDefault();
         if (searchTerm.trim()) {
-            router.push(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
+            router.push(`/products?search=${encodeURIComponent(searchTerm.trim())}`, { scroll: true });
         }
     };
 

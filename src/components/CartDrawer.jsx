@@ -48,20 +48,20 @@ export default function CartDrawer() {
 
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-      <SheetContent side="right" className="w-[min(70vw,28rem)] min-w-[18rem]">
-        <SheetHeader className="sheet-stagger-item">
+      <SheetContent side="right" className="w-[min(70vw,28rem)] min-w-[18rem] gap-0 bg-card p-0">
+        <SheetHeader className="border-b border-border/70 px-5 pb-3 pt-5">
           <SheetTitle>Your Cart</SheetTitle>
           <SheetDescription>{cart.length ? `${cart.length} item${cart.length > 1 ? 's' : ''} ready for checkout.` : 'Add products to start your order.'}</SheetDescription>
         </SheetHeader>
 
-        <ScrollArea className="sheet-stagger min-h-0 flex-1 pr-2">
-          <div className="flex flex-col gap-4">
+        <ScrollArea className="min-h-0 flex-1 px-5 py-4">
+          <div className="flex flex-col gap-3.5">
             {cart.length ? (
               <>
                 {cart.map((item, index) => (
                   <div
                     key={item.id || item.slug || item._id || item.Name || item.name || index}
-                    className="surface-card rounded-xl p-3 transition-shadow duration-200 hover:shadow-sm"
+                    className="surface-card rounded-xl p-3 transition-[background-color,border-color] duration-200 hover:bg-[color:color-mix(in_oklab,var(--color-card)_96%,white)]"
                   >
                     <div className="flex gap-3">
                       <div className="relative size-20 overflow-hidden rounded-lg border border-border bg-muted">
@@ -132,7 +132,7 @@ export default function CartDrawer() {
         </ScrollArea>
 
         {cart.length ? (
-          <SheetFooter className="sheet-stagger-item border-t border-border pt-4">
+          <SheetFooter className="gap-3 border-t border-border/70 bg-card px-5 pb-5 pt-4">
             <div className="surface-card rounded-xl p-4">
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>Subtotal</span>
@@ -151,12 +151,16 @@ export default function CartDrawer() {
               </div>
             </div>
 
-            <Button className="w-full border-[#25D366] bg-[#25D366] text-white transition-colors duration-200 hover:bg-[#1ebe57]" onClick={handleWhatsAppDirectCheckout}>
+            <Button
+              variant="outline"
+              className="h-11 w-full rounded-xl border-[color:color-mix(in_oklab,var(--color-primary)_16%,var(--color-border))] bg-[color:color-mix(in_oklab,var(--color-input)_92%,white)] text-foreground shadow-[0_1px_0_color-mix(in_oklab,var(--color-background)_65%,white)] transition-[border-color,background-color,box-shadow,color] duration-200 hover:bg-[color:color-mix(in_oklab,var(--color-muted)_74%,white)] hover:text-foreground"
+              onClick={handleWhatsAppDirectCheckout}
+            >
               <WhatsAppIcon className="size-5" />
               Order on WhatsApp
             </Button>
             <Link href="/checkout" onClick={() => setIsCartOpen(false)} className="w-full">
-              <Button className="w-full">
+              <Button className="h-11 w-full rounded-xl">
                 Continue to Checkout
                 <ArrowRight data-icon="inline-end" />
               </Button>

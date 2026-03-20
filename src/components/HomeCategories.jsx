@@ -36,7 +36,7 @@ export default function HomeCategories({ sections = [] }) {
                 iconName={section.category.iconName}
                 products={section.products}
                 skipFilter
-                onViewAll={(categoryId) => router.push(`/products?category=${categoryId}`)}
+                onViewAll={(categoryId) => router.push(`/products?category=${categoryId}`, { scroll: true })}
               />
             </div>
           </section>

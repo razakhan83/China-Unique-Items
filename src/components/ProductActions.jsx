@@ -62,6 +62,8 @@ export default function ProductActions({ product }) {
     };
 
     const isOutOfStock = product.StockStatus === "Out of Stock";
+    const secondaryActionClass =
+        "h-11 shrink-0 rounded-xl border-[color:color-mix(in_oklab,var(--color-primary)_16%,var(--color-border))] bg-[color:color-mix(in_oklab,var(--color-input)_92%,white)] text-foreground shadow-[0_1px_0_color-mix(in_oklab,var(--color-background)_65%,white)] transition-[border-color,background-color,box-shadow,color,transform] duration-200 hover:bg-[color:color-mix(in_oklab,var(--color-muted)_74%,white)] hover:text-foreground active:scale-[0.96]";
 
     return (
         <div className="flex flex-col gap-4">
@@ -90,7 +92,7 @@ export default function ProductActions({ product }) {
                 <Button
                     onClick={handleAddToCart}
                     disabled={isAdding || isOutOfStock}
-                    className="add-to-cart-button flex-1 active:scale-[0.96]"
+                    className="add-to-cart-button h-11 flex-1 rounded-xl active:scale-[0.96]"
                     size="lg"
                 >
                     <span className="relative inline-flex size-5 items-center justify-center">
@@ -113,7 +115,8 @@ export default function ProductActions({ product }) {
                 <Button
                     onClick={handleWhatsApp}
                     size="lg"
-                    className="shrink-0 border-[#25D366] bg-[#25D366] text-white transition-colors duration-200 hover:bg-[#1ebe57]"
+                    variant="outline"
+                    className={cn(secondaryActionClass, "min-w-11 px-3")}
                 >
                     <WhatsAppIcon className="size-5" />
                     <span className="hidden sm:inline">WhatsApp</span>
@@ -121,8 +124,7 @@ export default function ProductActions({ product }) {
                 <Button
                     onClick={handleShare}
                     variant="outline"
-                    className="shrink-0"
-                    size="icon"
+                    className={cn(secondaryActionClass, "size-11 px-0")}
                 >
                     <Share2 />
                 </Button>
@@ -141,7 +143,7 @@ export default function ProductActions({ product }) {
                 <Button
                     onClick={handleAddToCart}
                     disabled={isAdding}
-                    className="add-to-cart-button flex-1 active:scale-[0.96]"
+                    className="add-to-cart-button h-11 flex-1 rounded-xl active:scale-[0.96]"
                 >
                     <span className="relative inline-flex size-5 items-center justify-center">
                         <Spinner
@@ -162,7 +164,8 @@ export default function ProductActions({ product }) {
                 </Button>
                 <Button
                     onClick={handleWhatsApp}
-                    className="shrink-0 border-[#25D366] bg-[#25D366] text-white transition-colors duration-200 hover:bg-[#1ebe57]"
+                    variant="outline"
+                    className={cn(secondaryActionClass, "size-11 px-0")}
                 >
                     <WhatsAppIcon className="size-5" />
                 </Button>

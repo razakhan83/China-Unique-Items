@@ -119,6 +119,7 @@ export default function ProductCard({ product, className = "" }) {
       {/* Image Section */}
       <Link
         href={productHref}
+        scroll={true}
         className="relative block aspect-square w-full overflow-hidden bg-muted/30"
         draggable={false}
         onDragStart={(event) => event.preventDefault()}
@@ -175,6 +176,7 @@ export default function ProductCard({ product, className = "" }) {
         {/* Product Title */}
         <Link
           href={productHref}
+          scroll={true}
           className="block text-left"
           draggable={false}
           onDragStart={(event) => event.preventDefault()}

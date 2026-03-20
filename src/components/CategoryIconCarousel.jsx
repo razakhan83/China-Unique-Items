@@ -191,7 +191,7 @@ export default function CategoryIconCarousel({ categories }) {
                           event.stopPropagation();
                           return;
                         }
-                        router.push(`/products?category=${category.id}`);
+                        router.push(`/products?category=${category.id}`, { scroll: true });
                       }}
                       className="home-category-card group flex h-full w-full min-w-0 cursor-pointer flex-col items-center gap-3 rounded-xl px-1 py-1 text-center select-none"
                       style={{ "--home-category-delay": `${Math.min(index, 7) * 48}ms` }}

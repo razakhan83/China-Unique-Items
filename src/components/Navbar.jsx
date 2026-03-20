@@ -99,7 +99,7 @@ function NavbarContent({ categories }) {
     setIsSidebarOpen(false);
     setIsCategoriesOpen(false);
     const url = categoryId === 'all' ? '/products' : `/products?category=${categoryId}`;
-    router.push(url);
+    router.push(url, { scroll: true });
   }
 
   function handleSearchSubmit(event) {
@@ -107,7 +107,7 @@ function NavbarContent({ categories }) {
     if (!searchTerm.trim()) return;
     setIsSearchOpen(false);
     setIsFocused(false);
-    router.push(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
+    router.push(`/products?search=${encodeURIComponent(searchTerm.trim())}`, { scroll: true });
   }
 
   function navLinkClass(path) {
@@ -147,7 +147,7 @@ function NavbarContent({ categories }) {
         </div>
       </div>
 
-      <header className="relative mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
+      <header className="relative z-20 mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
         <Button variant="ghost" size="icon" onClick={openSidebar} aria-label="Open menu" className="md:hidden">
           <Menu />
         </Button>
@@ -164,7 +164,7 @@ function NavbarContent({ categories }) {
 
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
           <Link href="/" className={navLinkClass('/')}>Home</Link>
-          <Link href="/products" className={navLinkClass('/products')}>All Products</Link>
+          <Link href="/products" scroll={true} className={navLinkClass('/products')}>All Products</Link>
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
@@ -175,7 +175,7 @@ function NavbarContent({ categories }) {
               <ChevronDown className={cn('size-4 transition-transform', isCategoriesOpen && 'rotate-180')} />
             </button>
             {isCategoriesOpen ? (
-              <div className="absolute left-0 top-full mt-2 w-60 overflow-hidden rounded-xl border border-border bg-popover p-1 shadow-[0_18px_50px_rgba(10,61,46,0.12)]">
+              <div className="absolute left-0 top-full z-40 mt-2 w-60 overflow-hidden rounded-xl border border-border bg-popover p-1 shadow-[0_18px_50px_rgba(10,61,46,0.12)]">
                 <button
                   type="button"
                   onClick={() => handleCategoryClick('new-arrivals')}
@@ -301,7 +301,7 @@ function NavbarContent({ categories }) {
         data-state={isSearchOpen ? 'open' : 'closed'}
         aria-hidden={!isSearchOpen}
         className={cn(
-          'navbar-search-shell grid overflow-hidden border-t bg-background/80 backdrop-blur transition-[grid-template-rows,opacity,border-color] duration-300 ease-[cubic-bezier(0.2,0,0,1)]',
+          'navbar-search-shell relative z-10 grid overflow-hidden border-t bg-background/80 backdrop-blur transition-[grid-template-rows,opacity,border-color] duration-300 ease-[cubic-bezier(0.2,0,0,1)]',
           isSearchOpen ? 'grid-rows-[1fr] border-border/70 opacity-100' : 'pointer-events-none grid-rows-[0fr] border-transparent opacity-0'
         )}
       >

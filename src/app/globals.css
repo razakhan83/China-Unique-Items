@@ -116,6 +116,16 @@
     font: inherit;
   }
 
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
   img {
     display: block;
     max-width: 100%;
@@ -193,68 +203,6 @@
 
   to {
     opacity: 0;
-  }
-}
-
-@keyframes sheet-in-right {
-  from {
-    opacity: 0;
-    transform: translate3d(42px, 0, 0);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes sheet-in-left {
-  from {
-    opacity: 0;
-    transform: translate3d(-42px, 0, 0);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes sheet-out-right {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-
-  to {
-    opacity: 0;
-    transform: translate3d(22px, 0, 0);
-  }
-}
-
-@keyframes sheet-out-left {
-  from {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-
-  to {
-    opacity: 0;
-    transform: translate3d(-22px, 0, 0);
-  }
-}
-
-@keyframes sheet-item-in {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 12px, 0);
-    filter: blur(4px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-    filter: blur(0);
   }
 }
 
@@ -344,26 +292,6 @@
 
 .animate-fadeInUp {
   animation: fade-up 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.animate-sheetInRight {
-  animation: sheet-in-right 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: opacity, transform;
-}
-
-.animate-sheetInLeft {
-  animation: sheet-in-left 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: opacity, transform;
-}
-
-.animate-sheetOutRight {
-  animation: sheet-out-right 260ms cubic-bezier(0.4, 0, 0.2, 1) both;
-  will-change: opacity, transform;
-}
-
-.animate-sheetOutLeft {
-  animation: sheet-out-left 260ms cubic-bezier(0.4, 0, 0.2, 1) both;
-  will-change: opacity, transform;
 }
 
 .animate-fadeInHero {
@@ -622,66 +550,6 @@
   width: auto !important;
   transform: translateX(-50%);
   gap: 0.5rem;
-}
-
-[data-slot="sheet-overlay"][data-state="open"] {
-  animation: fade-in 220ms ease-out both;
-}
-
-[data-slot="sheet-overlay"][data-state="closed"] {
-  animation: fade-out 220ms ease-out both;
-}
-
-[data-slot="sheet-content"][data-side="right"][data-state="open"] {
-  animation: sheet-in-right 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: opacity, transform;
-}
-
-[data-slot="sheet-content"][data-side="right"][data-state="closed"] {
-  animation: sheet-out-right 260ms cubic-bezier(0.4, 0, 0.2, 1) both;
-  will-change: opacity, transform;
-}
-
-[data-slot="sheet-content"][data-side="left"][data-state="open"] {
-  animation: sheet-in-left 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  will-change: opacity, transform;
-}
-
-[data-slot="sheet-content"][data-side="left"][data-state="closed"] {
-  animation: sheet-out-left 260ms cubic-bezier(0.4, 0, 0.2, 1) both;
-  will-change: opacity, transform;
-}
-
-
-[data-slot="sheet-content"][data-side="top"][data-state="open"],
-[data-slot="sheet-content"][data-side="bottom"][data-state="open"] {
-  animation: fade-up 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-[data-slot="sheet-content"][data-side="top"][data-state="closed"],
-[data-slot="sheet-content"][data-side="bottom"][data-state="closed"] {
-  animation: fade-out 220ms ease-out both;
-}
-
-[data-slot="sheet-content"][data-state="open"] .sheet-stagger-item,
-[data-slot="sheet-content"][data-state="open"] .sheet-stagger > * {
-  animation: sheet-item-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-[data-slot="sheet-content"][data-state="open"] .sheet-stagger > :nth-child(1) {
-  animation-delay: 60ms;
-}
-
-[data-slot="sheet-content"][data-state="open"] .sheet-stagger > :nth-child(2) {
-  animation-delay: 120ms;
-}
-
-[data-slot="sheet-content"][data-state="open"] .sheet-stagger > :nth-child(3) {
-  animation-delay: 180ms;
-}
-
-[data-slot="sheet-content"][data-state="open"] .sheet-stagger > :nth-child(4) {
-  animation-delay: 240ms;
 }
 
 .home-enter {
