@@ -55,6 +55,150 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
+const ANNOUNCEMENT_ITEMS = [
+  'Imported homeware with a refined finish',
+  'Free delivery above Rs. 3000',
+];
+
+const MARQUEE_GAP = 64;
+const MARQUEE_SPEED = 72;
+
+function AnnouncementMarquee() {
+  const viewportRef = useRef(null);
+  const trackRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const lastTimestampRef = useRef(null);
+  const offsetRef = useRef(0);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const track = trackRef.current;
+
+    if (!viewport || !track) {
+      return undefined;
+    }
+
+    const createItemNode = (text, index) => {
+      const item = document.createElement('span');
+      item.className = 'flex shrink-0 items-center gap-2';
+      item.dataset.sourceIndex = String(index);
+      item.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles size-3.5" aria-hidden="true">
+          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063A2 2 0 0 0 14.063 15.5l-1.582 6.135a.5.5 0 0 1-.962 0z"></path>
+          <path d="M20 3v4"></path>
+          <path d="M22 5h-4"></path>
+          <path d="M4 17v2"></path>
+          <path d="M5 18H3"></path>
+        </svg>
+      `;
+      item.append(document.createTextNode(text));
+      return item;
+    };
+
+    track.replaceChildren(...ANNOUNCEMENT_ITEMS.map(createItemNode));
+    track.style.gap = `${MARQUEE_GAP}px`;
+
+    const getTrackWidth = () => {
+      const children = Array.from(track.children);
+      if (!children.length) {
+        return 0;
+      }
+
+      return children.reduce((total, child) => total + child.getBoundingClientRect().width, 0) + (children.length - 1) * MARQUEE_GAP;
+    };
+
+    const fillViewport = () => {
+      const viewportWidth = viewport.getBoundingClientRect().width;
+
+      if (!viewportWidth) {
+        return;
+      }
+
+      let totalWidth = getTrackWidth();
+      if (!totalWidth) {
+        return;
+      }
+
+      let nextIndex = track.children.length % ANNOUNCEMENT_ITEMS.length;
+
+      while (totalWidth < viewportWidth * 2) {
+        track.append(createItemNode(ANNOUNCEMENT_ITEMS[nextIndex], nextIndex));
+        totalWidth = getTrackWidth();
+        nextIndex = (nextIndex + 1) % ANNOUNCEMENT_ITEMS.length;
+      }
+    };
+
+    const recycleLeadingItems = () => {
+      let firstChild = track.firstElementChild;
+
+      while (firstChild) {
+        const shiftWidth = firstChild.getBoundingClientRect().width + MARQUEE_GAP;
+
+        if (-offsetRef.current < shiftWidth) {
+          break;
+        }
+
+        offsetRef.current += shiftWidth;
+        track.append(firstChild);
+        firstChild = track.firstElementChild;
+      }
+    };
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const updateTrackPosition = () => {
+      track.style.transform = `translate3d(${offsetRef.current}px, 0, 0)`;
+    };
+
+    const step = (timestamp) => {
+      if (mediaQuery.matches) {
+        lastTimestampRef.current = timestamp;
+        animationFrameRef.current = window.requestAnimationFrame(step);
+        return;
+      }
+
+      if (lastTimestampRef.current == null) {
+        lastTimestampRef.current = timestamp;
+      }
+
+      const deltaSeconds = (timestamp - lastTimestampRef.current) / 1000;
+      lastTimestampRef.current = timestamp;
+      offsetRef.current -= MARQUEE_SPEED * deltaSeconds;
+      recycleLeadingItems();
+      updateTrackPosition();
+      animationFrameRef.current = window.requestAnimationFrame(step);
+    };
+
+    const resizeObserver = new ResizeObserver(() => {
+      fillViewport();
+      recycleLeadingItems();
+      updateTrackPosition();
+    });
+
+    resizeObserver.observe(viewport);
+
+    fillViewport();
+    updateTrackPosition();
+    animationFrameRef.current = window.requestAnimationFrame(step);
+
+    return () => {
+      resizeObserver.disconnect();
+      if (animationFrameRef.current) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      ref={viewportRef}
+      className="w-full overflow-hidden text-xs font-medium uppercase tracking-[0.16em]"
+    >
+      <div ref={trackRef} className="flex whitespace-nowrap will-change-transform" />
+    </div>
+  );
+}
+
 function NavbarContent({ categories }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -128,23 +272,8 @@ function NavbarContent({ categories }) {
 
   return (
     <div className="sticky top-0 z-40 border-b border-border/60 bg-card/95 backdrop-blur">
-      <div className="relative border-b border-border/60 bg-primary px-4 py-2 text-primary-foreground">
-        <div className="mx-auto max-w-7xl overflow-hidden text-xs font-medium uppercase tracking-[0.16em]">
-          <div className="marquee-track flex gap-16 whitespace-nowrap">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="flex items-center gap-16">
-                <span className="flex items-center gap-2">
-                  <Sparkles className="size-3.5" />
-                  Imported homeware with a refined finish
-                </span>
-                <span className="flex items-center gap-2">
-                  <Sparkles className="size-3.5" />
-                  Free delivery above Rs. 3000
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="relative border-b border-border/60 bg-primary py-2 text-primary-foreground">
+        <AnnouncementMarquee />
       </div>
 
       <header className="relative z-20 mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">

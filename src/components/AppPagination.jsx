@@ -26,16 +26,18 @@ function PaginationLinkInner({ pageKey, label, onPendingChange }) {
   }, [onPendingChange, pageKey, pending]);
 
   return (
-    <span className="relative inline-flex items-center justify-center leading-none">
+    <span className="relative grid h-full w-full place-items-center leading-none">
       <span className={cn('transition-opacity duration-150', pending ? 'opacity-0' : 'opacity-100')}>
         {label}
       </span>
-      <Loader2
-        className={cn(
-          'absolute inset-0 m-auto size-4 animate-spin transition-opacity duration-150',
-          pending ? 'opacity-100' : 'opacity-0',
-        )}
-      />
+      <span className="pointer-events-none absolute inset-0 grid place-items-center">
+        <Loader2
+          className={cn(
+            'size-4 animate-spin transition-opacity duration-150',
+            pending ? 'opacity-100' : 'opacity-0',
+          )}
+        />
+      </span>
     </span>
   );
 }

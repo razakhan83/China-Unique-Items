@@ -8,6 +8,8 @@ import ProductsToolbar from '@/components/ProductsToolbar';
 import { ProductsGridSkeleton } from '@/components/ProductsPageSkeleton';
 import { getProductsList, getStoreCategories } from '@/lib/data';
 
+const PRODUCTS_PAGE_SIZE = 12;
+
 function buildSuspenseKey(searchParams) {
   return JSON.stringify({
     category: searchParams?.category || 'all',
@@ -45,6 +47,13 @@ export async function generateMetadata({ searchParams }) {
 export default async function ProductsPage({ searchParams }) {
   const resolvedSearchParams = (await searchParams) || {};
   const categories = await getStoreCategories();
+  const productsPromise = getProductsList({
+    category: resolvedSearchParams.category || 'all',
+    search: resolvedSearchParams.search || '',
+    sort: resolvedSearchParams.sort || 'newest',
+    page: Number(resolvedSearchParams.page || 1),
+    limit: PRODUCTS_PAGE_SIZE,
+  });
 
   return (
     <ProductsNavigationFeedbackProvider>
@@ -59,25 +68,25 @@ export default async function ProductsPage({ searchParams }) {
           initialSearch={resolvedSearchParams.search || ''}
           initialSort={resolvedSearchParams.sort || 'newest'}
         />
-        <Suspense key={buildSuspenseKey(resolvedSearchParams)} fallback={<ProductsGridSkeleton />}>
-          <ProductsResultsContent searchParams={resolvedSearchParams} />
-        </Suspense>
+        <section className="mx-auto max-w-7xl px-4 py-6">
+          <Suspense key={buildSuspenseKey(resolvedSearchParams)} fallback={<ProductsGridSkeleton />}>
+            <ProductsResultsContent productsPromise={productsPromise} />
+          </Suspense>
+          <Suspense fallback={null}>
+            <ProductsPaginationContent productsPromise={productsPromise} />
+          </Suspense>
+        </section>
       </div>
     </ProductsNavigationFeedbackProvider>
   );
 }
 
-async function ProductsResultsContent({ searchParams }) {
-  const data = await getProductsList({
-    category: searchParams.category || 'all',
-    search: searchParams.search || '',
-    sort: searchParams.sort || 'newest',
-    page: Number(searchParams.page || 1),
-    limit: 12,
-  });
+async function ProductsResultsContent({ productsPromise }) {
+  const data = await productsPromise;
+  const placeholderCount = Math.max(PRODUCTS_PAGE_SIZE - data.items.length, 0);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-6">
+    <>
       <ProductsPendingResults>
         <div className="products-page-results-meta mb-4 flex items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground tabular-nums">
@@ -100,6 +109,9 @@ async function ProductsResultsContent({ searchParams }) {
                 <ProductCard product={product} />
               </div>
             ))}
+            {Array.from({ length: placeholderCount }).map((_, index) => (
+              <ProductCardPlaceholder key={`placeholder-${index}`} index={data.items.length + index} />
+            ))}
           </div>
         ) : (
           <div className="products-page-empty surface-card flex flex-col items-center justify-center rounded-xl px-6 py-16 text-center">
@@ -110,15 +122,43 @@ async function ProductsResultsContent({ searchParams }) {
           </div>
         )}
       </ProductsPendingResults>
+    </>
+  );
+}
 
-      <ProductsPagination
-        pathname="/products"
-        page={data.page}
-        totalPages={data.totalPages}
-        category={data.activeCategory}
-        search={data.searchTerm}
-        sort={data.sort}
-      />
-    </section>
+function ProductCardPlaceholder({ index }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="products-grid-card pointer-events-none select-none opacity-0"
+      style={{ '--products-card-delay': `${Math.min(index, 7) * 48}ms` }}
+    >
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-transparent bg-transparent">
+        <div className="aspect-square w-full" />
+        <div className="flex flex-1 flex-col gap-1.5 p-3 pt-3">
+          <div className="h-5" />
+          <div className="h-8" />
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <div className="h-6 w-20" />
+            <div className="size-10" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+async function ProductsPaginationContent({ productsPromise }) {
+  const data = await productsPromise;
+
+  return (
+    <ProductsPagination
+      pathname="/products"
+      page={data.page}
+      totalPages={data.totalPages}
+      category={data.activeCategory}
+      search={data.searchTerm}
+      sort={data.sort}
+    />
   );
 }
