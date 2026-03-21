@@ -39,7 +39,7 @@ export default function MyOrdersButton({ className, isMobile = false }) {
           <ClipboardList className="size-4" />
           My Orders
         </button>
-        <AuthModal open={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} />
+        <AuthModal open={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} callbackUrl="/orders" />
       </>
     );
   }
@@ -54,7 +54,7 @@ export default function MyOrdersButton({ className, isMobile = false }) {
         <ClipboardList className="size-4" />
         My Orders
       </Button>
-      <AuthModal open={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} />
+      <AuthModal open={isAuthModalOpen} onOpenChange={setIsAuthModalOpen} callbackUrl="/orders" />
     </>
   );
 }

@@ -1,14 +1,19 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 
 export default function GoogleSignInButton({ className }) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const callbackUrl = `${pathname || '/'}${searchParams?.toString() ? `?${searchParams.toString()}` : ''}`;
+
   return (
     <Button
       variant="outline"
       className={`relative flex w-full items-center justify-center gap-3 border-border bg-background py-6 font-medium text-foreground transition-all hover:bg-muted/50 ${className}`}
-      onClick={() => signIn('google')}
+      onClick={() => signIn('google', { callbackUrl })}
     >
       <svg
         className="size-5"

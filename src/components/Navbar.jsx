@@ -267,6 +267,12 @@ function NavbarContent({ categories }) {
                       <ShoppingBag className="mr-2 h-4 w-4" />
                       <span>My Orders</span>
                     </DropdownMenuItem>
+                    {session.user?.isAdmin ? (
+                      <DropdownMenuItem onClick={() => router.push('/admin')}>
+                        <LayoutGrid className="mr-2 h-4 w-4" />
+                        <span>Admin Panel</span>
+                      </DropdownMenuItem>
+                    ) : null}
                     <DropdownMenuItem onClick={() => router.push('/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Account Settings</span>
@@ -440,6 +446,19 @@ function NavbarContent({ categories }) {
                     <Settings className="size-4" />
                     Account Settings
                   </button>
+                  {session.user?.isAdmin ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSidebarOpen(false);
+                        router.push('/admin');
+                      }}
+                      className="flex min-h-10 items-center gap-3 rounded-xl bg-muted/55 px-3.5 py-2.5 text-sm font-medium text-foreground transition-[background-color,transform] duration-200 hover:bg-muted active:scale-[0.96]"
+                    >
+                      <LayoutGrid className="size-4" />
+                      Admin Panel
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => {
