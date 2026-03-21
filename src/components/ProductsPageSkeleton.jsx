@@ -72,8 +72,7 @@ export function ProductsGridSkeleton() {
         {Array.from({ length: 12 }).map((_, index) => (
           <div
             key={index}
-            className="products-grid-card overflow-hidden rounded-xl border border-border bg-card"
-            style={{ "--products-card-delay": `${Math.min(index, 7) * 48}ms` }}
+            className="products-grid-skeleton-card overflow-hidden rounded-xl border border-border bg-card"
           >
             <Skeleton className="aspect-square w-full rounded-none" />
             <div className="flex flex-col gap-1.5 bg-card p-3 pt-3">

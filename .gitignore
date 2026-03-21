@@ -50,3 +50,5 @@ next-env.d.ts
 .vercel
 # next-agents-md
 .next-docs/
+
+/Slider
