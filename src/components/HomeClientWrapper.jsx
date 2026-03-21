@@ -1,15 +1,17 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
-import SearchField from '@/components/SearchField';
+import CategoryIconCarousel from "@/components/CategoryIconCarousel";
+import HeroSlider from "@/components/HeroSlider";
+import SearchField from "@/components/SearchField";
 
-export default function HomeMobileSearch() {
+export default function HomeClientWrapper({ heroSlides, categories = [] }) {
   const router = useRouter();
   const wrapperRef = useRef(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -32,14 +34,11 @@ export default function HomeMobileSearch() {
       }
 
       setIsLoadingSuggestions(true);
-
       try {
         const response = await fetch(`/api/search-products?q=${encodeURIComponent(debouncedSearch.trim())}&limit=5`);
         const result = await response.json();
 
-        if (!isActive) {
-          return;
-        }
+        if (!isActive) return;
 
         setSuggestions(
           Array.isArray(result?.data)
@@ -76,41 +75,41 @@ export default function HomeMobileSearch() {
         setIsFocused(false);
       }
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   function handleSearchSubmit(event) {
     event?.preventDefault();
     setIsFocused(false);
-
-    if (!searchTerm.trim()) {
-      return;
-    }
-
+    if (!searchTerm.trim()) return;
     router.push(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
   }
 
   return (
-    <div ref={wrapperRef} className="mx-auto max-w-3xl px-4 py-6 md:hidden">
-      <SearchField
-        value={searchTerm}
-        onChange={(event) => {
-          setSearchTerm(event.target.value);
-        }}
-        onSubmit={handleSearchSubmit}
-        onClear={() => {
-          setSearchTerm('');
-          setDebouncedSearch('');
-          setSuggestions([]);
-          setIsFocused(false);
-        }}
-        onFocus={() => setIsFocused(true)}
-        isFocused={isFocused}
-        suggestions={suggestions}
-        emptyLabel={isLoadingSuggestions ? 'Searching...' : `No products found for "${debouncedSearch}"`}
-      />
-    </div>
+    <>
+      <HeroSlider slides={heroSlides} />
+      <CategoryIconCarousel categories={categories} />
+
+      <div ref={wrapperRef} className="mx-auto max-w-3xl px-4 py-6 md:hidden">
+        <SearchField
+          value={searchTerm}
+          onChange={(event) => {
+            setSearchTerm(event.target.value);
+          }}
+          onSubmit={handleSearchSubmit}
+          onClear={() => {
+            setSearchTerm("");
+            setDebouncedSearch("");
+            setSuggestions([]);
+            setIsFocused(false);
+          }}
+          onFocus={() => setIsFocused(true)}
+          isFocused={isFocused}
+          suggestions={suggestions}
+          emptyLabel={isLoadingSuggestions ? "Searching..." : `No products found for "${debouncedSearch}"`}
+        />
+      </div>
+    </>
   );
 }
