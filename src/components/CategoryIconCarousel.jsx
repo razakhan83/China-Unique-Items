@@ -53,6 +53,7 @@ export default function CategoryIconCarousel({ categories }) {
       active: categoryCount > 1,
       align: "start",
       containScroll: categoryCount > 1 ? false : "trimSnaps",
+      dragFree: categoryCount > 1,
       loop: categoryCount > 1,
       slideChanges: false,
       slidesToScroll: 1,

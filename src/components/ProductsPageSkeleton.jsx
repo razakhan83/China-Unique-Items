@@ -31,7 +31,7 @@ export function ProductsToolbarSkeleton() {
     <div className="products-page-toolbar mx-auto max-w-7xl px-4 pt-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="min-w-0 flex-1">
-          <div className="relative h-12 overflow-hidden rounded-[calc(var(--radius-xl)+2px)] border border-border/70 bg-background/80 shadow-[0_14px_36px_rgba(10,61,46,0.08),0_2px_6px_rgba(10,61,46,0.05)]">
+          <div className="relative h-12 overflow-hidden rounded-[calc(var(--radius-xl)+2px)] border border-border/70 bg-background/80">
             <div className="absolute inset-y-0 left-0 flex items-center pl-4">
               <Skeleton className="size-4 rounded-full" />
             </div>
@@ -42,7 +42,7 @@ export function ProductsToolbarSkeleton() {
           </div>
         </div>
         <div className="flex items-center gap-2 lg:w-64">
-          <div className="relative h-12 w-full overflow-hidden rounded-[calc(var(--radius-xl)+2px)] border border-border/70 bg-background/80 px-4 shadow-[0_14px_36px_rgba(10,61,46,0.08),0_2px_6px_rgba(10,61,46,0.05)]">
+          <div className="relative h-12 w-full overflow-hidden rounded-[calc(var(--radius-xl)+2px)] border border-border/70 bg-background/80 px-4">
             <div className="flex h-full items-center gap-3">
               <Skeleton className="size-4 rounded-full" />
               <Skeleton className="h-4 w-28 rounded-md" />
@@ -57,6 +57,14 @@ export function ProductsToolbarSkeleton() {
 export function ProductsGridSkeleton() {
   return (
     <section className="mx-auto max-w-7xl px-4 py-6">
+      <ProductsGridSkeletonContent />
+    </section>
+  );
+}
+
+function ProductsGridSkeletonContent() {
+  return (
+    <>
       <div className="products-page-results-meta mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-1.5">
           <Skeleton className="h-4 w-14 rounded-md" />
@@ -88,7 +96,7 @@ export function ProductsGridSkeleton() {
           </div>
         ))}
       </div>
-    </section>
+    </>
   );
 }
 
@@ -111,8 +119,10 @@ export function ProductsResultsSkeleton() {
   return (
     <>
       <ProductsToolbarSkeleton />
-      <ProductsGridSkeleton />
-      <ProductsPaginationSkeleton />
+      <section className="mx-auto max-w-7xl px-4 py-6">
+        <ProductsGridSkeletonContent />
+        <ProductsPaginationSkeleton />
+      </section>
     </>
   );
 }
