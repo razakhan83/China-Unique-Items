@@ -25,6 +25,10 @@ import { normalizeProductImages } from '@/lib/productImages';
 const SETTINGS_KEY = 'site-settings';
 const COVER_PHOTOS_KEY = 'home-cover-photos';
 
+function escapeRegex(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function normalizeMediaItem(item, sortOrder = 0, fallbackItem = null) {
   if ((!item || typeof item !== 'object') && (!fallbackItem || typeof fallbackItem !== 'object')) return null;
 
@@ -294,7 +298,7 @@ async function getCategoriesRaw() {
 
 export async function getStoreSettings() {
   'use cache';
-  cacheLife('days');
+  cacheLife('foreverish');
   cacheTag('settings');
   return getSettingsRaw();
 }
@@ -338,15 +342,15 @@ export async function getAdminCoverPhotos() {
 
 export async function getStoreCategories() {
   'use cache';
-  cacheLife('days');
+  cacheLife('foreverish');
   cacheTag('categories');
   return getCategoriesRaw();
 }
 
 export async function getHomeSections() {
   'use cache';
-  cacheLife('minutes');
-  cacheTag('home-sections', 'products', 'categories');
+  cacheLife('foreverish');
+  cacheTag('home-sections', 'products', 'categories', 'cover-photos');
   const [products, categories, coverPhotos] = await Promise.all([
     getLiveProductsRaw(),
     getCategoriesRaw(),
@@ -378,7 +382,7 @@ export async function getHomeSections() {
       } else {
         items = products
           .filter((product) => hasProductCategory(product, category.id))
-          .slice(0, 12)
+          .slice(0, 8)
           .map(toProductCardItem);
       }
 
@@ -400,7 +404,7 @@ export async function getHomeSections() {
   ].map(m => {
     const items = products
       .filter(p => p[m.flag] === true)
-      .slice(0, 12)
+      .slice(0, 8)
       .map(toProductCardItem);
     
     if (items.length === 0) return null;
@@ -428,84 +432,130 @@ export async function getHomeSections() {
     categories: categories.filter(c => c.isEnabled !== false),
     coverPhotos,
     featuredProducts,
-    searchProducts: products.map(toProductCardItem),
     sections: finalSections,
   };
 }
 
-export async function getProductsList({ category = 'all', search = '', sort = 'newest', page = 1, limit = 24 } = {}) {
+export async function getProductsList({ category = 'all', search = '', sort = 'newest', page = 1, limit = 12 } = {}) {
   'use cache';
-  cacheLife('minutes');
-  cacheTag('products');
-  const products = await getLiveProductsRaw();
-  const normalizedSearch = String(search || '').trim().toLowerCase();
+  cacheLife('foreverish');
+  cacheTag('products', 'categories');
 
-  let searchMatched = products;
+  await mongooseConnect();
 
-  if (normalizedSearch) {
-    searchMatched = searchMatched.filter((product) => {
-      const name = String(product.Name || '').toLowerCase();
-      const categories = getProductCategoryNames(product).map((value) => String(value || '').toLowerCase());
-      return name.includes(normalizedSearch) || categories.some((value) => value.includes(normalizedSearch));
-    });
-  }
-
-  let filtered = searchMatched;
-
-  if (category === 'new-arrivals') {
-    filtered = filtered.filter((product) => product.isNewArrival === true);
-  } else if (category === 'special-offers') {
-    filtered = filtered.filter((product) => product.isDiscounted === true);
-  } else if (category && category !== 'all') {
-    filtered = filtered.filter((product) => hasProductCategory(product, category));
-  }
-
-  const sorted = [...filtered];
-  if (sort === 'price-low') {
-    sorted.sort((a, b) => Number(a.Price || 0) - Number(b.Price || 0));
-  } else if (sort === 'price-high') {
-    sorted.sort((a, b) => Number(b.Price || 0) - Number(a.Price || 0));
-  } else if (sort === 'az') {
-    sorted.sort((a, b) => String(a.Name || '').localeCompare(String(b.Name || '')));
-  } else if (sort === 'za') {
-    sorted.sort((a, b) => String(b.Name || '').localeCompare(String(a.Name || '')));
-  } else {
-    sorted.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-  }
-
+  const safeCategory = String(category || 'all').trim() || 'all';
+  const safeSearch = String(search || '').trim();
+  const safeSort = String(sort || 'newest').trim() || 'newest';
   const safePage = Math.max(1, Number(page) || 1);
-  const safeLimit = Math.max(1, Number(limit) || 24);
-  const start = (safePage - 1) * safeLimit;
-  const items = sorted.slice(start, start + safeLimit).map(toProductCardItem);
+  const safeLimit = Math.max(1, Number(limit) || 12);
 
-  const categoryCounts = new Map();
-  for (const product of searchMatched) {
-    for (const value of getProductCategories(product)) {
-      const id = value.id || value._id;
-      categoryCounts.set(id, (categoryCounts.get(id) || 0) + 1);
+  const query = { isLive: true };
+
+  if (safeCategory === 'new-arrivals') {
+    query.isNewArrival = true;
+  } else if (safeCategory === 'special-offers') {
+    query.isDiscounted = true;
+  } else if (safeCategory && safeCategory !== 'all') {
+    const categories = await getCategoriesRaw();
+    const matchedCategory = categories.find((entry) => entry.id === safeCategory);
+    if (!matchedCategory?._id) {
+      return {
+        items: [],
+        total: 0,
+        page: safePage,
+        limit: safeLimit,
+        hasMore: false,
+        totalPages: 0,
+        activeCategory: safeCategory,
+        searchTerm: safeSearch,
+        sort: safeSort,
+      };
+    }
+
+    query.Category = matchedCategory._id;
+  }
+
+  if (safeSearch) {
+    const searchRegex = new RegExp(escapeRegex(safeSearch), 'i');
+    const matchingCategories = await Category.find(
+      {
+        $or: [
+          { name: searchRegex },
+          { slug: searchRegex },
+        ],
+      },
+      '_id',
+    ).lean();
+
+    const matchingCategoryIds = matchingCategories.map((entry) => entry._id);
+    query.$or = [{ Name: searchRegex }];
+    if (matchingCategoryIds.length > 0) {
+      query.$or.push({ Category: { $in: matchingCategoryIds } });
     }
   }
 
-  const availableCategories = (await getCategoriesRaw()).filter(
-    (entry) => entry.id === 'special-offers' || (categoryCounts.get(entry.id) || 0) > 0,
-  );
+  const sortQuery = (() => {
+    if (safeSort === 'price-low') return { Price: 1, createdAt: -1 };
+    if (safeSort === 'price-high') return { Price: -1, createdAt: -1 };
+    if (safeSort === 'az') return { Name: 1, createdAt: -1 };
+    if (safeSort === 'za') return { Name: -1, createdAt: -1 };
+    return { createdAt: -1 };
+  })();
+
+  const skip = (safePage - 1) * safeLimit;
+
+  const [items, total] = await Promise.all([
+    Product.find(query)
+      .populate('Category')
+      .sort(sortQuery)
+      .skip(skip)
+      .limit(safeLimit)
+      .lean()
+      .then((products) => products.map(serializeProduct).map(toProductCardItem)),
+    Product.countDocuments(query),
+  ]);
 
   return {
     items,
-    total: sorted.length,
+    total,
     page: safePage,
     limit: safeLimit,
-    hasMore: start + safeLimit < sorted.length,
-    activeCategory: category,
-    searchTerm: search,
-    sort,
-    categories: availableCategories,
+    hasMore: skip + safeLimit < total,
+    totalPages: Math.ceil(total / safeLimit),
+    activeCategory: safeCategory,
+    searchTerm: safeSearch,
+    sort: safeSort,
   };
+}
+
+export async function getApprovedReviews(productId) {
+  'use cache';
+  cacheLife('foreverish');
+  cacheTag(`reviews-${productId}`);
+
+  const safeProductId = String(productId || '').trim();
+  if (!safeProductId) return [];
+
+  await mongooseConnect();
+  const Review = (await import('@/models/Review')).default;
+
+  const reviews = await Review.find({ productId: safeProductId, isApproved: true })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return reviews.map((review) => ({
+    ...review,
+    _id: review._id.toString(),
+    productId: review.productId?.toString?.() || safeProductId,
+    userId: review.userId?.toString?.() || null,
+    createdAt: review.createdAt ? new Date(review.createdAt).toISOString() : null,
+    updatedAt: review.updatedAt ? new Date(review.updatedAt).toISOString() : null,
+  }));
 }
 
 export async function getProductBySlug(slug) {
   'use cache';
-  cacheLife('max');
+  cacheLife('foreverish');
   cacheTag('products', `product-${slug}`);
   const safeSlug = String(slug || '').trim();
   if (!safeSlug) return null;
@@ -567,7 +617,7 @@ export async function getProductPrerenderParams(limit = 1) {
 
 export async function getRelatedProducts({ category = '', excludeSlug = '', limit = 8 } = {}) {
   'use cache';
-  cacheLife('max');
+  cacheLife('foreverish');
   cacheTag('products');
   const products = await getLiveProductsRaw();
 
@@ -592,6 +642,304 @@ export async function getOrdersList() {
   await mongooseConnect();
   const orders = await Order.find({}).sort({ createdAt: -1 }).lean();
   return orders.map(toOrderSummaryRow);
+}
+
+export async function getAdminProductsPage({
+  search = '',
+  status = 'all',
+  stock = 'all',
+  sort = 'newest',
+  page = 1,
+  limit = 12,
+} = {}) {
+  await mongooseConnect();
+
+  const safeSearch = String(search || '').trim();
+  const safeStatus = String(status || 'all').trim() || 'all';
+  const safeStock = String(stock || 'all').trim() || 'all';
+  const safeSort = String(sort || 'newest').trim() || 'newest';
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeLimit = Math.max(1, Number(limit) || 12);
+
+  const query = {};
+
+  if (safeStatus === 'live') query.isLive = true;
+  if (safeStatus === 'draft') query.isLive = false;
+
+  if (safeStock === 'in-stock') query.StockStatus = 'In Stock';
+  if (safeStock === 'out-of-stock') query.StockStatus = { $ne: 'In Stock' };
+
+  if (safeSearch) {
+    const searchRegex = new RegExp(escapeRegex(safeSearch), 'i');
+    const matchingCategories = await Category.find(
+      {
+        $or: [{ name: searchRegex }, { slug: searchRegex }],
+      },
+      '_id',
+    ).lean();
+
+    const matchingCategoryIds = matchingCategories.map((entry) => entry._id);
+    query.$or = [{ Name: searchRegex }];
+
+    if (matchingCategoryIds.length > 0) {
+      query.$or.push({ Category: { $in: matchingCategoryIds } });
+    }
+
+    if ('special offers'.includes(safeSearch.toLowerCase()) || 'special-offers'.includes(safeSearch.toLowerCase())) {
+      query.$or.push({ isDiscounted: true });
+    }
+  }
+
+  const sortQuery = (() => {
+    if (safeSort === 'oldest') return { createdAt: 1 };
+    if (safeSort === 'updated') return { updatedAt: -1, createdAt: -1 };
+    if (safeSort === 'price-high') return { Price: -1, createdAt: -1 };
+    if (safeSort === 'price-low') return { Price: 1, createdAt: -1 };
+    if (safeSort === 'name') return { Name: 1, createdAt: -1 };
+    return { createdAt: -1 };
+  })();
+
+  const skip = (safePage - 1) * safeLimit;
+
+  const [items, total, totalProducts, liveProducts] = await Promise.all([
+    Product.find(query)
+      .populate('Category')
+      .sort(sortQuery)
+      .skip(skip)
+      .limit(safeLimit)
+      .lean()
+      .then((products) => products.map(serializeProduct).map(toAdminProductRow)),
+    Product.countDocuments(query),
+    Product.countDocuments(),
+    Product.countDocuments({ isLive: true }),
+  ]);
+
+  return {
+    items,
+    total,
+    page: safePage,
+    limit: safeLimit,
+    totalPages: Math.ceil(total / safeLimit),
+    hasMore: skip + safeLimit < total,
+    searchTerm: safeSearch,
+    status: safeStatus,
+    stock: safeStock,
+    sort: safeSort,
+    summary: {
+      totalProducts,
+      liveProducts,
+      draftProducts: Math.max(0, totalProducts - liveProducts),
+    },
+  };
+}
+
+export async function getAdminOrdersPage({
+  search = '',
+  status = 'Confirmed',
+  startDate = '',
+  endDate = '',
+  page = 1,
+  limit = 12,
+} = {}) {
+  await mongooseConnect();
+
+  const safeSearch = String(search || '').trim();
+  const safeStatus = String(status || 'Confirmed').trim() || 'Confirmed';
+  const safeStartDate = String(startDate || '').trim();
+  const safeEndDate = String(endDate || '').trim();
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeLimit = Math.max(1, Number(limit) || 12);
+
+  const query = {};
+
+  if (safeStatus !== 'all') {
+    if (safeStatus === 'Confirmed') {
+      query.status = { $in: ['Confirmed', 'Pending'] };
+    } else {
+      query.status = safeStatus;
+    }
+  }
+
+  if (safeSearch) {
+    const searchRegex = new RegExp(escapeRegex(safeSearch), 'i');
+    query.$or = [
+      { orderId: searchRegex },
+      { customerName: searchRegex },
+      { customerPhone: searchRegex },
+    ];
+  }
+
+  if (safeStartDate || safeEndDate) {
+    query.createdAt = {};
+    if (safeStartDate) {
+      const start = new Date(safeStartDate);
+      start.setHours(0, 0, 0, 0);
+      query.createdAt.$gte = start;
+    }
+    if (safeEndDate) {
+      const end = new Date(safeEndDate);
+      end.setHours(23, 59, 59, 999);
+      query.createdAt.$lte = end;
+    }
+  }
+
+  const skip = (safePage - 1) * safeLimit;
+
+  const [items, total, confirmedCount, inProcessCount, deliveredCount, returnedCount] = await Promise.all([
+    Order.find(query).sort({ createdAt: -1 }).skip(skip).limit(safeLimit).lean().then((orders) => orders.map(toOrderSummaryRow)),
+    Order.countDocuments(query),
+    Order.countDocuments({ status: { $in: ['Confirmed', 'Pending'] } }),
+    Order.countDocuments({ status: 'In Process' }),
+    Order.countDocuments({ status: 'Delivered' }),
+    Order.countDocuments({ status: 'Returned' }),
+  ]);
+
+  return {
+    items,
+    total,
+    page: safePage,
+    limit: safeLimit,
+    totalPages: Math.ceil(total / safeLimit),
+    hasMore: skip + safeLimit < total,
+    searchTerm: safeSearch,
+    status: safeStatus,
+    startDate: safeStartDate,
+    endDate: safeEndDate,
+    summary: {
+      confirmedCount,
+      inProcessCount,
+      deliveredCount,
+      returnedCount,
+      allCount: confirmedCount + inProcessCount + deliveredCount + returnedCount,
+    },
+  };
+}
+
+export async function getAdminUsersPage({
+  search = '',
+  status = 'all',
+  page = 1,
+  limit = 12,
+} = {}) {
+  await mongooseConnect();
+
+  const safeSearch = String(search || '').trim();
+  const safeStatus = String(status || 'all').trim() || 'all';
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeLimit = Math.max(1, Number(limit) || 12);
+
+  const query = {};
+
+  if (safeStatus === 'active') query.disabled = { $ne: true };
+  if (safeStatus === 'disabled') query.disabled = true;
+
+  if (safeSearch) {
+    const searchRegex = new RegExp(escapeRegex(safeSearch), 'i');
+    query.$or = [{ name: searchRegex }, { email: searchRegex }];
+  }
+
+  const skip = (safePage - 1) * safeLimit;
+
+  const [items, total, totalUsers, disabledUsers] = await Promise.all([
+    User.find(query).sort({ createdAt: -1 }).skip(skip).limit(safeLimit).lean(),
+    User.countDocuments(query),
+    User.countDocuments(),
+    User.countDocuments({ disabled: true }),
+  ]);
+
+  return {
+    items: items.map((user) => ({
+      ...user,
+      _id: user._id.toString(),
+      createdAt: user.createdAt?.toISOString(),
+      updatedAt: user.updatedAt?.toISOString(),
+    })),
+    total,
+    page: safePage,
+    limit: safeLimit,
+    totalPages: Math.ceil(total / safeLimit),
+    hasMore: skip + safeLimit < total,
+    searchTerm: safeSearch,
+    status: safeStatus,
+    summary: {
+      totalUsers,
+      disabledUsers,
+      activeUsers: Math.max(0, totalUsers - disabledUsers),
+    },
+  };
+}
+
+export async function getAdminReviewsPage({
+  search = '',
+  page = 1,
+  limit = 12,
+} = {}) {
+  await mongooseConnect();
+  const Review = (await import('@/models/Review')).default;
+
+  const safeSearch = String(search || '').trim();
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeLimit = Math.max(1, Number(limit) || 12);
+
+  const query = {};
+
+  if (safeSearch) {
+    const searchRegex = new RegExp(escapeRegex(safeSearch), 'i');
+    const matchedProducts = await Product.find(
+      {
+        $or: [{ Name: searchRegex }, { slug: searchRegex }],
+      },
+      '_id',
+    ).lean();
+
+    query.$or = [{ userName: searchRegex }, { comment: searchRegex }];
+
+    if (matchedProducts.length > 0) {
+      query.$or.push({ productId: { $in: matchedProducts.map((product) => product._id) } });
+    }
+  }
+
+  const skip = (safePage - 1) * safeLimit;
+
+  const [items, total, totalReviews, recentReviews, ratings] = await Promise.all([
+    Review.find(query)
+      .populate('productId', 'Name slug')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(safeLimit)
+      .lean(),
+    Review.countDocuments(query),
+    Review.countDocuments(),
+    Review.countDocuments({ createdAt: { $gt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }),
+    Review.aggregate([{ $group: { _id: null, average: { $avg: '$rating' } } }]),
+  ]);
+
+  return {
+    items: items.map((review) => ({
+      ...review,
+      _id: review._id.toString(),
+      productId: review.productId
+        ? {
+            ...review.productId,
+            _id: review.productId._id.toString(),
+          }
+        : null,
+      userId: review.userId ? review.userId.toString() : null,
+      createdAt: review.createdAt?.toISOString(),
+      updatedAt: review.updatedAt?.toISOString(),
+    })),
+    total,
+    page: safePage,
+    limit: safeLimit,
+    totalPages: Math.ceil(total / safeLimit),
+    hasMore: skip + safeLimit < total,
+    searchTerm: safeSearch,
+    summary: {
+      totalReviews,
+      recentReviews,
+      averageRating: Number(ratings[0]?.average || 0),
+    },
+  };
 }
 
 export async function getUserOrders(email) {

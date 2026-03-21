@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { requireAdmin } from '@/lib/requireAdmin';
 import mongooseConnect from '@/lib/mongooseConnect';
 import Review from '@/models/Review';
@@ -47,6 +48,8 @@ export async function DELETE(req) {
     if (!result) {
       return NextResponse.json({ success: false, error: 'Review not found' }, { status: 404 });
     }
+
+    revalidateTag(`reviews-${result.productId?.toString?.() || result.productId}`);
 
     return NextResponse.json({ success: true, message: 'Review deleted successfully' });
   } catch (error) {

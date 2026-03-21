@@ -93,6 +93,7 @@ export async function PUT(req) {
 
     coverPhoto._id = coverPhoto._id.toString();
     revalidateTag('cover-photos', 'max');
+    revalidateTag('home-sections');
 
     return NextResponse.json({ success: true, data: coverPhoto });
   } catch (error) {

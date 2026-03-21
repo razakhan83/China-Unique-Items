@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
@@ -77,6 +78,8 @@ export async function POST(req) {
         rating: Number(rating),
       }
     });
+
+    revalidateTag(`reviews-${productId}`);
 
     return NextResponse.json({ success: true, data: review });
   } catch (error) {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { isAdminEmail } from '@/lib/admin';
@@ -19,6 +20,8 @@ export async function DELETE(req, { params }) {
     if (!review) {
       return NextResponse.json({ success: false, error: 'Review not found' }, { status: 404 });
     }
+
+    revalidateTag(`reviews-${review.productId?.toString?.() || review.productId}`);
 
     return NextResponse.json({ success: true, message: 'Review deleted successfully' });
   } catch (error) {

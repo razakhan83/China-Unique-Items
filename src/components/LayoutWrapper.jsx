@@ -1,7 +1,6 @@
 'use client';
 
 import { Suspense } from 'react';
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight, CreditCard, Facebook, Instagram, MapPin, Store, Truck } from 'lucide-react';
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
@@ -10,16 +9,8 @@ import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
 
 function LayoutContent({ children, categories, settings }) {
-    const pathname = usePathname();
     const year = new Date().getFullYear();
 
-    const isAdminPage = pathname?.startsWith('/admin');
-
-    if (isAdminPage) {
-        return <>{children}</>;
-    }
-
-    // Store routes: full chrome with Navbar, Footer, WhatsApp
     return (
         <>
             <div className="flex min-h-screen flex-col bg-background">

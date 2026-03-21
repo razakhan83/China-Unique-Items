@@ -1,12 +1,9 @@
-import { connection } from 'next/server';
-
 import { getAdminSettings } from '@/lib/data';
 import { requireAdmin } from '@/lib/requireAdmin';
 
 import AdminSettingsClient from './AdminSettingsClient';
 
 export default async function AdminSettingsPage() {
-  await connection();
   await requireAdmin();
 
   return <SettingsContent />;

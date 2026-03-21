@@ -1,33 +1,29 @@
 'use client';
 
-import { useState, useEffect, Suspense, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { 
-  Search, 
-  UserX, 
-  UserCheck, 
-  Mail, 
+import Link from 'next/link';
+import { useEffect, useState, useTransition } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import {
   Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Mail,
   MoreVertical,
+  Search,
   ShieldAlert,
-  LogOut,
+  UserCheck,
+  UserX,
   Users as UsersIcon,
   X,
-  ChevronLeft,
-  ChevronRight
+  LogOut,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import AppPagination from '@/components/AppPagination';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,87 +33,101 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
-export default function AdminUsersClient({ initialUsers }) {
-  const [users, setUsers] = useState(initialUsers);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all'); // all, active, disabled
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loadingId, setLoadingId] = useState(null);
+function buildHref(pathname, searchParams, updates) {
+  const params = new URLSearchParams(searchParams?.toString());
 
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value === null || value === undefined || value === '' || value === 'all') {
+      params.delete(key);
+    } else {
+      params.set(key, String(value));
+    }
+  });
+
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
+}
+
+export default function AdminUsersClient({
+  initialUsers,
+  total,
+  totalPages,
+  currentPage,
+  initialSearchQuery,
+  initialStatusFilter,
+  summary,
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [users, setUsers] = useState(initialUsers);
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
+  const [loadingId, setLoadingId] = useState(null);
   const [highlightedId, setHighlightedId] = useState(null);
 
   useEffect(() => {
+    setUsers(initialUsers);
+  }, [initialUsers]);
+
+  useEffect(() => {
+    setSearchQuery(initialSearchQuery);
+  }, [initialSearchQuery]);
+
+  useEffect(() => {
+    setStatusFilter(initialStatusFilter);
+  }, [initialStatusFilter]);
+
+  useEffect(() => {
     const id = searchParams.get('id');
-    if (id) {
-      // Set highlight immediately
-      setHighlightedId(id);
-      
-      // Delay scroll slightly to ensure table is rendered
-      const scrollTimer = setTimeout(() => {
-        const element = document.getElementById(`user-${id}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 100);
+    if (!id) return undefined;
 
-      // Remove highlight after 3 seconds
-      const clearTimer = setTimeout(() => {
-        setHighlightedId(null);
-      }, 3000);
+    setHighlightedId(id);
 
-      return () => {
-        clearTimeout(scrollTimer);
-        clearTimeout(clearTimer);
-      };
-    }
+    const scrollTimer = setTimeout(() => {
+      const element = document.getElementById(`user-${id}`);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+
+    const clearTimer = setTimeout(() => {
+      setHighlightedId(null);
+    }, 3000);
+
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearTimer);
+    };
   }, [searchParams]);
 
-  const filteredUsers = useMemo(() => {
-    let result = users;
+  function navigate(updates) {
+    const href = buildHref(pathname, searchParams, updates);
+    startTransition(() => {
+      router.push(href);
+    });
+  }
 
-    if (statusFilter !== 'all') {
-      result = result.filter(user => (statusFilter === 'active' ? !user.disabled : user.disabled));
-    }
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(user => 
-        user.name?.toLowerCase().includes(query) ||
-        user.email?.toLowerCase().includes(query)
-      );
-    }
-
-    return result;
-  }, [users, searchQuery, statusFilter]);
-
-  const ITEMS_PER_PAGE = 10;
-  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
-  const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredUsers.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredUsers, currentPage]);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const clearFilters = () => {
+  function clearFilters() {
     setSearchQuery('');
     setStatusFilter('all');
-    setCurrentPage(1);
-  };
+    navigate({ search: null, status: null, page: null });
+  }
 
-  const handleUserAction = async (user, updateData) => {
+  async function handleUserAction(user, updateData) {
     setLoadingId(user._id);
-    
+
     try {
       const res = await fetch(`/api/admin/users/${user._id}`, {
         method: 'PATCH',
@@ -127,22 +137,27 @@ export default function AdminUsersClient({ initialUsers }) {
 
       const data = await res.json();
 
-      if (data.success) {
-        if (typeof updateData.disabled === 'boolean') {
-          setUsers(prev => prev.map(u => u._id === user._id ? { ...u, disabled: updateData.disabled } : u));
-          toast.success(`User ${updateData.disabled ? 'disabled' : 'enabled'} successfully`);
-        } else if (updateData.action === 'force-logout') {
-          toast.success(`User logged out from all devices`);
-        }
-      } else {
+      if (!data.success) {
         toast.error(data.message || 'Action failed');
+        return;
       }
+
+      if (typeof updateData.disabled === 'boolean') {
+        setUsers((prev) => prev.map((entry) => (
+          entry._id === user._id ? { ...entry, disabled: updateData.disabled } : entry
+        )));
+        toast.success(`User ${updateData.disabled ? 'disabled' : 'enabled'} successfully`);
+      } else if (updateData.action === 'force-logout') {
+        toast.success('User logged out from all devices');
+      }
+
+      router.refresh();
     } catch (error) {
       toast.error('An error occurred during user action');
     } finally {
       setLoadingId(null);
     }
-  };
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -157,7 +172,7 @@ export default function AdminUsersClient({ initialUsers }) {
         <Card className="surface-card border-none bg-primary/5">
           <CardHeader className="pb-2">
             <CardDescription className="text-primary/70">Total Users</CardDescription>
-            <CardTitle className="text-3xl font-bold text-primary">{users.length}</CardTitle>
+            <CardTitle className="text-3xl font-bold text-primary">{summary.totalUsers}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-xs text-primary/60">
@@ -166,13 +181,11 @@ export default function AdminUsersClient({ initialUsers }) {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="surface-card border-none bg-emerald-500/5">
           <CardHeader className="pb-2">
             <CardDescription className="text-emerald-600/70">Active Users</CardDescription>
-            <CardTitle className="text-3xl font-bold text-emerald-600">
-              {users.filter(u => !u.disabled).length}
-            </CardTitle>
+            <CardTitle className="text-3xl font-bold text-emerald-600">{summary.activeUsers}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-xs text-emerald-600/60">
@@ -185,9 +198,7 @@ export default function AdminUsersClient({ initialUsers }) {
         <Card className="surface-card border-none bg-red-500/5">
           <CardHeader className="pb-2">
             <CardDescription className="text-red-600/70">Disabled Users</CardDescription>
-            <CardTitle className="text-3xl font-bold text-red-600">
-              {users.filter(u => u.disabled).length}
-            </CardTitle>
+            <CardTitle className="text-3xl font-bold text-red-600">{summary.disabledUsers}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-xs text-red-600/60">
@@ -199,24 +210,27 @@ export default function AdminUsersClient({ initialUsers }) {
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center">
-        <div className="relative flex-1">
+        <form
+          className="relative flex-1"
+          onSubmit={(event) => {
+            event.preventDefault();
+            navigate({ search: searchQuery.trim() || null, page: null });
+          }}
+        >
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by name or email..."
             className="pl-10"
             value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(event) => setSearchQuery(event.target.value)}
           />
-        </div>
+        </form>
         <div className="flex items-center gap-2">
           <Select
             value={statusFilter}
-            onValueChange={(val) => {
-              setStatusFilter(val);
-              setCurrentPage(1);
+            onValueChange={(value) => {
+              setStatusFilter(value);
+              navigate({ status: value, page: null });
             }}
           >
             <SelectTrigger className="h-10 w-[140px]">
@@ -243,7 +257,7 @@ export default function AdminUsersClient({ initialUsers }) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card shadow-sm">
+      <div className={cn('rounded-xl border border-border bg-card shadow-sm transition-opacity', isPending && 'opacity-70')}>
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
@@ -255,14 +269,14 @@ export default function AdminUsersClient({ initialUsers }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedUsers.length > 0 ? (
-              paginatedUsers.map((user) => (
-                <TableRow 
-                  key={user._id} 
+            {users.length > 0 ? (
+              users.map((user) => (
+                <TableRow
+                  key={user._id}
                   id={`user-${user._id}`}
                   className={cn(
-                    "transition-all duration-700",
-                    highlightedId === user._id ? "bg-primary/10 ring-1 ring-primary/20" : "hover:bg-muted/30"
+                    'transition-all duration-700',
+                    highlightedId === user._id ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-muted/30',
                   )}
                 >
                   <TableCell>
@@ -277,12 +291,12 @@ export default function AdminUsersClient({ initialUsers }) {
                         <span className="font-semibold text-foreground flex items-center gap-2">
                           {user.name}
                           {highlightedId === user._id && (
-                            <Badge className="h-4 px-1 text-[10px] uppercase tracking-wider bg-primary text-primary-foreground animate-pulse">New</Badge>
+                            <Badge className="h-4 px-1 text-[10px] uppercase tracking-wider bg-primary text-primary-foreground animate-pulse">
+                              New
+                            </Badge>
                           )}
                         </span>
-                        {user.phone && (
-                          <span className="text-xs text-muted-foreground">{user.phone}</span>
-                        )}
+                        {user.phone && <span className="text-xs text-muted-foreground">{user.phone}</span>}
                       </div>
                     </div>
                   </TableCell>
@@ -307,7 +321,7 @@ export default function AdminUsersClient({ initialUsers }) {
                         Disabled
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="flex w-fit items-center gap-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-500 font-bold">
+                      <Badge variant="secondary" className="flex w-fit items-center gap-1 bg-emerald-50 text-emerald-700 font-bold">
                         <UserCheck className="size-3" />
                         Active
                       </Badge>
@@ -325,8 +339,8 @@ export default function AdminUsersClient({ initialUsers }) {
                         <DropdownMenuGroup>
                           <DropdownMenuLabel>User Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className={user.disabled ? "text-emerald-600 focus:text-emerald-600" : "text-destructive focus:text-destructive"}
+                          <DropdownMenuItem
+                            className={user.disabled ? 'text-emerald-600 focus:text-emerald-600' : 'text-destructive focus:text-destructive'}
                             onClick={() => handleUserAction(user, { disabled: !user.disabled })}
                             disabled={loadingId === user._id}
                           >
@@ -336,7 +350,7 @@ export default function AdminUsersClient({ initialUsers }) {
                               <><UserX className="mr-2 size-4" /> Disable User</>
                             )}
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => handleUserAction(user, { action: 'force-logout' })}
                             disabled={loadingId === user._id || user.disabled}
                           >
@@ -365,52 +379,21 @@ export default function AdminUsersClient({ initialUsers }) {
         </Table>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-2">
+        <div className="flex flex-col gap-3 px-2">
           <p className="text-sm text-muted-foreground">
-            Showing <span className="font-medium text-foreground">{((currentPage - 1) * ITEMS_PER_PAGE) + 1}</span> to{' '}
-            <span className="font-medium text-foreground">
-              {Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)}
-            </span>{' '}
-            of <span className="font-medium text-foreground">{filteredUsers.length}</span> users
+            Showing <span className="font-medium text-foreground">{((currentPage - 1) * 12) + 1}</span> to{' '}
+            <span className="font-medium text-foreground">{Math.min(currentPage * 12, total)}</span> of{' '}
+            <span className="font-medium text-foreground">{total}</span> users
           </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <div className="flex items-center gap-1">
-              {[...Array(totalPages)].map((_, i) => (
-                <Button
-                  key={i + 1}
-                  variant={currentPage === i + 1 ? "default" : "outline"}
-                  size="icon"
-                  className="size-9 font-medium"
-                  onClick={() => handlePageChange(i + 1)}
-                >
-                  {i + 1}
-                </Button>
-              ))}
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
+          <AppPagination
+            page={currentPage}
+            totalPages={totalPages}
+            getHref={(page) => buildHref(pathname, searchParams, { page })}
+          />
         </div>
       )}
-      
+
       <div className="rounded-xl bg-amber-50 p-4 border border-amber-200 flex items-start gap-4">
         <div className="bg-amber-100 p-2 rounded-lg text-amber-700 flex-shrink-0">
           <ShieldAlert className="size-5" />

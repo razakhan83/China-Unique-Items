@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { signOut, useSession } from 'next-auth/react';
-import { usePathname, useRouter } from 'next/navigation';
+import { signOut } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
 import NextTopLoader from 'nextjs-toploader';
 import {
   Box,
@@ -52,10 +52,8 @@ const navItems = [
   { href: '/admin/reviews', label: 'Reviews', icon: MessageSquare, match: (pathname) => pathname.startsWith('/admin/reviews') },
 ];
 
-export default function AdminLayoutShell({ children }) {
+export default function AdminLayoutShell({ children, sessionUser }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (pathname === '/admin/login') return <>{children}</>;
@@ -96,12 +94,12 @@ export default function AdminLayoutShell({ children }) {
       <div className="mt-auto flex flex-col gap-2 pt-6 border-t border-white/10">
         <div className="flex items-center gap-3 rounded-xl bg-white/10 px-3 py-3">
           <Avatar className="h-10 w-10 border border-white/20">
-            <AvatarImage src={session?.user?.image} alt={session?.user?.name || 'Admin'} />
-            <AvatarFallback className="bg-white/20 text-white">{(session?.user?.name || 'A').charAt(0)}</AvatarFallback>
+            <AvatarImage src={sessionUser?.image} alt={sessionUser?.name || 'Admin'} />
+            <AvatarFallback className="bg-white/20 text-white">{(sessionUser?.name || 'A').charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col min-w-0">
-            <p className="truncate text-sm font-semibold">{session?.user?.name || 'Admin'}</p>
-            <p className="truncate text-xs text-primary-foreground/60">{session?.user?.email}</p>
+            <p className="truncate text-sm font-semibold">{sessionUser?.name || 'Admin'}</p>
+            <p className="truncate text-xs text-primary-foreground/60">{sessionUser?.email}</p>
           </div>
         </div>
         <button
@@ -141,7 +139,7 @@ export default function AdminLayoutShell({ children }) {
                 </Button>
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Dashboard</p>
-                  <p className="text-xs text-muted-foreground">Welcome back, {session?.user?.name || 'Admin'}</p>
+                  <p className="text-xs text-muted-foreground">Welcome back, {sessionUser?.name || 'Admin'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -151,8 +149,8 @@ export default function AdminLayoutShell({ children }) {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
                       <Avatar className="h-10 w-10 border border-border">
-                        <AvatarImage src={session?.user?.image} alt={session?.user?.name || 'Admin'} />
-                        <AvatarFallback className="bg-primary/5 text-primary">{(session?.user?.name || 'A').charAt(0)}</AvatarFallback>
+                        <AvatarImage src={sessionUser?.image} alt={sessionUser?.name || 'Admin'} />
+                        <AvatarFallback className="bg-primary/5 text-primary">{(sessionUser?.name || 'A').charAt(0)}</AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
@@ -160,8 +158,8 @@ export default function AdminLayoutShell({ children }) {
                     <DropdownMenuGroup>
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium leading-none">{session?.user?.name || 'Admin'}</p>
-                          <p className="text-xs leading-none text-muted-foreground">{session?.user?.email}</p>
+                          <p className="text-sm font-medium leading-none">{sessionUser?.name || 'Admin'}</p>
+                          <p className="text-xs leading-none text-muted-foreground">{sessionUser?.email}</p>
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />

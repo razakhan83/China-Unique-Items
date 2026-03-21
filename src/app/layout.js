@@ -1,7 +1,5 @@
-import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { getStoreCategories, getStoreSettings } from "@/lib/data";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,15 +33,9 @@ export const metadata = {
   },
 };
 
-import { CartProvider } from "@/context/CartContext";
-import AuthProvider from "@/components/AuthProvider";
-import LayoutWrapper from "@/components/LayoutWrapper";
 import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
-export default async function RootLayout({ children }) {
-  const [categories, settings] = await Promise.all([getStoreCategories(), getStoreSettings()]);
-
+export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <head>
@@ -53,13 +45,7 @@ export default async function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning={true}
       >
-        <CartProvider>
-          <AuthProvider>
-            <TooltipProvider>
-              <LayoutWrapper categories={categories} settings={settings}>{children}</LayoutWrapper>
-            </TooltipProvider>
-          </AuthProvider>
-        </CartProvider>
+        {children}
         <Toaster position="bottom-center" richColors />
       </body>
     </html>

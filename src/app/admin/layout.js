@@ -1,8 +1,8 @@
-import { connection } from 'next/server';
-
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import AdminLayoutShell from './AdminLayoutShell';
 
 export default async function AdminLayout({ children }) {
-  await connection();
-  return <AdminLayoutShell>{children}</AdminLayoutShell>;
+  const session = await getServerSession(authOptions);
+  return <AdminLayoutShell sessionUser={session?.user || null}>{children}</AdminLayoutShell>;
 }

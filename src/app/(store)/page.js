@@ -20,7 +20,7 @@ export default function Home() {
 }
 
 async function HomeContent() {
-  const { categories, coverPhotos, searchProducts, sections } = await getHomeSections();
+  const { categories, coverPhotos, sections } = await getHomeSections();
   const activeHeroSlides = coverPhotos.length
     ? coverPhotos.map((item, index) => ({
         desktopImage: item.desktopImage,
@@ -32,7 +32,6 @@ async function HomeContent() {
 
   return (
     <HomeClientWrapper
-      products={searchProducts}
       heroSlides={activeHeroSlides}
       categories={categories.filter(c => c.id !== 'special-offers')}
       sections={sections}

@@ -1,19 +1,15 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { 
-  Search, 
-  Trash2, 
-  Star, 
-  MessageSquare, 
-  Calendar,
-  User,
-  Package,
-} from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useState, useTransition } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Calendar, ChevronLeft, ChevronRight, MessageSquare, Package, Search, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import AppPagination from '@/components/AppPagination';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -23,51 +19,81 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-export default function AdminReviewsClient({ initialReviews }) {
-  const [reviews, setReviews] = useState(initialReviews);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loadingId, setLoadingId] = useState(null);
+function buildHref(pathname, searchParams, updates) {
+  const params = new URLSearchParams(searchParams?.toString());
 
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value === null || value === undefined || value === '') {
+      params.delete(key);
+    } else {
+      params.set(key, String(value));
+    }
+  });
+
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
+}
+
+export default function AdminReviewsClient({
+  initialReviews,
+  total,
+  totalPages,
+  currentPage,
+  initialSearchQuery,
+  summary,
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [reviews, setReviews] = useState(initialReviews);
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+  const [loadingId, setLoadingId] = useState(null);
   const [highlightedId, setHighlightedId] = useState(null);
 
   useEffect(() => {
+    setReviews(initialReviews);
+  }, [initialReviews]);
+
+  useEffect(() => {
+    setSearchQuery(initialSearchQuery);
+  }, [initialSearchQuery]);
+
+  useEffect(() => {
     const id = searchParams.get('id');
-    if (id) {
-      setHighlightedId(id);
-      
-      const scrollTimer = setTimeout(() => {
-        const element = document.getElementById(`review-${id}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 100);
+    if (!id) return undefined;
 
-      const clearTimer = setTimeout(() => {
-        setHighlightedId(null);
-      }, 3000);
+    setHighlightedId(id);
 
-      return () => {
-        clearTimeout(scrollTimer);
-        clearTimeout(clearTimer);
-      };
-    }
+    const scrollTimer = setTimeout(() => {
+      const element = document.getElementById(`review-${id}`);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+
+    const clearTimer = setTimeout(() => {
+      setHighlightedId(null);
+    }, 3000);
+
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearTimer);
+    };
   }, [searchParams]);
 
-  const filteredReviews = reviews.filter(review => 
-    review.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    review.comment?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    review.productId?.Name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  function navigate(updates) {
+    const href = buildHref(pathname, searchParams, updates);
+    startTransition(() => {
+      router.push(href);
+    });
+  }
 
-  const handleDelete = async (id) => {
+  async function handleDelete(id) {
     if (!confirm('Are you sure you want to delete this review?')) return;
-    
+
     setLoadingId(id);
+
     try {
       const res = await fetch(`/api/admin/reviews?id=${id}`, {
         method: 'DELETE',
@@ -75,18 +101,20 @@ export default function AdminReviewsClient({ initialReviews }) {
 
       const data = await res.json();
 
-      if (data.success) {
-        setReviews(prev => prev.filter(r => r._id !== id));
-        toast.success('Review deleted successfully');
-      } else {
+      if (!data.success) {
         toast.error(data.message || 'Delete failed');
+        return;
       }
+
+      setReviews((prev) => prev.filter((review) => review._id !== id));
+      toast.success('Review deleted successfully');
+      router.refresh();
     } catch (error) {
       toast.error('An error occurred while deleting the review');
     } finally {
       setLoadingId(null);
     }
-  };
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -101,7 +129,7 @@ export default function AdminReviewsClient({ initialReviews }) {
         <Card className="surface-card border-none bg-primary/5">
           <CardHeader className="pb-2">
             <CardDescription className="text-primary/70">Total Reviews</CardDescription>
-            <CardTitle className="text-3xl font-bold text-primary">{reviews.length}</CardTitle>
+            <CardTitle className="text-3xl font-bold text-primary">{summary.totalReviews}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-xs text-primary/60">
@@ -110,15 +138,11 @@ export default function AdminReviewsClient({ initialReviews }) {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="surface-card border-none bg-amber-500/5">
           <CardHeader className="pb-2">
             <CardDescription className="text-amber-600/70">Average Rating</CardDescription>
-            <CardTitle className="text-3xl font-bold text-amber-600">
-              {reviews.length > 0 
-                ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) 
-                : '0.0'}
-            </CardTitle>
+            <CardTitle className="text-3xl font-bold text-amber-600">{summary.averageRating.toFixed(1)}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-xs text-amber-600/60">
@@ -131,9 +155,7 @@ export default function AdminReviewsClient({ initialReviews }) {
         <Card className="surface-card border-none bg-emerald-500/5">
           <CardHeader className="pb-2">
             <CardDescription className="text-emerald-600/70">Recent (7 Days)</CardDescription>
-            <CardTitle className="text-3xl font-bold text-emerald-600">
-              {reviews.filter(r => new Date(r.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length}
-            </CardTitle>
+            <CardTitle className="text-3xl font-bold text-emerald-600">{summary.recentReviews}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-xs text-emerald-600/60">
@@ -144,19 +166,25 @@ export default function AdminReviewsClient({ initialReviews }) {
         </Card>
       </div>
 
-      <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-sm md:flex-row md:items-center">
+      <form
+        className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-sm md:flex-row md:items-center"
+        onSubmit={(event) => {
+          event.preventDefault();
+          navigate({ search: searchQuery.trim() || null, page: null });
+        }}
+      >
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by user, comment, or product..."
             className="pl-10"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(event) => setSearchQuery(event.target.value)}
           />
         </div>
-      </div>
+      </form>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+      <div className={cn('overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-opacity', isPending && 'opacity-70')}>
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
@@ -169,14 +197,14 @@ export default function AdminReviewsClient({ initialReviews }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredReviews.length > 0 ? (
-              filteredReviews.map((review) => (
-                <TableRow 
-                  key={review._id} 
+            {reviews.length > 0 ? (
+              reviews.map((review) => (
+                <TableRow
+                  key={review._id}
                   id={`review-${review._id}`}
                   className={cn(
-                    "transition-all duration-700",
-                    highlightedId === review._id ? "bg-primary/10 ring-1 ring-primary/20" : "hover:bg-muted/30"
+                    'transition-all duration-700',
+                    highlightedId === review._id ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-muted/30',
                   )}
                 >
                   <TableCell>
@@ -188,7 +216,9 @@ export default function AdminReviewsClient({ initialReviews }) {
                         <span className="text-sm font-semibold text-foreground flex items-center gap-2">
                           {review.userName}
                           {highlightedId === review._id && (
-                            <Badge className="h-4 px-1 text-[10px] uppercase tracking-wider bg-primary text-primary-foreground animate-pulse">New</Badge>
+                            <Badge className="h-4 px-1 text-[10px] uppercase tracking-wider bg-primary text-primary-foreground animate-pulse">
+                              New
+                            </Badge>
                           )}
                         </span>
                       </div>
@@ -196,13 +226,10 @@ export default function AdminReviewsClient({ initialReviews }) {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          className={cn(
-                            "size-3", 
-                            i < review.rating ? "fill-amber-500 text-amber-500" : "text-muted/40"
-                          )} 
+                      {Array.from({ length: 5 }, (_, index) => (
+                        <Star
+                          key={index}
+                          className={cn('size-3', index < review.rating ? 'fill-amber-500 text-amber-500' : 'text-muted/40')}
                         />
                       ))}
                     </div>
@@ -227,9 +254,9 @@ export default function AdminReviewsClient({ initialReviews }) {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="size-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => handleDelete(review._id)}
                       disabled={loadingId === review._id}
@@ -256,6 +283,21 @@ export default function AdminReviewsClient({ initialReviews }) {
           </TableBody>
         </Table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex flex-col gap-3 px-2">
+          <p className="text-sm text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{((currentPage - 1) * 12) + 1}</span> to{' '}
+            <span className="font-medium text-foreground">{Math.min(currentPage * 12, total)}</span> of{' '}
+            <span className="font-medium text-foreground">{total}</span> reviews
+          </p>
+          <AppPagination
+            page={currentPage}
+            totalPages={totalPages}
+            getHref={(page) => buildHref(pathname, searchParams, { page })}
+          />
+        </div>
+      )}
     </div>
   );
 }

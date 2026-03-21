@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import ExcelJS from 'exceljs';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useTransition } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, Receipt, Search, ChevronLeft, ChevronRight, X, Download, Edit, Zap, Loader2, Check, ChevronsUpDown } from 'lucide-react';
+import AppPagination from '@/components/AppPagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,20 +26,48 @@ const statusVariant = {
   Returned: 'outline',
 };
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
 
 const formatPrice = (price) => `PKR ${Number(price).toLocaleString('en-PK')}`;
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('en-PK', { year: 'numeric', month: 'short', day: 'numeric' });
 const formatTime = (dateStr) => new Date(dateStr).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-export default function AdminOrdersClient({ initialOrders }) {
+function buildHref(pathname, searchParams, updates) {
+  const params = new URLSearchParams(searchParams?.toString());
+
+  Object.entries(updates).forEach(([key, value]) => {
+    if (value === null || value === undefined || value === '' || (key === 'status' && value === 'Confirmed')) {
+      params.delete(key);
+    } else {
+      params.set(key, String(value));
+    }
+  });
+
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
+}
+
+export default function AdminOrdersClient({
+  initialOrders,
+  total,
+  totalPages,
+  currentPage,
+  initialSearchQuery,
+  initialStatusFilter,
+  initialStartDate,
+  initialEndDate,
+  summary,
+}) {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('Confirmed');
-  const [currentPage, setCurrentPage] = useState(1);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startNavTransition] = useTransition();
+  const [orders, setOrders] = useState(initialOrders);
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
+  const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
   const [selectedOrders, setSelectedOrders] = useState([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(initialStartDate);
+  const [endDate, setEndDate] = useState(initialEndDate);
   
   // Modals & Popovers State
   const [editingOrder, setEditingOrder] = useState(null);
@@ -54,63 +82,33 @@ export default function AdminOrdersClient({ initialOrders }) {
   
   const [cityOpen, setCityOpen] = useState(false);
 
-  // Filtering Logic
-  const filteredOrders = useMemo(() => {
-    let result = initialOrders;
+  useEffect(() => {
+    setOrders(initialOrders);
+    setSelectedOrders([]);
+  }, [initialOrders]);
 
-    if (statusFilter !== 'all') {
-      result = result.filter(order => {
-        if (statusFilter === 'Confirmed') {
-          return order.status === 'Confirmed' || order.status === 'Pending';
-        }
-        return order.status === statusFilter;
-      });
-    }
+  useEffect(() => {
+    setSearchQuery(initialSearchQuery);
+    setStatusFilter(initialStatusFilter);
+    setStartDate(initialStartDate);
+    setEndDate(initialEndDate);
+  }, [initialSearchQuery, initialStatusFilter, initialStartDate, initialEndDate]);
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(order => 
-        order.orderId.toLowerCase().includes(query) ||
-        order.customerName.toLowerCase().includes(query) ||
-        (order.customerPhone && order.customerPhone.includes(query))
-      );
-    }
+  const displayOrders = orders;
 
-    if (startDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      result = result.filter(order => new Date(order.createdAt) >= start);
-    }
-
-    if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      result = result.filter(order => new Date(order.createdAt) <= end);
-    }
-
-    return result;
-  }, [initialOrders, statusFilter, searchQuery, startDate, endDate]);
-
-  // Pagination Logic
-  const isPaginatedStatus = ['all', 'Delivered'].includes(statusFilter);
-  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
-  const displayOrders = useMemo(() => {
-    if (!isPaginatedStatus) return filteredOrders; // Show all (scrollable) for Confirmed/In Process
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredOrders.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredOrders, currentPage, isPaginatedStatus]);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  function navigate(updates) {
+    const href = buildHref(pathname, searchParams, updates);
+    startNavTransition(() => {
+      router.push(href);
+    });
+  }
 
   const clearFilters = () => {
     setSearchQuery('');
     setStatusFilter('Confirmed');
     setStartDate('');
     setEndDate('');
-    setCurrentPage(1);
+    navigate({ search: null, status: null, startDate: null, endDate: null, page: null });
   };
 
   const isAllPaginatedSelected = displayOrders.length > 0 && displayOrders.every(o => o && selectedOrders.includes(o._id));
@@ -136,9 +134,10 @@ export default function AdminOrdersClient({ initialOrders }) {
   };
 
   const handleDownloadExcel = async () => {
-    const ordersToExport = initialOrders.filter(o => selectedOrders.includes(o._id));
+    const ordersToExport = orders.filter(o => selectedOrders.includes(o._id));
     if (ordersToExport.length === 0) return;
 
+    const ExcelJS = (await import('exceljs')).default;
     const workbook = new ExcelJS.Workbook();
     
     // 1. Create a single sheet named 'Sheet1' (Courier Portal requirement)
@@ -242,7 +241,7 @@ export default function AdminOrdersClient({ initialOrders }) {
   };
 
   const handleDownloadPDF = async () => {
-    const ordersToExport = initialOrders.filter(o => selectedOrders.includes(o._id));
+    const ordersToExport = orders.filter(o => selectedOrders.includes(o._id));
     if (ordersToExport.length === 0) return;
 
     // Dynamically import jspdf to avoid SSR errors with Node-specific modules
@@ -275,7 +274,7 @@ export default function AdminOrdersClient({ initialOrders }) {
 
   const handleExportMonthlySales = async (format) => {
     // Filter orders by the selected date range for monthly report
-    const reportOrders = filteredOrders;
+    const reportOrders = orders;
     if (reportOrders.length === 0) {
       toast.error('No orders found in the current filtered range for report.');
       return;
@@ -288,6 +287,7 @@ export default function AdminOrdersClient({ initialOrders }) {
     }, {});
 
     if (format === 'excel') {
+      const ExcelJS = (await import('exceljs')).default;
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Monthly Sales');
       
@@ -384,6 +384,9 @@ export default function AdminOrdersClient({ initialOrders }) {
     if (res.success) {
       toast.success('Order updated quickly');
       setQuickActionOrder(null);
+      setOrders((prev) => prev.map((order) => (
+        order._id === id ? { ...order, status: quickStatus, trackingNumber: quickTracking, courierName: editingOrder?.courierName || '' } : order
+      )));
       router.refresh();
     } else {
       toast.error(res.error || 'Failed to update order');
@@ -415,6 +418,11 @@ export default function AdminOrdersClient({ initialOrders }) {
       toast.success('Order details updated successfully');
       setIsEditModalOpen(false);
       setEditingOrder(null);
+      setOrders((prev) => prev.map((order) => (
+        order._id === editingOrder._id
+          ? { ...order, ...updates, customerCity: editingOrder.customerCity }
+          : order
+      )));
       router.refresh();
     } else {
       toast.error(res.error || 'Failed to update order');
@@ -433,11 +441,11 @@ export default function AdminOrdersClient({ initialOrders }) {
       {/* Filter Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
         {[
-          { id: 'Confirmed', label: 'All Confirmed' },
-          { id: 'In Process', label: 'In Progress' },
-          { id: 'Delivered', label: 'Delivered' },
-          { id: 'Returned', label: 'Returned' },
-          { id: 'all', label: 'All Orders' },
+          { id: 'Confirmed', label: `All Confirmed (${summary.confirmedCount})` },
+          { id: 'In Process', label: `In Progress (${summary.inProcessCount})` },
+          { id: 'Delivered', label: `Delivered (${summary.deliveredCount})` },
+          { id: 'Returned', label: `Returned (${summary.returnedCount})` },
+          { id: 'all', label: `All Orders (${summary.allCount})` },
         ].map((tab) => (
           <Button
             key={tab.id}
@@ -445,7 +453,7 @@ export default function AdminOrdersClient({ initialOrders }) {
             size="sm"
             onClick={() => {
               setStatusFilter(tab.id);
-              setCurrentPage(1);
+              navigate({ status: tab.id, page: null });
             }}
             className={cn(
               "rounded-full px-5 h-9 font-medium transition-all",
@@ -458,17 +466,25 @@ export default function AdminOrdersClient({ initialOrders }) {
       </div>
 
       {/* Filters Bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <form
+        className="flex flex-col gap-3 sm:flex-row sm:items-center"
+        onSubmit={(event) => {
+          event.preventDefault();
+          navigate({
+            search: searchQuery.trim() || null,
+            startDate: startDate || null,
+            endDate: endDate || null,
+            page: null,
+          });
+        }}
+      >
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Search by Order ID, Name, or Phone..."
             className="pl-10 h-10"
             value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
@@ -556,10 +572,10 @@ export default function AdminOrdersClient({ initialOrders }) {
             </Button>
           )}
         </div>
-      </div>
+      </form>
 
       {/* Table Section */}
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className={cn("overflow-hidden rounded-xl border border-border bg-card transition-opacity", isPending && "opacity-70")}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[850px]">
             <thead>
@@ -587,7 +603,7 @@ export default function AdminOrdersClient({ initialOrders }) {
                     <Receipt className="mx-auto mb-4 size-10 text-muted-foreground/40" />
                     <p className="text-lg font-semibold text-foreground">No orders found</p>
                     <p className="mt-1 text-sm text-muted-foreground">Try adjusting your search or filters.</p>
-                    {(searchQuery || statusFilter !== 'Confirmed') && (
+                    {(searchQuery || statusFilter !== 'Confirmed' || startDate || endDate) && (
                       <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
                         Clear all filters
                       </Button>
@@ -847,48 +863,20 @@ export default function AdminOrdersClient({ initialOrders }) {
       </Dialog>
 
       {/* Pagination Controls */}
-      {isPaginatedStatus && totalPages > 1 && (
-        <div className="flex items-center justify-between px-2 py-4">
+      {totalPages > 1 && (
+        <div className="flex flex-col gap-3 px-2 py-4">
           <p className="text-sm text-muted-foreground">
             Showing <span className="font-medium text-foreground">{((currentPage - 1) * ITEMS_PER_PAGE) + 1}</span> to{' '}
             <span className="font-medium text-foreground">
-              {Math.min(currentPage * ITEMS_PER_PAGE, filteredOrders.length)}
+              {Math.min(currentPage * ITEMS_PER_PAGE, total)}
             </span>{' '}
-            of <span className="font-medium text-foreground">{filteredOrders.length}</span> orders
+            of <span className="font-medium text-foreground">{total}</span> orders
           </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <div className="flex items-center gap-1">
-              {[...Array(totalPages)].map((_, i) => (
-                <Button
-                  key={i + 1}
-                  variant={currentPage === i + 1 ? "default" : "outline"}
-                  size="icon"
-                  className="size-9 font-medium"
-                  onClick={() => handlePageChange(i + 1)}
-                >
-                  {i + 1}
-                </Button>
-              ))}
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-9"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
+          <AppPagination
+            page={currentPage}
+            totalPages={totalPages}
+            getHref={(page) => buildHref(pathname, searchParams, { page })}
+          />
         </div>
       )}
     </div>

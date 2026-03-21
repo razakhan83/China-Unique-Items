@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { updateTag } from 'next/cache';
+import { after } from 'next/server';
 
 import { isAdminEmail, normalizeEmail, normalizePhone, getPhoneRegex } from '@/lib/admin';
 import { authOptions } from '@/lib/auth';
@@ -76,6 +77,36 @@ async function assertAdmin() {
     throw new Error('Unauthorized access');
   }
   return session;
+}
+
+async function sendOrderEmails({ order, customerName, userEmail }) {
+  try {
+    const adminEmailResult = await resend.emails.send({
+      from: 'China Unique <onboarding@resend.dev>',
+      to: process.env.ADMIN_EMAIL || '123raza83@gmail.com',
+      subject: `New Order Received - ${customerName}`,
+      html: generateOrderEmailHtml(order),
+      headers: {
+        'X-Click-Tracking': 'off',
+      },
+    });
+    console.log(`Admin email notification triggered for ${order.orderId}:`, adminEmailResult);
+
+    if (userEmail) {
+      const customerEmailResult = await resend.emails.send({
+        from: 'China Unique <onboarding@resend.dev>',
+        to: userEmail,
+        subject: `Thank You for Your Order! - ${order.orderId}`,
+        html: generateCustomerOrderConfirmationHtml(order),
+        headers: {
+          'X-Click-Tracking': 'off',
+        },
+      });
+      console.log(`Customer 'Thank You' email triggered for ${order.orderId}:`, customerEmailResult);
+    }
+  } catch (emailError) {
+    console.error(`Failed to send emails for ${order.orderId}:`, emailError);
+  }
 }
 
 export async function toggleProductLiveAction(productId, nextValue) {
@@ -301,36 +332,7 @@ export async function submitOrderAction(input) {
     console.error('Failed to create order notification:', notifyError);
   }
 
-  // Trigger Notification Emails (Background)
-  try {
-    // 1. Notify Admin
-    const adminEmailResult = await resend.emails.send({
-      from: 'China Unique <onboarding@resend.dev>',
-      to: process.env.ADMIN_EMAIL || '123raza83@gmail.com',
-      subject: `New Order Received - ${customerName}`,
-      html: generateOrderEmailHtml(order),
-      headers: {
-        'X-Click-Tracking': 'off',
-      },
-    });
-    console.log(`Admin email notification triggered for ${order.orderId}:`, adminEmailResult);
-
-    // 2. Notify Customer (Thank You Email)
-    if (userEmail) {
-      const customerEmailResult = await resend.emails.send({
-        from: 'China Unique <onboarding@resend.dev>',
-        to: userEmail,
-        subject: `Thank You for Your Order! - ${order.orderId}`,
-        html: generateCustomerOrderConfirmationHtml(order),
-        headers: {
-          'X-Click-Tracking': 'off',
-        },
-      });
-      console.log(`Customer 'Thank You' email triggered for ${order.orderId}:`, customerEmailResult);
-    }
-  } catch (emailError) {
-    console.error(`Failed to send emails for ${order.orderId}:`, emailError);
-  }
+  after(() => sendOrderEmails({ order, customerName, userEmail }));
 
   const lines = [
     '*New Order from China Unique Store*',

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Bell, ShoppingCart, MessageSquare, UserPlus, Circle, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react';
+import { Bell, ShoppingCart, MessageSquare, UserPlus, Circle, CheckCircle2, ChevronRight, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { 
@@ -49,11 +49,15 @@ export default function AdminNotificationCenter() {
   }, []);
 
   useEffect(() => {
+    if (!open) return undefined;
     fetchNotifications();
-    // Poll every 60 seconds
-    const interval = setInterval(() => fetchNotifications(true), 60000);
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
+    return undefined;
+  }, [fetchNotifications, open]);
+
+  async function handleRefresh() {
+    await fetchNotifications();
+    toast.success('Notifications refreshed');
+  }
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -112,16 +116,29 @@ export default function AdminNotificationCenter() {
               </Badge>
             )}
           </div>
-          {unreadCount > 0 && (
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 text-xs font-semibold text-primary hover:bg-primary/5"
-              onClick={markAllRead}
+              size="icon"
+              className="size-8 text-muted-foreground hover:text-foreground"
+              onClick={handleRefresh}
+              disabled={loading}
+              title="Refresh notifications"
             >
-              Mark all as read
+              <RefreshCw className={cn('size-4', loading && 'animate-spin')} />
+              <span className="sr-only">Refresh notifications</span>
             </Button>
-          )}
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs font-semibold text-primary hover:bg-primary/5"
+                onClick={markAllRead}
+              >
+                Mark all as read
+              </Button>
+            )}
+          </div>
         </div>
         <Separator />
         <ScrollArea className="h-[400px]">

@@ -1,25 +1,74 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import CategoryIconCarousel from "@/components/CategoryIconCarousel";
 import HeroSlider from "@/components/HeroSlider";
 import HomeCategories from "@/components/HomeCategories";
-import ProductGridClient from "@/components/ProductGridClient";
 import SearchField from "@/components/SearchField";
-import { getProductCategoryNames } from "@/lib/productCategories";
 
-export default function HomeClientWrapper({ products, heroSlides, categories = [], sections = [] }) {
+export default function HomeClientWrapper({ heroSlides, categories = [], sections = [] }) {
+  const router = useRouter();
   const wrapperRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm), 250);
     return () => clearTimeout(timer);
   }, [searchTerm]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadSuggestions() {
+      if (!debouncedSearch.trim()) {
+        if (isActive) {
+          setSuggestions([]);
+          setIsLoadingSuggestions(false);
+        }
+        return;
+      }
+
+      setIsLoadingSuggestions(true);
+      try {
+        const response = await fetch(`/api/search-products?q=${encodeURIComponent(debouncedSearch.trim())}&limit=5`);
+        const result = await response.json();
+
+        if (!isActive) return;
+
+        setSuggestions(
+          Array.isArray(result?.data)
+            ? result.data.map((product) => ({
+                ...product,
+                onSelect: () => {
+                  router.push(`/products/${product.slug || product._id || product.id}`);
+                  setIsFocused(false);
+                },
+              }))
+            : [],
+        );
+      } catch {
+        if (isActive) {
+          setSuggestions([]);
+        }
+      } finally {
+        if (isActive) {
+          setIsLoadingSuggestions(false);
+        }
+      }
+    }
+
+    loadSuggestions();
+
+    return () => {
+      isActive = false;
+    };
+  }, [debouncedSearch, router]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -31,35 +80,11 @@ export default function HomeClientWrapper({ products, heroSlides, categories = [
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const suggestions = useMemo(() => {
-    if (!debouncedSearch.trim()) return [];
-    const term = debouncedSearch.toLowerCase();
-    return products
-      .filter((product) => {
-        const name = (product.Name || product.name || "").toLowerCase();
-        const categories = getProductCategoryNames(product);
-        return (
-          name.includes(term) ||
-          categories.some((category) => (category || "").toLowerCase().includes(term))
-        );
-      })
-      .slice(0, 5)
-      .map((product) => ({
-        ...product,
-        onSelect: handleSuggestionClick,
-      }));
-  }, [debouncedSearch, products]);
-
   function handleSearchSubmit(event) {
     event?.preventDefault();
     setIsFocused(false);
-    setHasSearched(Boolean(searchTerm.trim()));
-  }
-
-  function handleSuggestionClick(product) {
-    setSearchTerm(product.Name || product.name || "");
-    setHasSearched(true);
-    setIsFocused(false);
+    if (!searchTerm.trim()) return;
+    router.push(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
   }
 
   return (
@@ -74,31 +99,24 @@ export default function HomeClientWrapper({ products, heroSlides, categories = [
           value={searchTerm}
           onChange={(event) => {
             setSearchTerm(event.target.value);
-            setHasSearched(false);
           }}
           onSubmit={handleSearchSubmit}
           onClear={() => {
             setSearchTerm("");
             setDebouncedSearch("");
-            setHasSearched(false);
+            setSuggestions([]);
             setIsFocused(false);
           }}
           onFocus={() => setIsFocused(true)}
           isFocused={isFocused}
           suggestions={suggestions}
-          emptyLabel={`No products found for "${debouncedSearch}"`}
+          emptyLabel={isLoadingSuggestions ? "Searching..." : `No products found for "${debouncedSearch}"`}
         />
       </div>
 
-      {hasSearched ? (
-        <div className="animate-fadeIn">
-          <ProductGridClient initialProducts={products} forceSearchTerm={searchTerm} hideSearch />
-        </div>
-      ) : (
-        <div className="animate-fadeIn">
-          <HomeCategories sections={sections} />
-        </div>
-      )}
+      <div className="animate-fadeIn">
+        <HomeCategories sections={sections} />
+      </div>
     </>
   );
 }

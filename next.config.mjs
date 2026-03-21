@@ -3,6 +3,13 @@ const nextConfig = {
     browserToTerminal: true,
   },
   cacheComponents: true,
+  cacheLife: {
+    foreverish: {
+      stale: 60 * 60 * 24 * 30,
+      revalidate: 60 * 60 * 24 * 365,
+      expire: 60 * 60 * 24 * 365 * 2,
+    },
+  },
   reactCompiler: true,
   experimental: {
     turbopackFileSystemCacheForDev: true,
@@ -12,6 +19,7 @@ const nextConfig = {
   },
   transpilePackages: ['swiper'],
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

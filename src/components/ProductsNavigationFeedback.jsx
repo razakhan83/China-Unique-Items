@@ -9,6 +9,7 @@ const ProductsNavigationFeedbackContext = createContext(null);
 
 export function ProductsNavigationFeedbackProvider({ children }) {
   const [pendingCategoryId, setPendingCategoryId] = useState(null);
+  const [manualPending, setManualPending] = useState(false);
 
   const setCategoryPending = useCallback((categoryId, pending) => {
     setPendingCategoryId((current) => {
@@ -27,10 +28,12 @@ export function ProductsNavigationFeedbackProvider({ children }) {
   const value = useMemo(
     () => ({
       pendingCategoryId,
-      isPending: pendingCategoryId !== null,
+      isPending: pendingCategoryId !== null || manualPending,
+      manualPending,
       setCategoryPending,
+      setManualPending,
     }),
-    [pendingCategoryId, setCategoryPending]
+    [manualPending, pendingCategoryId, setCategoryPending]
   );
 
   return (

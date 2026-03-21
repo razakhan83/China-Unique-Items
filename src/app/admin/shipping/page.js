@@ -1,4 +1,3 @@
-import { connection } from 'next/server';
 import { Suspense } from 'react';
 import AdminShippingClient from './AdminShippingClient';
 import { getAdminSettings } from '@/lib/data';
@@ -10,7 +9,6 @@ export const metadata = {
 };
 
 export default async function ShippingPage() {
-  await connection();
   await requireAdmin();
   const settings = await getAdminSettings();
 

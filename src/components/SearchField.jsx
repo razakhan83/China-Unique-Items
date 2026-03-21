@@ -34,7 +34,7 @@ export default function SearchField({
       <form onSubmit={onSubmit} className="flex items-center">
         <InputGroup
           className={cn(
-            "min-h-12 rounded-[calc(var(--radius-xl)+2px)] border-border/70 bg-background/80 shadow-[0_14px_36px_rgba(10,61,46,0.08),0_2px_6px_rgba(10,61,46,0.05)]"
+            "min-h-12 rounded-[calc(var(--radius-xl)+2px)] border-border/70 bg-card/95"
           )}
         >
           <InputGroupInput

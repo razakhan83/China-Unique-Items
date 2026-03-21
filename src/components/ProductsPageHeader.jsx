@@ -26,10 +26,13 @@ function buildTitle(activeCategory, categories, searchTerm) {
   return "All Products";
 }
 
-function buildCategoryHref(categoryId, searchTerm) {
+function buildCategoryHref(categoryId, searchTerm, sort) {
   const params = new URLSearchParams();
   if (searchTerm) {
     params.set("search", searchTerm);
+  }
+  if (sort && sort !== "newest") {
+    params.set("sort", sort);
   }
   if (categoryId !== "all") {
     params.set("category", categoryId);
@@ -85,6 +88,7 @@ export default function ProductsPageHeader({
   categories,
   activeCategory = "all",
   searchTerm = "",
+  sort = "newest",
 }) {
   const { pendingCategoryId } = useProductsNavigationFeedback();
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -225,7 +229,7 @@ export default function ProductsPageHeader({
               return (
                 <Link
                   key={category.id}
-                  href={buildCategoryHref(category.id, searchTerm)}
+                  href={buildCategoryHref(category.id, searchTerm, sort)}
                   prefetch={false}
                   scroll={false}
                   draggable={false}

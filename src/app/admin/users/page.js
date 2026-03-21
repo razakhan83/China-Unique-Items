@@ -1,35 +1,29 @@
-import { connection } from 'next/server';
-import { Suspense } from 'react';
 import { requireAdmin } from '@/lib/requireAdmin';
+import { getAdminUsersPage } from '@/lib/data';
 import AdminUsersClient from './AdminUsersClient';
-import mongooseConnect from '@/lib/mongooseConnect';
-import User from '@/models/User';
 
 export const metadata = {
   title: 'User Management | Admin',
 };
 
-export default async function AdminUsersPage() {
-  await connection();
+export default async function AdminUsersPage({ searchParams }) {
   await requireAdmin();
 
-  return <UsersContent />;
-}
-
-async function UsersContent() {
-  await mongooseConnect();
-  const users = await User.find({}).sort({ createdAt: -1 }).lean();
-  
-  const serializedUsers = users.map(user => ({
-    ...user,
-    _id: user._id.toString(),
-    createdAt: user.createdAt?.toISOString(),
-    updatedAt: user.updatedAt?.toISOString(),
-  }));
+  const params = await searchParams;
+  const search = String(params?.search || '').trim();
+  const status = String(params?.status || 'all').trim() || 'all';
+  const page = Math.max(1, Number(params?.page) || 1);
+  const result = await getAdminUsersPage({ search, status, page, limit: 12 });
 
   return (
-    <Suspense fallback={null}>
-      <AdminUsersClient initialUsers={serializedUsers} />
-    </Suspense>
+    <AdminUsersClient
+      initialUsers={result.items}
+      total={result.total}
+      totalPages={result.totalPages}
+      currentPage={result.page}
+      initialSearchQuery={result.searchTerm}
+      initialStatusFilter={result.status}
+      summary={result.summary}
+    />
   );
 }
