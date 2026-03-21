@@ -1,7 +1,9 @@
 import { Suspense } from 'react';
 
-import HomeClientWrapper from '@/components/HomeClientWrapper';
 import HomeCategories from '@/components/HomeCategories';
+import HomeMobileSearch from '@/components/HomeMobileSearch';
+import CategoryIconCarousel from '@/components/CategoryIconCarousel';
+import HeroSlider from '@/components/HeroSlider';
 import HomePageSkeleton from '@/components/HomePageSkeleton';
 import { getHomeSections } from '@/lib/data';
 
@@ -33,10 +35,9 @@ async function HomeContent() {
 
   return (
     <>
-      <HomeClientWrapper
-        heroSlides={activeHeroSlides}
-        categories={categories.filter((category) => category.id !== 'special-offers')}
-      />
+      <HeroSlider slides={activeHeroSlides} />
+      <CategoryIconCarousel categories={categories.filter((category) => category.id !== 'special-offers')} />
+      <HomeMobileSearch />
       <HomeCategories sections={sections} />
     </>
   );
