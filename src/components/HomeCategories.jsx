@@ -1,12 +1,8 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
+import ProductCard from '@/components/ProductCard';
 
 import CategoryProductSlider from '@/components/CategoryProductSlider';
 
 export default function HomeCategories({ sections = [] }) {
-  const router = useRouter();
-
   if (sections.length === 0) {
     return (
       <div className="bg-muted/30 py-12">
@@ -26,18 +22,21 @@ export default function HomeCategories({ sections = [] }) {
         return (
           <section
             key={section.category.id}
-            className={`home-section py-8 md:py-12 ${sectionClassName}`}
-            style={{ '--home-section-delay': `${index * 90}ms` }}
+            className={`home-lazy-section py-8 md:py-11 ${sectionClassName}`}
           >
             <div className="mx-auto w-full max-w-7xl px-4">
               <CategoryProductSlider
-                categoryId={section.category.id}
                 categoryLabel={section.category.label}
-                iconName={section.category.iconName}
-                products={section.products}
-                skipFilter
-                onViewAll={(categoryId) => router.push(`/products?category=${categoryId}`, { scroll: true })}
-              />
+                viewAllHref={`/products?category=${section.category.id}`}
+              >
+                {section.products.map((product, productIndex) => (
+                  <ProductCard
+                    key={`${product.slug || product._id || product.id || 'item'}-${productIndex}`}
+                    product={product}
+                    className="h-full shadow-none"
+                  />
+                ))}
+              </CategoryProductSlider>
             </div>
           </section>
         );

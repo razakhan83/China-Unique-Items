@@ -3,6 +3,7 @@ import { BadgeCheck, PackageCheck, Truck } from 'lucide-react';
 import { notFound } from 'next/navigation';
 
 import CategoryProductSlider from '@/components/CategoryProductSlider';
+import ProductCard from '@/components/ProductCard';
 import ProductActions from '@/components/ProductActions';
 import ProductGallery from '@/components/ProductGallery';
 import ProductReviews from '@/components/ProductReviews';
@@ -230,11 +231,16 @@ async function RelatedProductsSection({ slugPromise }) {
     <div className="border-t border-border bg-muted/35 py-10 md:py-14">
       <div className="container mx-auto max-w-7xl px-4">
         <CategoryProductSlider
-          categoryId={categorySlug}
           categoryLabel="You May Also Like"
-          products={relatedProducts}
-          skipFilter
-        />
+        >
+          {relatedProducts.map((product, index) => (
+            <ProductCard
+              key={`${product.slug || product._id || product.id || 'item'}-${index}`}
+              product={product}
+              className="h-full shadow-none"
+            />
+          ))}
+        </CategoryProductSlider>
       </div>
     </div>
   );

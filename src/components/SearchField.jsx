@@ -10,6 +10,7 @@ import {
   InputGroupInput,
   InputGroupText,
 } from "@/components/ui/input-group";
+import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from "@/lib/cloudinaryImage";
 import { getProductCategoryNames } from "@/lib/productCategories";
 import { cn } from "@/lib/utils";
 import { getPrimaryProductImage } from "@/lib/productImages";
@@ -87,7 +88,13 @@ export default function SearchField({
         <div className="absolute top-full z-40 mt-3 w-full overflow-hidden rounded-[calc(var(--radius-xl)+2px)] border border-border/80 bg-popover/98 shadow-[0_24px_60px_rgba(10,61,46,0.14),0_4px_10px_rgba(10,61,46,0.06)] backdrop-blur">
           {suggestions.length ? (
             <ul className="divide-y divide-border/70">
-              {suggestions.map((product, index) => (
+              {suggestions.map((product, index) => {
+                const primaryImage = getPrimaryProductImage(product);
+                const primaryImageSrc = primaryImage?.url
+                  ? optimizeCloudinaryUrl(primaryImage.url, CLOUDINARY_IMAGE_PRESETS.searchSuggestion)
+                  : "";
+
+                return (
                 <li key={`${product._id || product.id || "result"}-${index}`}>
                   <button
                     type="button"
@@ -95,14 +102,14 @@ export default function SearchField({
                     className="flex w-full items-center gap-3 px-4 py-3 text-left transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-muted"
                   >
                     <div className="relative size-12 overflow-hidden rounded-xl border border-border/80 bg-muted shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]">
-                      {getPrimaryProductImage(product)?.url ? (
+                      {primaryImageSrc ? (
                         <Image
-                          src={getPrimaryProductImage(product).url}
+                          src={primaryImageSrc}
                           alt={product.Name || product.name || "product"}
                           fill
                           sizes="48px"
                           className="object-cover"
-                          {...getBlurPlaceholderProps(getPrimaryProductImage(product).blurDataURL)}
+                          {...getBlurPlaceholderProps(primaryImage?.blurDataURL)}
                         />
                       ) : null}
                     </div>
@@ -115,7 +122,8 @@ export default function SearchField({
                     <ArrowRight className="size-4 text-muted-foreground" />
                   </button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           ) : (
             <div className="px-5 py-6 text-center text-sm text-muted-foreground">{emptyLabel || `No products found for "${value}"`}</div>

@@ -1,15 +1,11 @@
-"use client";
-
-import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCart } from "@/context/CartContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ProductCardAddToCartButton from "@/components/ProductCardAddToCartButton";
+import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from "@/lib/cloudinaryImage";
 import { getPrimaryProductImage } from "@/lib/productImages";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
 
@@ -69,30 +65,16 @@ function getStatusBadge(product) {
     };
   }
 
-  // Fallback: products created within the last 7 days (optional, but keep it tight)
-  const createdAt = product.createdAt || product.created_at;
-  if (createdAt) {
-    const daysSinceCreated =
-      (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24);
-    if (daysSinceCreated <= 7) {
-      return {
-        label: "New",
-        className: "bg-emerald-100 text-emerald-800 border-emerald-200",
-      };
-    }
-  }
-
   return null;
 }
 
 export default function ProductCard({ product, className = "" }) {
-  const { addToCart } = useCart();
-  const [isAdding, setIsAdding] = useState(false);
-  const [didJustAdd, setDidJustAdd] = useState(false);
-
   const productName = product.Name || product.name || "Unknown";
   const productDescription = product.Description || product.description || "";
   const primaryImage = getPrimaryProductImage(product);
+  const primaryImageSrc = primaryImage?.url
+    ? optimizeCloudinaryUrl(primaryImage.url, CLOUDINARY_IMAGE_PRESETS.productCard)
+    : "";
   const productPrice = product.Price || product.price || 0;
   const productSlug = product.slug || product._id || product.id;
   const productHref = `/products/${productSlug}`;
@@ -114,7 +96,6 @@ export default function ProductCard({ product, className = "" }) {
         className
       )}
       draggable={false}
-      onDragStart={(event) => event.preventDefault()}
     >
       {/* Image Section */}
       <Link
@@ -122,7 +103,6 @@ export default function ProductCard({ product, className = "" }) {
         scroll={true}
         className="relative block aspect-square w-full overflow-hidden bg-muted/30"
         draggable={false}
-        onDragStart={(event) => event.preventDefault()}
       >
         {/* Discount Badge — top left */}
         {discountLabel && (
@@ -153,15 +133,14 @@ export default function ProductCard({ product, className = "" }) {
         )}
 
         {/* Product Image */}
-        {primaryImage?.url ? (
+        {primaryImageSrc ? (
           <Image
-            src={primaryImage.url}
+            src={primaryImageSrc}
             alt={productName}
             fill
             draggable={false}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover transition-transform duration-500 ease-out md:group-hover:scale-105"
-            onDragStart={(event) => event.preventDefault()}
             {...getBlurPlaceholderProps(primaryImage.blurDataURL)}
           />
         ) : (
@@ -179,13 +158,11 @@ export default function ProductCard({ product, className = "" }) {
           scroll={true}
           className="block text-left"
           draggable={false}
-          onDragStart={(event) => event.preventDefault()}
         >
           <h3
             className="line-clamp-1 text-sm font-semibold leading-tight text-primary"
             title={productName}
             draggable={false}
-            onDragStart={(event) => event.preventDefault()}
           >
             {productName}
           </h3>
@@ -196,7 +173,6 @@ export default function ProductCard({ product, className = "" }) {
           <p
             className="line-clamp-2 text-xs text-muted-foreground"
             draggable={false}
-            onDragStart={(event) => event.preventDefault()}
           >
             {productDescription}
           </p>
@@ -212,14 +188,12 @@ export default function ProductCard({ product, className = "" }) {
                 <p
                   className="text-xs font-medium text-muted-foreground line-through"
                   draggable={false}
-                  onDragStart={(event) => event.preventDefault()}
                 >
                   {formatPrice(productPrice)}
                 </p>
                 <p
                   className="text-base font-bold tracking-tight text-red-600 dark:text-red-500"
                   draggable={false}
-                  onDragStart={(event) => event.preventDefault()}
                 >
                   {formatPrice(discountedPrice)}
                 </p>
@@ -228,51 +202,12 @@ export default function ProductCard({ product, className = "" }) {
               <p
                 className="text-base font-bold tracking-tight text-foreground"
                 draggable={false}
-                onDragStart={(event) => event.preventDefault()}
               >
                 {formatPrice(productPrice)}
               </p>
             )}
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            disabled={product.StockStatus === "Out of Stock" || isAdding}
-            onClick={async (e) => {
-              e.preventDefault();
-              setIsAdding(true);
-              const startedAt = performance.now();
-              try {
-                await addToCart(product);
-                setDidJustAdd(true);
-                const elapsed = performance.now() - startedAt;
-                const remaining = Math.max(140 - elapsed, 0);
-                if (remaining > 0) {
-                  await new Promise((resolve) => window.setTimeout(resolve, remaining));
-                }
-              } finally {
-                setIsAdding(false);
-                window.setTimeout(() => setDidJustAdd(false), 650);
-              }
-            }}
-            className="add-to-cart-button size-10 cursor-pointer shadow-none md:hover:border-primary/30 md:hover:bg-primary/12 md:hover:text-primary md:hover:shadow-sm disabled:pointer-events-none disabled:opacity-50"
-          >
-            <span className="relative inline-flex size-5 items-center justify-center">
-              <Spinner
-                className={cn(
-                  "add-to-cart-icon absolute size-5 text-muted-foreground",
-                  isAdding ? "is-visible" : ""
-                )}
-              />
-              <ShoppingCart
-                className={cn(
-                  "add-to-cart-icon absolute size-5",
-                  !isAdding ? "is-visible" : "",
-                  didJustAdd ? "text-primary" : ""
-                )}
-              />
-            </span>
-          </Button>
+          <ProductCardAddToCartButton product={product} />
         </div>
       </CardContent>
     </Card>

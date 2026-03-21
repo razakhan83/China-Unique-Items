@@ -42,11 +42,12 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from "@/lib/cloudinaryImage";
 import { uploadImageDataUrl } from "@/lib/cloudinaryUpload";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
 import { cn } from "@/lib/utils";
 
-function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabled }) {
+function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabled, onToggleHome }) {
   const {
     attributes,
     listeners,
@@ -81,7 +82,7 @@ function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabl
       <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted/35">
         {category.image ? (
           <Image
-            src={category.image}
+            src={optimizeCloudinaryUrl(category.image, CLOUDINARY_IMAGE_PRESETS.adminThumb)}
             alt={category.name}
             fill
             sizes="64px"
@@ -130,29 +131,58 @@ function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabl
         )}
       </div>
 
-      {/* Visibility Toggle */}
-      <div className="flex items-center gap-3 pr-2">
-        <span className={cn(
-          "text-[9px] font-black uppercase tracking-widest",
-          category.isEnabled ? "text-emerald-500" : "text-muted-foreground/60"
-        )}>
-          {category.isEnabled ? "Visible" : "Hidden"}
-        </span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleEnabled?.(category._id, category.isEnabled);
-          }}
-          className={cn(
-            "relative h-5 w-9 rounded-full transition-colors duration-300",
-            category.isEnabled ? "bg-emerald-500" : "bg-muted-foreground/30"
-          )}
-        >
+      <div className="flex flex-col items-end gap-2 pr-2">
+        <div className="flex items-center gap-3">
           <span className={cn(
-            "absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-300 shadow-sm",
-            category.isEnabled ? "translate-x-4" : "translate-x-0"
-          )} />
-        </button>
+            "text-[9px] font-black uppercase tracking-widest",
+            category.isEnabled ? "text-emerald-500" : "text-muted-foreground/60"
+          )}>
+            {category.isEnabled ? "Visible" : "Hidden"}
+          </span>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleEnabled?.(category._id, category.isEnabled);
+            }}
+            className={cn(
+              "relative h-5 w-9 rounded-full transition-colors duration-300",
+              category.isEnabled ? "bg-emerald-500" : "bg-muted-foreground/30"
+            )}
+          >
+            <span className={cn(
+              "absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-300 shadow-sm",
+              category.isEnabled ? "translate-x-4" : "translate-x-0"
+            )} />
+          </button>
+        </div>
+
+        {category.slug !== "special-offers" ? (
+          <div className="flex items-center gap-3">
+            <span className={cn(
+              "text-[9px] font-black uppercase tracking-widest",
+              category.showOnHome !== false ? "text-primary" : "text-muted-foreground/60"
+            )}>
+              {category.showOnHome !== false ? "Home On" : "Home Off"}
+            </span>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleHome?.(category._id, category.showOnHome !== false);
+              }}
+              className={cn(
+                "relative h-5 w-9 rounded-full transition-colors duration-300",
+                category.showOnHome !== false ? "bg-primary" : "bg-muted-foreground/30"
+              )}
+            >
+              <span className={cn(
+                "absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-300 shadow-sm",
+                category.showOnHome !== false ? "translate-x-4" : "translate-x-0"
+              )} />
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -211,6 +241,8 @@ export default function AdminCategoriesClient() {
           imagePublicId: category.imagePublicId || "",
           blurDataURL: category.blurDataURL || "",
           sortOrder: Number(category.sortOrder ?? index) || 0,
+          isEnabled: category.isEnabled !== false,
+          showOnHome: category.showOnHome !== false,
         })),
       );
     } catch (error) {
@@ -293,6 +325,8 @@ export default function AdminCategoriesClient() {
           imagePublicId: data.data.imagePublicId || "",
           blurDataURL: data.data.blurDataURL || "",
           sortOrder: Number(data.data.sortOrder ?? current.length) || current.length,
+          isEnabled: data.data.isEnabled !== false,
+          showOnHome: data.data.showOnHome !== false,
         }].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
       );
     } catch (error) {
@@ -364,7 +398,8 @@ export default function AdminCategoriesClient() {
           image: data.data.image,
           imagePublicId: data.data.imagePublicId,
           blurDataURL: data.data.blurDataURL,
-          isEnabled: data.data.isEnabled, // Update isEnabled in state
+          isEnabled: data.data.isEnabled,
+          showOnHome: data.data.showOnHome !== false,
         } : cat))
       );
       
@@ -409,6 +444,7 @@ export default function AdminCategoriesClient() {
           blurDataURL: category.blurDataURL || "",
           sortOrder: Number(category.sortOrder ?? index) || 0,
           isEnabled: category.isEnabled ?? true,
+          showOnHome: category.showOnHome !== false,
         })),
       );
     } catch (error) {
@@ -455,7 +491,7 @@ export default function AdminCategoriesClient() {
       const res = await fetch(`/api/categories/${categoryId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isEnabled: newStatus, name: categories.find(c => c._id === categoryId).name }),
+        body: JSON.stringify({ isEnabled: newStatus }),
       });
       if (!res.ok) throw new Error('Failed to update status');
       toast.success(newStatus ? 'Category enabled' : 'Category disabled');
@@ -465,12 +501,38 @@ export default function AdminCategoriesClient() {
     }
   };
 
+  const toggleCategoryHome = async (categoryId, currentStatus) => {
+    const originalCategories = [...categories];
+    const nextStatus = !currentStatus;
+
+    try {
+      setCategories((prev) =>
+        prev.map((category) => (
+          category._id === categoryId ? { ...category, showOnHome: nextStatus } : category
+        ))
+      );
+
+      const response = await fetch(`/api/categories/${categoryId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showOnHome: nextStatus }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update home visibility');
+      toast.success(nextStatus ? 'Category shown on home' : 'Category hidden from home');
+    } catch (error) {
+      setCategories(originalCategories);
+      toast.error('Failed to update home visibility');
+    }
+  };
+
   return (
     <div className="max-w-4xl pb-24 md:pb-0">
       <div className="mb-6">
         <h2 className="text-2xl font-bold tracking-tight text-foreground">Categories</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Add a category image, then drag categories into the order you want the home page sections to appear.
+          Use the Home toggle on each row to decide whether a category shows on the homepage.
         </p>
       </div>
 
@@ -548,6 +610,7 @@ export default function AdminCategoriesClient() {
                       setDeleteModal({ open: true, category: selectedCategory })
                     }
                     onToggleEnabled={toggleCategoryEnabled}
+                    onToggleHome={toggleCategoryHome}
                   />
                 ))}
               </div>

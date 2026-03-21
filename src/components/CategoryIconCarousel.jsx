@@ -1,9 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import Image from "next/image";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, FreeMode, Mousewheel } from 'swiper/modules';
 import {
   Armchair,
   Beef,
@@ -21,9 +19,10 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { getCategoryColor } from "@/lib/categoryColors";
+import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from "@/lib/cloudinaryImage";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
-import { SHARED_SWIPER_PROPS } from "@/components/swiper/swiperConfig";
 
 const CATEGORY_ICONS = {
   "kitchen accessories": UtensilsCrossed,
@@ -45,186 +44,106 @@ function getCategoryIcon(name) {
   return CATEGORY_ICONS[(name || "").toLowerCase().trim()] || Tag;
 }
 
-const CATEGORY_CIRCLE_BREAKPOINTS = {
-  0: { slidesPerView: "auto", spaceBetween: 16 },
-  768: { slidesPerView: "auto", spaceBetween: 20 },
-  1024: { slidesPerView: "auto", spaceBetween: 24 },
-};
-
-function buildMarqueeCategories(categories) {
-  const repeatCount = Math.max(5, Math.ceil(18 / categories.length));
-  return Array.from({ length: repeatCount }, (_, repeatIndex) =>
-    categories.map((category) => ({
-      ...category,
-      _marqueeKey: `${category.id}-${repeatIndex}`,
-    }))
-  ).flat();
-}
-
 export default function CategoryIconCarousel({ categories }) {
   const router = useRouter();
-  const isDraggingRef = useRef(false);
-  const pointerStartRef = useRef({ x: 0, y: 0 });
+  const categoryCount = categories?.length ?? 0;
 
-  if (!categories?.length) return null;
-
-  const marqueeCategories = useMemo(
-    () => (categories.length > 1 ? buildMarqueeCategories(categories) : categories),
-    [categories]
+  const carouselOptions = useMemo(
+    () => ({
+      active: categoryCount > 1,
+      align: "start",
+      containScroll: categoryCount > 1 ? false : "trimSnaps",
+      loop: categoryCount > 1,
+      slideChanges: false,
+      slidesToScroll: 1,
+      ssr: Array.from({ length: categoryCount }, () => 31.25),
+      breakpoints: {
+        "(min-width: 640px)": {
+          ssr: Array.from({ length: categoryCount }, () => 24),
+        },
+        "(min-width: 768px)": {
+          ssr: Array.from({ length: categoryCount }, () => 18),
+        },
+        "(min-width: 1024px)": {
+          ssr: Array.from({ length: categoryCount }, () => 13.5),
+        },
+        "(min-width: 1280px)": {
+          ssr: Array.from({ length: categoryCount }, () => 11.25),
+        },
+      },
+    }),
+    [categoryCount]
   );
-  const baseCount = categories.length;
-  const middleIndex = categories.length > 1 ? baseCount * 2 : 0;
 
-  const normalizeInfinitePosition = useCallback((swiper) => {
-    if (!swiper || baseCount <= 1) return;
-
-    const minIndex = baseCount;
-    const maxIndex = baseCount * 4;
-
-    if (swiper.activeIndex < minIndex) {
-      swiper.slideTo(swiper.activeIndex + baseCount * 2, 0, false);
-    } else if (swiper.activeIndex >= maxIndex) {
-      swiper.slideTo(swiper.activeIndex - baseCount * 2, 0, false);
-    }
-  }, [baseCount]);
+  if (!categoryCount) return null;
 
   return (
-    <div className="w-full border-b border-border bg-card/70 py-4 md:py-5">
-      <div className="mx-auto w-full max-w-7xl px-4">
-        <div className="overflow-hidden">
-          <div className="relative">
-            <div
-              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 md:w-10"
-              style={{ background: "linear-gradient(to right, var(--color-card), transparent)" }}
-            />
-            <div
-              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 md:w-10"
-              style={{ background: "linear-gradient(to left, var(--color-card), transparent)" }}
-            />
-            <Swiper
-              {...SHARED_SWIPER_PROPS}
-              modules={[Autoplay, FreeMode, Mousewheel]}
-              breakpoints={CATEGORY_CIRCLE_BREAKPOINTS}
-              watchOverflow={false}
-              preventInteractionOnTransition={false}
-              initialSlide={middleIndex}
-              slidesPerView="auto"
-              freeMode={{
-                enabled: true,
-                momentum: true,
-                momentumBounce: false,
-                sticky: false,
-              }}
-              mousewheel={{
-                enabled: true,
-                releaseOnEdges: false,
-                sensitivity: 0.8,
-                thresholdDelta: 4,
-              }}
-              speed={4200}
-              autoplay={
-                marqueeCategories.length > 1
-                  ? {
-                      delay: 1,
-                      disableOnInteraction: false,
-                      pauseOnMouseEnter: false,
-                      waitForTransition: true,
-                    }
-                  : false
-              }
-              allowTouchMove
-              simulateTouch
-              touchRatio={1}
-              touchAngle={45}
-              grabCursor
-              preventClicks
-              preventClicksPropagation
-              className="category-icon-swiper overflow-visible"
-              onSwiper={(swiper) => {
-                if (baseCount > 1) {
-                  swiper.slideTo(middleIndex, 0, false);
-                }
-              }}
-              onTouchStart={() => {
-                isDraggingRef.current = false;
-              }}
-              onSlideChange={normalizeInfinitePosition}
-              onTouchEnd={(swiper) => {
-                requestAnimationFrame(() => normalizeInfinitePosition(swiper));
-                window.setTimeout(() => {
-                  isDraggingRef.current = false;
-                }, 0);
-              }}
-              onTransitionEnd={() => {
-                isDraggingRef.current = false;
-              }}
-            >
-              {marqueeCategories.map((category, index) => {
+    <section className="border-b border-border bg-card/70 py-4 md:py-5">
+      <div className="mx-auto max-w-7xl px-4">
+        <div className="relative overflow-hidden">
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 md:w-10"
+            style={{ background: "linear-gradient(to right, var(--color-card), transparent)" }}
+          />
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 md:w-10"
+            style={{ background: "linear-gradient(to left, var(--color-card), transparent)" }}
+          />
+          <Carousel
+            opts={carouselOptions}
+            className="w-full"
+          >
+            <CarouselContent className="ml-0 gap-2 sm:gap-3">
+              {categories.map((category, index) => {
                 const colors = getCategoryColor(category.label);
                 const Icon = getCategoryIcon(category.label);
+                const categoryImageSrc = category.image
+                  ? optimizeCloudinaryUrl(category.image, CLOUDINARY_IMAGE_PRESETS.categoryCircle)
+                  : "";
+
                 return (
-                  <SwiperSlide
-                    key={category._marqueeKey || `${category.id}-${index}`}
-                    className="!h-auto !w-[96px] md:!w-[132px]"
+                  <CarouselItem
+                    key={`${category.id}-${index}`}
+                    className="basis-[31.25%] pl-0 sm:basis-[24%] md:basis-[18%] lg:basis-[13.5%] xl:basis-[11.25%]"
                   >
                     <button
-                      onPointerDown={(event) => {
-                        pointerStartRef.current = { x: event.clientX, y: event.clientY };
-                        isDraggingRef.current = false;
-                      }}
-                      onPointerMove={(event) => {
-                        const deltaX = Math.abs(event.clientX - pointerStartRef.current.x);
-                        const deltaY = Math.abs(event.clientY - pointerStartRef.current.y);
-                        if (deltaX > 6 || deltaY > 6) {
-                          isDraggingRef.current = true;
-                        }
-                      }}
-                      onPointerUp={() => {
-                        window.setTimeout(() => {
-                          isDraggingRef.current = false;
-                        }, 0);
-                      }}
-                      onDragStart={(event) => event.preventDefault()}
-                      onClick={(event) => {
-                        if (isDraggingRef.current) {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          return;
-                        }
-                        router.push(`/products?category=${category.id}`, { scroll: true });
-                      }}
-                      className="home-category-card group flex h-full w-full min-w-0 cursor-pointer flex-col items-center gap-3 rounded-xl px-1 py-1 text-center select-none"
-                      style={{ "--home-category-delay": `${Math.min(index, 7) * 48}ms` }}
+                      type="button"
+                      onClick={() => router.push(`/products?category=${category.id}`, { scroll: true })}
+                      className="flex w-full min-w-0 flex-col items-center gap-3 px-1 py-1 text-center"
                     >
-                      <div
-                        className={`relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border ${colors.border} bg-white transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:shadow-md md:h-28 md:w-28`}
+                      <span
+                        className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-white/80 md:h-[6.75rem] md:w-[6.75rem]"
+                        style={{
+                          background: `radial-gradient(circle at 30% 25%, white, ${colors.hex})`,
+                        }}
                       >
-                        {category.image ? (
+                        {categoryImageSrc ? (
                           <Image
-                            src={category.image}
+                            src={categoryImageSrc}
                             alt={category.label}
                             fill
-                            sizes="112px"
+                            sizes="(max-width: 768px) 80px, 108px"
                             className="object-cover"
                             {...getBlurPlaceholderProps(category.blurDataURL)}
                           />
                         ) : (
-                          <div className={`flex size-full items-center justify-center rounded-full ${colors.bg}`}>
+                          <span className={`flex size-full items-center justify-center rounded-full ${colors.bg}`}>
                             <Icon className={`${colors.text} size-7 md:size-9`} />
-                          </div>
+                          </span>
                         )}
-                      </div>
-                      <span className="line-clamp-2 max-w-[110px] select-none text-sm font-medium leading-tight text-muted-foreground transition-colors group-hover:text-foreground md:max-w-[140px]">
+                      </span>
+
+                      <span className="line-clamp-2 min-h-10 max-w-[112px] text-sm font-medium leading-tight text-muted-foreground md:max-w-[132px]">
                         {category.label}
                       </span>
                     </button>
-                  </SwiperSlide>
+                  </CarouselItem>
                 );
               })}
-            </Swiper>
-          </div>
+            </CarouselContent>
+          </Carousel>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

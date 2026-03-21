@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 
 import CategoryIconCarousel from "@/components/CategoryIconCarousel";
 import HeroSlider from "@/components/HeroSlider";
-import HomeCategories from "@/components/HomeCategories";
 import SearchField from "@/components/SearchField";
 
-export default function HomeClientWrapper({ heroSlides, categories = [], sections = [] }) {
+export default function HomeClientWrapper({ heroSlides, categories = [] }) {
   const router = useRouter();
   const wrapperRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -90,11 +89,9 @@ export default function HomeClientWrapper({ heroSlides, categories = [], section
   return (
     <>
       <HeroSlider slides={heroSlides} />
-      <div className="home-enter" style={{ "--home-enter-delay": "80ms" }}>
-        <CategoryIconCarousel categories={categories} />
-      </div>
+      <CategoryIconCarousel categories={categories} />
 
-      <div ref={wrapperRef} className="home-enter mx-auto max-w-3xl px-4 py-6 md:hidden" style={{ "--home-enter-delay": "140ms" }}>
+      <div ref={wrapperRef} className="mx-auto max-w-3xl px-4 py-6 md:hidden">
         <SearchField
           value={searchTerm}
           onChange={(event) => {
@@ -112,10 +109,6 @@ export default function HomeClientWrapper({ heroSlides, categories = [], section
           suggestions={suggestions}
           emptyLabel={isLoadingSuggestions ? "Searching..." : `No products found for "${debouncedSearch}"`}
         />
-      </div>
-
-      <div className="animate-fadeIn">
-        <HomeCategories sections={sections} />
       </div>
     </>
   );

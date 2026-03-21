@@ -1,12 +1,4 @@
 @import "tailwindcss";
-@import "swiper/css";
-@import "swiper/css/a11y";
-@import "swiper/css/autoplay";
-@import "swiper/css/effect-fade";
-@import "swiper/css/free-mode";
-@import "swiper/css/mousewheel";
-@import "swiper/css/pagination";
-@import "swiper/css/thumbs";
 
 @view-transition {
   navigation: auto;
@@ -359,10 +351,6 @@
   will-change: opacity, transform, filter;
 }
 
-.home-category-card {
-  will-change: opacity, transform, filter;
-}
-
 .add-to-cart-button {
   transition-property: transform, background-color, border-color, color, box-shadow;
   transition-duration: 180ms;
@@ -483,138 +471,19 @@
     animation: none;
   }
 
-  .home-category-card {
-    opacity: 0;
-    animation: home-enter 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: calc(var(--home-enter-delay, 0ms) + var(--home-category-delay, 0ms));
-  }
-
   .navbar-search-shell[data-state="open"] .navbar-search-inner {
     animation: home-enter 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 }
 
-.swiper .swiper-slide {
-  height: auto;
-}
-
-.category-icon-swiper .swiper-wrapper {
-  transition-timing-function: linear !important;
-}
-
-.swiper-slide img {
-  -webkit-user-drag: none;
-  user-select: none;
-}
-
-.swiper.swiper-thumbs .swiper-slide-thumb-active {
-  opacity: 1;
-}
-
-.hero-swiper .swiper-slide-active .hero-swiper-image {
-  animation: hero-fade-in 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.hero-swiper-bullet {
-  display: inline-flex;
-  height: 0.5rem;
-  width: 0.5rem;
-  cursor: pointer;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.45);
-  transition:
-    width 300ms cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 300ms ease,
-    box-shadow 300ms ease;
-}
-
-.hero-swiper-bullet:hover {
-  background: rgba(255, 255, 255, 0.65);
-}
-
-.hero-swiper-bullet-active {
-  width: 1.25rem;
-  background: #fff;
-  box-shadow: 0 8px 20px rgba(255, 255, 255, 0.22);
-}
-
-.hero-swiper-bullet-active:hover {
-  background: #fff;
-}
-
-.hero-swiper .swiper-pagination.swiper-pagination-clickable.swiper-pagination-bullets.swiper-pagination-horizontal {
-  bottom: 1.25rem !important;
-  left: 50% !important;
-  z-index: 10;
-  display: flex;
-  width: auto !important;
-  transform: translateX(-50%);
-  gap: 0.5rem;
-}
-
-.home-enter {
-  opacity: 1;
-  will-change: opacity, transform, filter;
-}
-
-.home-section {
-  opacity: 1;
-  will-change: opacity, transform, filter;
-}
-
-.home-section-item {
-  opacity: 1;
-  will-change: opacity, transform, filter;
-}
-
 @supports (content-visibility: auto) {
-  @media (hover: none), (pointer: coarse) {
-    .home-section {
-      content-visibility: auto;
-      contain-intrinsic-size: auto 640px;
-    }
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .home-enter {
-    opacity: 0;
-    animation: home-enter 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: var(--home-enter-delay, 0ms);
-  }
-
-  .home-section {
-    opacity: 0;
-    animation: home-enter 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: var(--home-section-delay, 0ms);
-  }
-
-  .home-section-item {
-    opacity: 0;
-    animation: home-enter 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
-  .home-section .home-section-item:nth-child(1) {
-    animation-delay: calc(var(--home-section-delay, 0ms) + 70ms);
-  }
-
-  .home-section .home-section-item:nth-child(2) {
-    animation-delay: calc(var(--home-section-delay, 0ms) + 140ms);
+  .home-lazy-section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 780px;
   }
 }
 
 @media (hover: none), (pointer: coarse) {
-  .home-enter,
-  .home-section,
-  .home-section-item,
-  .home-category-card {
-    /* animation: none !important; */
-    opacity: 1 !important;
-    transform: none !important;
-    filter: none !important;
-    will-change: auto;
-  }
-
   .products-page-bar,
   .products-page-meta,
   .products-page-heading,

@@ -16,6 +16,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from '@/lib/cloudinaryImage';
 import { getPrimaryProductImage } from '@/lib/productImages';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
 
@@ -58,21 +59,27 @@ export default function CartDrawer() {
           <div className="flex flex-col gap-3.5">
             {cart.length ? (
               <>
-                {cart.map((item, index) => (
+                {cart.map((item, index) => {
+                  const primaryImage = getPrimaryProductImage(item);
+                  const primaryImageSrc = primaryImage?.url
+                    ? optimizeCloudinaryUrl(primaryImage.url, CLOUDINARY_IMAGE_PRESETS.cartItem)
+                    : '';
+
+                  return (
                   <div
                     key={item.id || item.slug || item._id || item.Name || item.name || index}
                     className="surface-card rounded-xl p-3 transition-[background-color,border-color] duration-200 hover:bg-[color:color-mix(in_oklab,var(--color-card)_96%,white)]"
                   >
                     <div className="flex gap-3">
                       <div className="relative size-20 overflow-hidden rounded-lg border border-border bg-muted">
-                        {getPrimaryProductImage(item)?.url ? (
+                        {primaryImageSrc ? (
                           <Image
-                            src={getPrimaryProductImage(item).url}
+                            src={primaryImageSrc}
                             alt={item.Name || item.name || 'product'}
                             fill
                             sizes="80px"
                             className="object-cover"
-                            {...getBlurPlaceholderProps(getPrimaryProductImage(item).blurDataURL)}
+                            {...getBlurPlaceholderProps(primaryImage?.blurDataURL)}
                           />
                         ) : null}
                       </div>
@@ -117,7 +124,8 @@ export default function CartDrawer() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </>
             ) : (
               <div className="surface-card flex min-h-[16rem] flex-col items-center justify-center rounded-xl px-6 py-12 text-center">

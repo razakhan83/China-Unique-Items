@@ -41,6 +41,7 @@ export async function GET() {
         ...category,
         _id: category._id.toString(),
         image: optimizeCloudinaryUrl(category.image || ''),
+        showOnHome: category.showOnHome !== false,
       })),
     });
   } catch (error) {
@@ -90,7 +91,8 @@ export async function POST(req) {
       imagePublicId,
       blurDataURL,
       sortOrder: body.sortOrder ?? count,
-      isEnabled: body.isEnabled !== false, // default to true
+      isEnabled: body.isEnabled !== false,
+      showOnHome: body.showOnHome !== false,
     });
     revalidateTag('categories', 'max');
     return NextResponse.json(
@@ -101,6 +103,7 @@ export async function POST(req) {
           _id: category._id.toString(),
           image: optimizeCloudinaryUrl(category.image || ""),
           blurDataURL: category.blurDataURL || "",
+          showOnHome: category.showOnHome !== false,
         },
       },
       { status: 201 },
@@ -143,7 +146,8 @@ export async function PUT(req) {
         filter: { _id: new mongoose.Types.ObjectId(cat._id) },
         update: { $set: { 
           sortOrder: Number(cat.sortOrder) || 0,
-          ...(cat.isEnabled !== undefined && { isEnabled: cat.isEnabled === true || cat.isEnabled === 'true' })
+          ...(cat.isEnabled !== undefined && { isEnabled: cat.isEnabled === true || cat.isEnabled === 'true' }),
+          ...(cat.showOnHome !== undefined && { showOnHome: cat.showOnHome === true || cat.showOnHome === 'true' }),
         } },
       },
     }));

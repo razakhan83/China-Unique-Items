@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from '@/lib/cloudinaryImage';
 import { getProductCategoryNames } from '@/lib/productCategories';
 import { getPrimaryProductImage } from '@/lib/productImages';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
@@ -21,6 +22,9 @@ export default function ProductModal({ product, onClose }) {
 
     const categories = getProductCategoryNames(product);
     const primaryImage = getPrimaryProductImage(product);
+    const primaryImageSrc = primaryImage?.url
+        ? optimizeCloudinaryUrl(primaryImage.url, CLOUDINARY_IMAGE_PRESETS.productModal)
+        : '';
 
     return (
         <>
@@ -44,9 +48,9 @@ export default function ProductModal({ product, onClose }) {
 
                     <div className="flex flex-col md:flex-row">
                         <div className="w-full md:w-1/2 relative bg-gray-50 aspect-square md:aspect-auto md:min-h-[300px] overflow-hidden group">
-                            {primaryImage?.url ? (
+                            {primaryImageSrc ? (
                                 <Image
-                                    src={primaryImage.url}
+                                    src={primaryImageSrc}
                                     alt={product.Name || product.name || 'Product'}
                                     fill
                                     className="object-cover transition-transform duration-500 group-hover:scale-105"

@@ -36,13 +36,6 @@ export async function PATCH(req, { params }) {
 
     const body = await req.json();
 
-    if (!body.name) {
-      return NextResponse.json(
-        { success: false, error: "Category name is required" },
-        { status: 400 },
-      );
-    }
-
     const existingCategory = await Category.findById(id);
     if (!existingCategory) {
       return NextResponse.json(
@@ -64,13 +57,25 @@ export async function PATCH(req, { params }) {
       }
     }
 
-    existingCategory.name = body.name.trim();
-    existingCategory.slug = slugifyCategory(body.name);
+    const nextName = body.name !== undefined ? String(body.name || '').trim() : existingCategory.name;
+
+    if (!nextName) {
+      return NextResponse.json(
+        { success: false, error: "Category name is required" },
+        { status: 400 },
+      );
+    }
+
+    existingCategory.name = nextName;
+    existingCategory.slug = slugifyCategory(nextName);
     existingCategory.image = image;
     existingCategory.imagePublicId = imagePublicId;
     existingCategory.blurDataURL = blurDataURL;
     if (body.isEnabled !== undefined) {
       existingCategory.isEnabled = body.isEnabled === true || body.isEnabled === 'true';
+    }
+    if (body.showOnHome !== undefined) {
+      existingCategory.showOnHome = body.showOnHome === true || body.showOnHome === 'true';
     }
 
     await existingCategory.save();
@@ -84,6 +89,7 @@ export async function PATCH(req, { params }) {
           _id: existingCategory._id.toString(),
           image: optimizeCloudinaryUrl(existingCategory.image || ""),
           blurDataURL: existingCategory.blurDataURL || "",
+          showOnHome: existingCategory.showOnHome !== false,
         },
       },
       { status: 200 },

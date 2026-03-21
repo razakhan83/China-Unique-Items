@@ -252,6 +252,7 @@ async function getCategoriesRaw() {
       blurDataURL: category.blurDataURL || '',
       sortOrder: category.sortOrder ?? 0,
       isEnabled: category.isEnabled !== false,
+      showOnHome: category.showOnHome !== false,
     }));
   }
 
@@ -266,6 +267,7 @@ async function getCategoriesRaw() {
       blurDataURL: '',
       sortOrder: 0,
       isEnabled: true,
+      showOnHome: true,
     });
   }
   
@@ -288,6 +290,7 @@ async function getCategoriesRaw() {
           image: '',
           imagePublicId: '',
           blurDataURL: '',
+          showOnHome: true,
         });
       }
     }
@@ -392,7 +395,10 @@ export async function getHomeSections() {
       };
     })
     .filter((section) => 
-      (section.category.id === 'special-offers' || section.category.isEnabled !== false) &&
+      (
+        section.category.id === 'special-offers' ||
+        (section.category.isEnabled !== false && section.category.showOnHome !== false)
+      ) &&
       (section.category.id === 'special-offers' || section.products.length > 0)
     );
 
@@ -453,6 +459,10 @@ export async function getProductsList({ category = 'all', search = '', sort = 'n
 
   if (safeCategory === 'new-arrivals') {
     query.isNewArrival = true;
+  } else if (safeCategory === 'trending') {
+    query.isTrending = true;
+  } else if (safeCategory === 'best-selling') {
+    query.isBestSelling = true;
   } else if (safeCategory === 'special-offers') {
     query.isDiscounted = true;
   } else if (safeCategory && safeCategory !== 'all') {
