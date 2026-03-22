@@ -551,7 +551,7 @@ export default function AdminProductsClient({
                           onClick={() => toggleProductFlag(product._id, "isTrending", product.isTrending)}
                           className={cn(
                             "flex h-7 px-2 items-center justify-center rounded-md border text-[9px] font-bold transition-all",
-                            product.isTrending ? "bg-amber-500/10 border-amber-500/20 text-amber-600" : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted",
+                            product.isTrending ? "bg-accent/12 border-accent/25 text-accent-foreground" : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted",
                           )}
                           title="Trending"
                         >

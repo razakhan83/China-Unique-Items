@@ -8,6 +8,7 @@ import ProductActions from '@/components/ProductActions';
 import ProductGallery from '@/components/ProductGallery';
 import ProductReviews from '@/components/ProductReviews';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -139,7 +140,7 @@ async function ProductHeroSection({ slugPromise }) {
           <div className="flex flex-wrap items-baseline gap-3">
             {product.isDiscounted && product.discountPercentage > 0 ? (
               <>
-                <span className="text-3xl font-extrabold text-red-600 dark:text-red-500 md:text-4xl">
+                <span className="text-3xl font-extrabold text-destructive md:text-4xl">
                   {formatPrice(product.discountedPrice != null ? product.discountedPrice : Math.round(product.Price * (1 - product.discountPercentage / 100)))}
                 </span>
                 <span className="text-lg font-medium text-muted-foreground line-through">
@@ -170,24 +171,30 @@ async function ProductHeroSection({ slugPromise }) {
 
           <div className="mt-2 border-t border-border pt-5">
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="surface-card flex flex-col items-center gap-2 rounded-xl p-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <PackageCheck className="size-4" />
-                </div>
-                <span className="text-xs font-semibold text-muted-foreground">Purchased</span>
-              </div>
-              <div className="surface-card flex flex-col items-center gap-2 rounded-xl p-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Truck className="size-4" />
-                </div>
-                <span className="text-xs font-semibold text-muted-foreground">Dispatch</span>
-              </div>
-              <div className="surface-card flex flex-col items-center gap-2 rounded-xl p-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <BadgeCheck className="size-4" />
-                </div>
-                <span className="text-xs font-semibold text-muted-foreground">Delivered</span>
-              </div>
+              <Card>
+                <CardContent className="flex flex-col items-center gap-2 p-3">
+                  <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <PackageCheck className="size-4" />
+                  </div>
+                  <span className="text-xs font-semibold text-muted-foreground">Purchased</span>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="flex flex-col items-center gap-2 p-3">
+                  <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Truck className="size-4" />
+                  </div>
+                  <span className="text-xs font-semibold text-muted-foreground">Dispatch</span>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="flex flex-col items-center gap-2 p-3">
+                  <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <BadgeCheck className="size-4" />
+                  </div>
+                  <span className="text-xs font-semibold text-muted-foreground">Delivered</span>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

@@ -276,7 +276,7 @@ export default function EditProduct({ id }) {
       </div>
 
       {/* Form Card */}
-      <div className="surface-card max-w-2xl rounded-[calc(var(--radius-xl)+0.5rem)] p-4 shadow-[0_24px_60px_rgba(10,61,46,0.08)] md:p-8">
+      <div className="surface-card max-w-2xl rounded-xl p-4 shadow-lg md:p-8">
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
           {/* Product Name */}
           <div>

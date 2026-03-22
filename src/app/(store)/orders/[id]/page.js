@@ -70,9 +70,9 @@ export default async function SingleOrderPage({ params, searchParams }) {
         <OrderDetailsClient order={order} />
         
         {!session && (
-          <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
-            <p className="text-sm font-medium text-amber-800">
-              Viewing as Guest. <Link href="/api/auth/signin" className="underline font-bold hover:text-amber-900">Sign in</Link> to save this order to your account permanently.
+          <div className="mt-8 rounded-xl border border-accent/25 bg-accent/12 p-6 text-center">
+            <p className="text-sm font-medium text-accent-foreground">
+              Viewing as Guest. <Link href="/api/auth/signin" className="font-bold underline hover:text-foreground">Sign in</Link> to save this order to your account permanently.
             </p>
           </div>
         )}

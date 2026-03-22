@@ -100,7 +100,7 @@ export default function ProductsToolbar({ initialSearch = '', initialSort = 'new
               navigate(buildHref({ sort: value }));
             }}
           >
-            <SelectTrigger className="h-12 rounded-[calc(var(--radius-xl)+2px)] border-border/70 bg-card/95 px-4 text-sm font-medium transition-none hover:bg-card/95 focus:border-border/70 focus:ring-0">
+            <SelectTrigger className="h-12 rounded-xl border-border/70 bg-card/95 px-4 text-sm font-medium transition-none hover:bg-card/95 focus:border-border/70 focus:ring-0">
               <ArrowDownWideNarrow className="size-4 text-muted-foreground" />
               <SelectValue placeholder="Sort products" />
             </SelectTrigger>

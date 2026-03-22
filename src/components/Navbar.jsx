@@ -219,22 +219,11 @@ function NavbarContent({ categories }) {
   const [isFocused, setIsFocused] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const dropdownRef = useRef(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm), 250);
     return () => clearTimeout(timer);
   }, [searchTerm]);
-
-  useEffect(() => {
-    const handleClick = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsCategoriesOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
 
   const suggestions = useMemo(() => [], []);
 
@@ -269,6 +258,8 @@ function NavbarContent({ categories }) {
   ];
   const mobileSidebarButtonClass =
     'flex w-full min-h-10 items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-[background-color,transform,color] duration-200 active:scale-[0.96]';
+  const navActionButtonClass =
+    'nav-icon-button relative overflow-hidden rounded-2xl border border-border/60 bg-card/85 p-0 text-foreground transition-[transform,background-color,border-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:text-foreground active:scale-[0.96]';
 
   return (
     <div className="sticky top-0 z-40 border-b border-border/60 bg-card/95 backdrop-blur">
@@ -294,47 +285,37 @@ function NavbarContent({ categories }) {
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
           <Link href="/" className={navLinkClass('/')}>Home</Link>
           <Link href="/products" scroll={true} className={navLinkClass('/products')}>All Products</Link>
-          <div className="relative" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsCategoriesOpen((value) => !value)}
-              className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              Categories
-              <ChevronDown className={cn('size-4 transition-transform', isCategoriesOpen && 'rotate-180')} />
-            </button>
-            {isCategoriesOpen ? (
-              <div className="absolute left-0 top-full z-40 mt-2 w-60 overflow-hidden rounded-xl border border-border bg-popover p-1 shadow-[0_18px_50px_rgba(10,61,46,0.12)]">
-                <button
-                  type="button"
-                  onClick={() => handleCategoryClick('new-arrivals')}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted"
+          <DropdownMenu open={isCategoriesOpen} onOpenChange={setIsCategoriesOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                Categories
+                <ChevronDown className={cn('size-4 transition-transform', isCategoriesOpen && 'rotate-180')} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-60 p-1" align="start" sideOffset={8}>
+              <DropdownMenuItem onClick={() => handleCategoryClick('new-arrivals')}>
+                <Sparkles className="text-accent-foreground" />
+                <span>New Arrivals</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleCategoryClick('special-offers')}>
+                <Tag className="text-accent-foreground" />
+                <span>Special Offers</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {categories.filter(c => c.id !== 'special-offers' && c.id !== 'new-arrivals').map((category) => (
+                <DropdownMenuItem
+                  key={category.id}
+                  onClick={() => handleCategoryClick(category.id)}
                 >
-                  <Sparkles className="size-4 text-accent-foreground" />
-                  New Arrivals
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleCategoryClick('special-offers')}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted"
-                >
-                  <Tag className="size-4 text-accent-foreground" />
-                  Special Offers
-                </button>
-                {categories.filter(c => c.id !== 'special-offers' && c.id !== 'new-arrivals').map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => handleCategoryClick(category.id)}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted"
-                  >
-                    <Tag className="size-4 text-muted-foreground" />
-                    {category.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
+                  <Tag className="text-muted-foreground" />
+                  <span>{category.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         <div className="ml-auto flex items-center gap-2 self-center">
@@ -345,8 +326,10 @@ function NavbarContent({ categories }) {
             aria-label="Toggle search"
             aria-expanded={isSearchOpen}
             className={cn(
-              'nav-icon-button nav-search-toggle relative overflow-hidden rounded-2xl border border-transparent bg-transparent text-muted-foreground',
-              isSearchOpen && 'is-open border-primary/15 bg-primary/8 text-primary'
+              `nav-search-toggle ${navActionButtonClass}`,
+              isSearchOpen
+                ? 'is-open border-primary/18 bg-background text-primary'
+                : ''
             )}
           >
             <span className="relative flex size-5 items-center justify-center">
@@ -354,19 +337,23 @@ function NavbarContent({ categories }) {
               <X className={cn('navbar-toggle-icon navbar-toggle-icon-close', isSearchOpen && 'is-visible')} />
             </span>
           </Button>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon-lg"
             onClick={openCart}
-            className="nav-cart-button relative inline-flex size-11 items-center justify-center rounded-2xl border border-border/75 bg-background/95 text-foreground shadow-[0_12px_28px_rgba(10,61,46,0.08),0_2px_6px_rgba(10,61,46,0.05)] transition-[transform,background-color,border-color,box-shadow] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_34px_rgba(10,61,46,0.12),0_3px_8px_rgba(10,61,46,0.06)] active:scale-[0.96]"
+            className={`nav-cart-button ${navActionButtonClass}`}
             aria-label="Open cart"
           >
-            <ShoppingBag className="size-[1.05rem]" />
+            <span className="relative flex size-5 items-center justify-center">
+              <ShoppingBag className="size-[1.05rem]" />
+            </span>
             {cartCount > 0 ? (
               <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-md bg-primary px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary-foreground">
                 {cartCount}
               </span>
             ) : null}
-          </button>
+          </Button>
 
           {session ? (
             <div className="hidden md:block">
@@ -375,7 +362,7 @@ function NavbarContent({ categories }) {
                   <Button
                     variant="ghost"
                     size="icon-lg"
-                    className="nav-icon-button nav-profile-button relative flex items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-card/85 p-0 text-foreground shadow-[0_10px_24px_rgba(10,61,46,0.06)] transition-[transform,background-color,border-color,box-shadow] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:shadow-[0_16px_30px_rgba(10,61,46,0.1)] active:scale-[0.96]"
+                    className={`nav-profile-button flex items-center justify-center ${navActionButtonClass}`}
                   >
                     <Avatar className="size-9">
                       <AvatarImage src={session.user?.image} alt={session.user?.name || 'User'} />
@@ -421,9 +408,11 @@ function NavbarContent({ categories }) {
                 variant="ghost"
                 size="icon-lg"
                 onClick={() => setIsAuthModalOpen(true)}
-                className="nav-icon-button nav-profile-button rounded-2xl border border-border/60 bg-card/85 text-muted-foreground shadow-[0_10px_24px_rgba(10,61,46,0.06)] transition-[transform,background-color,border-color,box-shadow,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:text-foreground hover:shadow-[0_16px_30px_rgba(10,61,46,0.1)] active:scale-[0.96]"
+                className={`nav-profile-button ${navActionButtonClass}`}
               >
-                <User />
+                <span className="relative flex size-5 items-center justify-center">
+                  <User className="size-5" />
+                </span>
               </Button>
             </div>
           )}
@@ -499,8 +488,9 @@ function NavbarContent({ categories }) {
                     </AccordionTrigger>
                     <AccordionContent className="px-0 pt-1.5 pb-0">
                       <div className="flex flex-col gap-1.5">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => handleCategoryClick('new-arrivals')}
                           className={cn(
                             mobileSidebarButtonClass,
@@ -509,11 +499,12 @@ function NavbarContent({ categories }) {
                               : 'bg-muted/55 text-foreground hover:bg-muted'
                           )}
                         >
-                          <Sparkles className="size-4" />
+                          <Sparkles />
                           New Arrivals
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => handleCategoryClick('special-offers')}
                           className={cn(
                             mobileSidebarButtonClass,
@@ -522,13 +513,14 @@ function NavbarContent({ categories }) {
                               : 'bg-muted/55 text-foreground hover:bg-muted'
                           )}
                         >
-                          <Tag className="size-4" />
+                          <Tag />
                           Special Offers
-                        </button>
+                        </Button>
                         {categories.filter(c => c.id !== 'special-offers' && c.id !== 'new-arrivals').map((category) => (
-                          <button
+                          <Button
                             key={category.id}
                             type="button"
+                            variant="ghost"
                             onClick={() => handleCategoryClick(category.id)}
                             className={cn(
                               mobileSidebarButtonClass,
@@ -537,9 +529,9 @@ function NavbarContent({ categories }) {
                                 : 'bg-muted/55 text-foreground hover:bg-muted'
                             )}
                           >
-                            <Tag className="size-4" />
+                            <Tag />
                             {category.label}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </AccordionContent>
@@ -564,41 +556,44 @@ function NavbarContent({ categories }) {
                       <p className="truncate text-xs text-muted-foreground">{session.user?.email}</p>
                     </div>
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => {
                       setIsSidebarOpen(false);
                       router.push('/settings');
                     }}
-                    className="flex min-h-10 items-center gap-3 rounded-xl bg-muted/55 px-3.5 py-2.5 text-sm font-medium text-foreground transition-[background-color,transform] duration-200 hover:bg-muted active:scale-[0.96]"
+                    className="h-auto justify-start rounded-xl bg-muted/55 px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
                   >
-                    <Settings className="size-4" />
+                    <Settings />
                     Account Settings
-                  </button>
+                  </Button>
                   {session.user?.isAdmin ? (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       onClick={() => {
                         setIsSidebarOpen(false);
                         router.push('/admin');
                       }}
-                      className="flex min-h-10 items-center gap-3 rounded-xl bg-muted/55 px-3.5 py-2.5 text-sm font-medium text-foreground transition-[background-color,transform] duration-200 hover:bg-muted active:scale-[0.96]"
+                      className="h-auto justify-start rounded-xl bg-muted/55 px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
                     >
-                      <LayoutGrid className="size-4" />
+                      <LayoutGrid />
                       Admin Panel
-                    </button>
+                    </Button>
                   ) : null}
-                  <button
+                  <Button
                     type="button"
+                    variant="destructive"
                     onClick={() => {
                       setIsSidebarOpen(false);
                       signOut();
                     }}
-                    className="flex min-h-10 items-center gap-3 rounded-xl bg-destructive/10 px-3.5 py-2.5 text-sm font-medium text-destructive transition-[background-color,transform] duration-200 hover:bg-destructive/20 active:scale-[0.96]"
+                    className="h-auto justify-start rounded-xl px-3.5 py-2.5 text-sm font-medium"
                   >
-                    <LogOut className="size-4" />
+                    <LogOut />
                     Logout
-                  </button>
+                  </Button>
                 </div>
               )}
 

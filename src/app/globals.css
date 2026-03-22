@@ -63,7 +63,7 @@
     min-height: 100vh;
     background:
       radial-gradient(circle at top, color-mix(in oklab, var(--color-accent) 12%, transparent), transparent 32%),
-      linear-gradient(180deg, oklch(0.982 0.007 95), var(--color-background));
+      linear-gradient(180deg, color-mix(in oklab, var(--color-background) 82%, white), var(--color-background));
     color: var(--color-foreground);
     font-family: var(--font-sans);
     line-height: 1.5;
@@ -84,7 +84,7 @@
   html::-webkit-scrollbar-thumb {
     background: color-mix(in oklab, var(--color-primary) 42%, white);
     border: 1px solid transparent;
-    border-radius: 9999px;
+    border-radius: var(--radius-xl);
     box-shadow: none;
   }
 
@@ -294,8 +294,8 @@
   gap: 1rem;
   overflow: hidden;
   border-width: 1px;
-  border-radius: 1rem;
-  background: #fff;
+  border-radius: var(--radius-xl);
+  background: var(--color-card);
   padding: 1rem;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
   will-change: opacity, transform;
@@ -316,7 +316,7 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-lg);
 }
 
 .toast-progress {
@@ -501,13 +501,13 @@
 }
 
 [data-sonner-toaster] {
-  --normal-bg: #ffffff;
+  --normal-bg: var(--color-card);
   --normal-border: var(--color-border);
   --normal-text: var(--color-foreground);
-  --success-bg: #ffffff;
+  --success-bg: var(--color-card);
   --success-border: color-mix(in oklab, var(--color-success) 25%, white);
   --success-text: color-mix(in oklab, var(--color-primary) 70%, black);
-  --error-bg: #ffffff;
+  --error-bg: var(--color-card);
   --error-border: color-mix(in oklab, var(--color-destructive) 25%, white);
   --error-text: var(--color-foreground);
 }

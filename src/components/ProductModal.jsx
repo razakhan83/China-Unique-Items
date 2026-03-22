@@ -35,19 +35,19 @@ export default function ProductModal({ product, onClose }) {
             >
                 {/* Modal */}
                 <div
-                    className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative animate-fadeInUp"
+                    className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-card shadow-2xl animate-fadeInUp"
                     style={{ willChange: 'transform, opacity' }}
                     onClick={(e) => e.stopPropagation()}
                 >
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors"
+                        className="absolute right-4 top-4 z-10 flex size-8 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     >
                         <i className="fa-solid fa-xmark"></i>
                     </button>
 
                     <div className="flex flex-col md:flex-row">
-                        <div className="w-full md:w-1/2 relative bg-gray-50 aspect-square md:aspect-auto md:min-h-[300px] overflow-hidden group">
+                        <div className="relative aspect-square w-full overflow-hidden bg-muted group md:min-h-[300px] md:w-1/2 md:aspect-auto">
                             {primaryImageSrc ? (
                                 <Image
                                     src={primaryImageSrc}
@@ -57,7 +57,7 @@ export default function ProductModal({ product, onClose }) {
                                     {...getBlurPlaceholderProps(primaryImage.blurDataURL)}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                <div className="flex h-full w-full items-center justify-center text-muted-foreground/60">
                                     <i className="fa-solid fa-image text-6xl opacity-20"></i>
                                 </div>
                             )}
@@ -67,22 +67,22 @@ export default function ProductModal({ product, onClose }) {
                             <div className="flex flex-wrap gap-1.5 mb-3">
                                 {categories.length > 0 ? (
                                     categories.map((cat, i) => (
-                                        <Badge key={i} variant="emerald">
+                                        <Badge key={i} variant="secondary">
                                             {cat}
                                         </Badge>
                                     ))
                                 ) : (
-                                    <Badge variant="emerald">Premium Item</Badge>
+                                    <Badge variant="secondary">Premium Item</Badge>
                                 )}
                             </div>
 
-                            <h2 className="text-2xl font-bold text-gray-900 mb-3 leading-tight">
+                            <h2 className="mb-3 text-2xl font-bold leading-tight text-foreground">
                                 {product.Name || product.name}
                             </h2>
-                            <div className="text-3xl font-extrabold text-[#0A3D2E] mb-4 tracking-tight">
+                            <div className="mb-4 text-3xl font-extrabold tracking-tight text-primary">
                                 {formatPrice(product.Price || product.price)}
                             </div>
-                            <p className="text-gray-600 text-sm md:text-base leading-relaxed mb-6">
+                            <p className="mb-6 text-sm leading-relaxed text-muted-foreground md:text-base">
                                 {product.Description || product.description || "Discover the perfect addition to your collection. This premium item from China Unique Store is crafted with quality and elegance in mind."}
                             </p>
 
@@ -103,7 +103,7 @@ export default function ProductModal({ product, onClose }) {
                                     rel="noopener noreferrer"
                                     className="flex-1 w-full"
                                 >
-                                    <Button variant="default" className="w-full bg-[#25D366] hover:bg-[#1ebe5d] transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:-translate-y-1 shadow-sm hover:shadow-md">
+                                    <Button variant="default" className="w-full bg-success text-success-foreground transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] hover:-translate-y-1 hover:bg-success/90 shadow-sm hover:shadow-md">
                                         <i className="fa-brands fa-whatsapp text-xl mr-2"></i> Order via WhatsApp
                                     </Button>
                                 </a>

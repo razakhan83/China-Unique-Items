@@ -2,42 +2,53 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  Package, 
   Calendar, 
   Clock, 
-  ChevronRight, 
-  ShoppingBag, 
   Truck,
   MessageSquare,
-  FileText
+  Archive,
+  PackageSearch
 } from 'lucide-react';
-import Link from 'next/link';
+import Image from 'next/image';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import InvoiceButton from '@/components/InvoiceButtonWrapper';
 import CopyButton from '@/components/CopyButton';
 import ReviewModal from '@/components/ReviewModal';
 import { cn } from '@/lib/utils';
 
 const STATUS_COLORS = {
-  Pending: 'bg-amber-100 text-amber-700 border-amber-200',
-  Confirmed: 'bg-blue-100 text-blue-700 border-blue-200',
-  'In Process': 'bg-indigo-100 text-indigo-700 border-indigo-200',
-  Delivered: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  'Delivery Address Issue': 'bg-red-100 text-red-700 border-red-200',
-  Returned: 'bg-gray-100 text-gray-700 border-gray-200',
+  Pending: 'bg-accent/15 text-accent-foreground border-accent/25',
+  Confirmed: 'bg-primary/10 text-primary border-primary/20',
+  'In Process': 'bg-secondary text-secondary-foreground border-border',
+  Delivered: 'bg-success/12 text-success border-success/20',
+  'Delivery Address Issue': 'bg-destructive/10 text-destructive border-destructive/20',
+  Returned: 'bg-muted text-muted-foreground border-border',
 };
 
 export default function OrdersClient({ initialOrders }) {
-  const [orders, setOrders] = useState(initialOrders);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState('active'); // 'active' or 'history'
+  const [activeTab, setActiveTab] = useState('active');
+  const orders = initialOrders;
 
   useEffect(() => {
-    setMounted(true);
+    const frameId = window.requestAnimationFrame(() => {
+      setMounted(true);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
   }, []);
 
   // Updated Grouping Logic
@@ -112,6 +123,20 @@ export default function OrdersClient({ initialOrders }) {
     window.location.reload();
   };
 
+  function renderEmptyState(title, description, Icon) {
+    return (
+      <Empty className="surface-card rounded-xl border border-dashed border-border py-12">
+        <EmptyHeader>
+          <EmptyMedia variant="icon" className="size-12 rounded-xl bg-muted text-muted-foreground">
+            <Icon className="size-6" />
+          </EmptyMedia>
+          <EmptyTitle className="text-lg font-semibold text-foreground">{title}</EmptyTitle>
+          <EmptyDescription>{description}</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
+
   const renderOrderCard = (order) => {
     const hasUnreviewedItems = order.status === 'Delivered' && order.items.some(item => !item.isReviewed);
     
@@ -141,7 +166,13 @@ export default function OrdersClient({ initialOrders }) {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <Badge 
+              variant="outline" 
+              className={cn("px-3 py-1 rounded-full border shadow-sm", STATUS_COLORS[order.status] || 'bg-muted')}
+            >
+              {order.status}
+            </Badge>
             <InvoiceButton order={order} />
             {hasUnreviewedItems && (
               <Button 
@@ -153,12 +184,6 @@ export default function OrdersClient({ initialOrders }) {
                 Review Now
               </Button>
             )}
-            <Badge 
-              variant="outline" 
-              className={cn("px-3 py-1 rounded-full border shadow-sm", STATUS_COLORS[order.status] || 'bg-muted')}
-            >
-              {order.status}
-            </Badge>
           </div>
         </div>
 
@@ -169,11 +194,11 @@ export default function OrdersClient({ initialOrders }) {
               <div key={idx} className="flex items-center gap-4">
                 <div className="relative size-12 overflow-hidden rounded-lg border border-border bg-muted shrink-0">
                   {item.image && (
-                    <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                    <Image src={item.image} alt={item.name} fill sizes="48px" className="object-cover" unoptimized />
                   )}
                   {item.isReviewed && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <Badge className="bg-emerald-500 hover:bg-emerald-600 text-[8px] h-4 px-1">Reviewed</Badge>
+                      <Badge className="h-4 bg-success px-1 text-[8px] text-success-foreground hover:bg-success/90">Reviewed</Badge>
                     </div>
                   )}
                 </div>
@@ -190,12 +215,11 @@ export default function OrdersClient({ initialOrders }) {
           {(order.courierName || order.trackingNumber) && (
             <>
               <Separator className="my-6" />
-              <div className="rounded-xl border border-primary/10 bg-primary/5 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Truck className="size-4 text-primary" />
-                  <h3 className="text-sm font-bold text-primary">Tracking Information</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Alert className="rounded-xl border-primary/10 bg-primary/5 px-4 py-4">
+                <Truck className="size-4 text-primary" />
+                <AlertTitle className="text-sm font-bold text-primary">Tracking Information</AlertTitle>
+                <AlertDescription className="pt-2">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {order.courierName && (
                     <div>
                       <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Courier</p>
@@ -214,8 +238,9 @@ export default function OrdersClient({ initialOrders }) {
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
             </>
           )}
 
@@ -238,78 +263,46 @@ export default function OrdersClient({ initialOrders }) {
 
   return (
     <>
-      <div className="space-y-8">
-        {/* Tabs Switcher */}
-        <div className="flex p-1 bg-muted rounded-xl w-full sm:w-fit overflow-hidden">
-          <button
-            onClick={() => setActiveTab('active')}
-            className={cn(
-              "flex-1 sm:flex-none px-6 py-2.5 text-sm font-semibold rounded-lg transition-all",
-              activeTab === 'active' 
-                ? "bg-background text-primary shadow-sm" 
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col gap-6">
+        <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl bg-muted p-1 sm:w-fit">
+          <TabsTrigger value="active" className="px-4 py-2 text-sm font-semibold">
             Active Orders
-            {activeOrders.length > 0 && (
-              <span className={cn(
-                "ml-2 px-1.5 py-0.5 text-[10px] rounded-full",
-                activeTab === 'active' ? "bg-primary/10 text-primary" : "bg-muted-foreground/10 text-muted-foreground"
-              )}>
+            {activeOrders.length > 0 ? (
+              <Badge variant="secondary" className="ml-1 rounded-full px-1.5 py-0 text-[10px]">
                 {activeOrders.length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={cn(
-              "flex-1 sm:flex-none px-6 py-2.5 text-sm font-semibold rounded-lg transition-all",
-              activeTab === 'history' 
-                ? "bg-background text-primary shadow-sm" 
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
+              </Badge>
+            ) : null}
+          </TabsTrigger>
+          <TabsTrigger value="history" className="px-4 py-2 text-sm font-semibold">
             Order History
-            {historyOrders.length > 0 && (
-              <span className={cn(
-                "ml-2 px-1.5 py-0.5 text-[10px] rounded-full",
-                activeTab === 'history' ? "bg-primary/10 text-primary" : "bg-muted-foreground/10 text-muted-foreground"
-              )}>
+            {historyOrders.length > 0 ? (
+              <Badge variant="secondary" className="ml-1 rounded-full px-1.5 py-0 text-[10px]">
                 {historyOrders.length}
-              </span>
-            )}
-          </button>
-        </div>
+              </Badge>
+            ) : null}
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Content Section */}
-        <div className="space-y-4">
-          {activeTab === 'active' ? (
-            activeOrders.length > 0 ? (
-              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                {activeOrders.map(renderOrderCard)}
-              </div>
-            ) : (
-              <div className="text-center py-12 surface-card rounded-xl border border-dashed border-border">
-                <Package className="mx-auto size-8 text-muted-foreground mb-3" />
-                <h3 className="text-lg font-semibold text-foreground">No active orders</h3>
-                <p className="text-sm text-muted-foreground">You don't have any ongoing shipments at the moment.</p>
-              </div>
-            )
+        <TabsContent value="active" className="space-y-4">
+          {activeOrders.length > 0 ? (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {activeOrders.map(renderOrderCard)}
+            </div>
           ) : (
-            historyOrders.length > 0 ? (
-              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                {historyOrders.map(renderOrderCard)}
-              </div>
-            ) : (
-              <div className="text-center py-12 surface-card rounded-xl border border-dashed border-border">
-                <Clock className="mx-auto size-8 text-muted-foreground mb-3" />
-                <h3 className="text-lg font-semibold text-foreground">No order history</h3>
-                <p className="text-sm text-muted-foreground">Your completed orders will appear here.</p>
-              </div>
-            )
+            renderEmptyState('No active orders', "You don't have any ongoing shipments at the moment.", PackageSearch)
           )}
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-4">
+          {historyOrders.length > 0 ? (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {historyOrders.map(renderOrderCard)}
+            </div>
+          ) : (
+            renderEmptyState('No order history', 'Your completed orders will appear here.', Archive)
+          )}
+        </TabsContent>
+      </Tabs>
 
       <ReviewModal 
         isOpen={isReviewModalOpen} 

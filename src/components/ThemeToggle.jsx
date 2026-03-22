@@ -24,7 +24,7 @@ export default function ThemeToggle() {
             aria-label="Toggle Dark Mode"
         >
             {currentTheme === 'dark' ? (
-                <i className="fa-solid fa-sun text-yellow-300 drop-shadow-md"></i>
+                <i className="fa-solid fa-sun text-accent drop-shadow-md"></i>
             ) : (
                 <i className="fa-solid fa-moon drop-shadow-md"></i>
             )}

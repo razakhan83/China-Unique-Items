@@ -129,7 +129,7 @@ export default function ProductGallery({ images }) {
                       : 'border-border opacity-60 hover:scale-[1.02] hover:opacity-100'
                   }`}
                 >
-                  <div className="absolute inset-0 bg-gray-100" />
+                  <div className="absolute inset-0 bg-muted" />
                   <Image
                     src={optimizeCloudinaryUrl(image.url, CLOUDINARY_IMAGE_PRESETS.productGalleryThumb)}
                     alt={`Thumbnail ${index + 1}`}

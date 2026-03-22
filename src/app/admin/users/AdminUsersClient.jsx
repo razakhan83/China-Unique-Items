@@ -182,26 +182,26 @@ export default function AdminUsersClient({
           </CardContent>
         </Card>
 
-        <Card className="surface-card border-none bg-emerald-500/5">
+        <Card className="surface-card border-none bg-success/8">
           <CardHeader className="pb-2">
-            <CardDescription className="text-emerald-600/70">Active Users</CardDescription>
-            <CardTitle className="text-3xl font-bold text-emerald-600">{summary.activeUsers}</CardTitle>
+            <CardDescription className="text-success/70">Active Users</CardDescription>
+            <CardTitle className="text-3xl font-bold text-success">{summary.activeUsers}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2 text-xs text-emerald-600/60">
+            <div className="flex items-center gap-2 text-xs text-success/60">
               <UserCheck className="size-3" />
               <span>Allowed to login</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="surface-card border-none bg-red-500/5">
+        <Card className="surface-card border-none bg-destructive/6">
           <CardHeader className="pb-2">
-            <CardDescription className="text-red-600/70">Disabled Users</CardDescription>
-            <CardTitle className="text-3xl font-bold text-red-600">{summary.disabledUsers}</CardTitle>
+            <CardDescription className="text-destructive/70">Disabled Users</CardDescription>
+            <CardTitle className="text-3xl font-bold text-destructive">{summary.disabledUsers}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2 text-xs text-red-600/60">
+            <div className="flex items-center gap-2 text-xs text-destructive/60">
               <UserX className="size-3" />
               <span>Blocked from login</span>
             </div>
@@ -321,7 +321,7 @@ export default function AdminUsersClient({
                         Disabled
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="flex w-fit items-center gap-1 bg-emerald-50 text-emerald-700 font-bold">
+                      <Badge variant="secondary" className="flex w-fit items-center gap-1 bg-success/10 font-bold text-success">
                         <UserCheck className="size-3" />
                         Active
                       </Badge>
@@ -340,7 +340,7 @@ export default function AdminUsersClient({
                           <DropdownMenuLabel>User Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            className={user.disabled ? 'text-emerald-600 focus:text-emerald-600' : 'text-destructive focus:text-destructive'}
+                            className={user.disabled ? 'text-success focus:text-success' : 'text-destructive focus:text-destructive'}
                             onClick={() => handleUserAction(user, { disabled: !user.disabled })}
                             disabled={loadingId === user._id}
                           >
@@ -394,13 +394,13 @@ export default function AdminUsersClient({
         </div>
       )}
 
-      <div className="rounded-xl bg-amber-50 p-4 border border-amber-200 flex items-start gap-4">
-        <div className="bg-amber-100 p-2 rounded-lg text-amber-700 flex-shrink-0">
+      <div className="flex items-start gap-4 rounded-xl border border-accent/25 bg-accent/12 p-4">
+        <div className="shrink-0 rounded-lg bg-accent/18 p-2 text-accent-foreground">
           <ShieldAlert className="size-5" />
         </div>
         <div>
-          <h4 className="font-bold text-amber-800">Security Note</h4>
-          <p className="text-sm text-amber-700 mt-1 leading-relaxed">
+          <h4 className="font-bold text-accent-foreground">Security Note</h4>
+          <p className="mt-1 text-sm leading-relaxed text-accent-foreground/80">
             Disabling a user will prevent them from signing in to their account. If the user is currently logged in, they will be blocked upon their next authentication request. This action is manually reversible at any time by an administrator.
           </p>
         </div>

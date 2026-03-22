@@ -6,12 +6,12 @@ export function ProductsHeaderSkeleton() {
       <div className="products-page-bar fixed inset-x-0 top-24 z-30 border-y border-border/70 bg-card/95 backdrop-blur">
         <div className="relative mx-auto max-w-7xl px-4">
           <div className="relative flex gap-2 overflow-x-hidden py-4 hide-scrollbar">
-            <Skeleton className="h-7 w-24 shrink-0 rounded-[min(var(--radius-md),12px)]" />
-            <Skeleton className="h-7 w-30 shrink-0 rounded-[min(var(--radius-md),12px)]" />
-            <Skeleton className="h-7 w-31 shrink-0 rounded-[min(var(--radius-md),12px)]" />
-            <Skeleton className="h-7 w-28 shrink-0 rounded-[min(var(--radius-md),12px)]" />
-            <Skeleton className="h-7 w-26 shrink-0 rounded-[min(var(--radius-md),12px)]" />
-            <Skeleton className="h-7 w-32 shrink-0 rounded-[min(var(--radius-md),12px)]" />
+            <Skeleton className="h-7 w-24 shrink-0 rounded-md" />
+            <Skeleton className="h-7 w-30 shrink-0 rounded-md" />
+            <Skeleton className="h-7 w-31 shrink-0 rounded-md" />
+            <Skeleton className="h-7 w-28 shrink-0 rounded-md" />
+            <Skeleton className="h-7 w-26 shrink-0 rounded-md" />
+            <Skeleton className="h-7 w-32 shrink-0 rounded-md" />
           </div>
         </div>
       </div>
@@ -31,7 +31,7 @@ export function ProductsToolbarSkeleton() {
     <div className="products-page-toolbar mx-auto max-w-7xl px-4 pt-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="min-w-0 flex-1">
-          <div className="relative h-12 overflow-hidden rounded-[calc(var(--radius-xl)+2px)] border border-border/70 bg-background/80">
+          <div className="relative h-12 overflow-hidden rounded-xl border border-border/70 bg-background/80">
             <div className="absolute inset-y-0 left-0 flex items-center pl-4">
               <Skeleton className="size-4 rounded-full" />
             </div>
@@ -42,7 +42,7 @@ export function ProductsToolbarSkeleton() {
           </div>
         </div>
         <div className="flex items-center gap-2 lg:w-64">
-          <div className="relative h-12 w-full overflow-hidden rounded-[calc(var(--radius-xl)+2px)] border border-border/70 bg-background/80 px-4">
+          <div className="relative h-12 w-full overflow-hidden rounded-xl border border-border/70 bg-background/80 px-4">
             <div className="flex h-full items-center gap-3">
               <Skeleton className="size-4 rounded-full" />
               <Skeleton className="h-4 w-28 rounded-md" />

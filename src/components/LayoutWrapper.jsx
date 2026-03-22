@@ -33,13 +33,13 @@ function LayoutContent({ children, categories, settings }) {
                                 </div>
                                 <p className="max-w-sm leading-relaxed text-primary-foreground/76">A premium destination for kitchenware, home decor, and lifestyle pieces chosen for everyday elegance.</p>
                                 <div className="mt-5 flex gap-3">
-                                    <a href="#" className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-[#1877F2] hover:border-[#1877F2] hover:shadow-[0_8px_20px_rgba(24,119,242,0.3)]" aria-label="Facebook">
+                                    <a href="#" className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-white/14 hover:border-white/20 hover:text-white" aria-label="Facebook">
                                         <Facebook className="size-4" />
                                     </a>
-                                    <a href="#" className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-[#E4405F] hover:border-[#E4405F] hover:shadow-[0_8px_20px_rgba(228,64,95,0.3)]" aria-label="Instagram">
+                                    <a href="#" className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-white/14 hover:border-white/20 hover:text-white" aria-label="Instagram">
                                         <Instagram className="size-4" />
                                     </a>
-                                    <a href={`https://wa.me/${settings.whatsappNumber}`} className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-[#25D366] hover:border-[#25D366] hover:shadow-[0_8px_20px_rgba(37,211,102,0.3)]" aria-label="WhatsApp">
+                                    <a href={`https://wa.me/${settings.whatsappNumber}`} className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-white/14 hover:border-white/20 hover:text-white" aria-label="WhatsApp">
                                         <WhatsAppIcon className="size-5" />
                                     </a>
                                 </div>

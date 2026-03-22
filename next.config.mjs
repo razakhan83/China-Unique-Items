@@ -18,7 +18,6 @@ const nextConfig = {
     cachedNavigations: true,
     appNewScrollHandler: true,
   },
-  transpilePackages: ['swiper'],
   images: {
     unoptimized: true,
     remotePatterns: [

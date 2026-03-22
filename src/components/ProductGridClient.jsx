@@ -1,16 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownWideNarrow, PackageOpen, Search, Sparkles } from "lucide-react";
+import { ArrowDownWideNarrow, Search, SearchX, Sparkles } from "lucide-react";
 
 import ProductCard from "@/components/ProductCard";
 import SearchField from "@/components/SearchField";
 import { useCart } from "@/context/CartContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { getProductCategoryNames, hasProductCategory, normalizeCategoryId } from "@/lib/productCategories";
-import { cn } from "@/lib/utils";
 
 function ProductGridContent({
   initialProducts,
@@ -29,7 +36,6 @@ function ProductGridContent({
   const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
   const itemsPerPage = 12;
   const loadMoreRef = useRef(null);
-  const categoryNavRef = useRef(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm), 250);
@@ -113,26 +119,22 @@ function ProductGridContent({
   }, [handleObserver]);
 
   useEffect(() => {
-    setCurrentPage(1);
+    const timeoutId = window.setTimeout(() => {
+      setCurrentPage(1);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [activeCategory, searchTerm]);
 
   useEffect(() => {
     if (forceSearchTerm !== undefined) {
-      setSearchTerm(forceSearchTerm);
+      const timeoutId = window.setTimeout(() => {
+        setSearchTerm(forceSearchTerm);
+      }, 0);
+
+      return () => window.clearTimeout(timeoutId);
     }
   }, [forceSearchTerm]);
-
-  useEffect(() => {
-    if (categoryNavRef.current) {
-      const activePill = categoryNavRef.current.querySelector("[data-active='true']");
-      if (activePill) {
-        categoryNavRef.current.scrollTo({
-          left: activePill.offsetLeft - categoryNavRef.current.clientWidth / 2 + activePill.clientWidth / 2,
-          behavior: "smooth",
-        });
-      }
-    }
-  }, [activeCategory]);
 
   const suggestions = useMemo(() => {
     if (!debouncedSearch.trim()) return [];
@@ -163,29 +165,33 @@ function ProductGridContent({
     <>
       {!hideCategoryBar ? (
         <div className="border-y border-border/70 bg-card/70">
-          <div ref={categoryNavRef} className="relative mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 py-4 hide-scrollbar">
-            {categoryButtons.map((category) => {
-              const Icon = category.icon;
-              const isActive = activeCategory === category.id;
-              return (
-                <button
-                  key={category.id}
-                  type="button"
-                  data-active={isActive}
-                  onClick={() => {
-                    setActiveCategory(category.id);
-                    setCurrentPage(1);
-                  }}
-                  className={cn(
-                    "inline-flex shrink-0 items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-medium transition-colors",
-                    isActive ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-foreground hover:bg-muted"
-                  )}
-                >
+          <div className="mx-auto max-w-7xl overflow-x-auto px-4 py-4 hide-scrollbar">
+            <ToggleGroup
+              type="single"
+              value={activeCategory}
+              onValueChange={(value) => {
+                if (!value) return;
+                setActiveCategory(value);
+                setCurrentPage(1);
+              }}
+              variant="outline"
+              spacing={2}
+              className="min-w-max"
+            >
+              {categoryButtons.map((category) => {
+                const Icon = category.icon;
+                return (
+                  <ToggleGroupItem
+                    key={category.id}
+                    value={category.id}
+                    className="rounded-lg px-3.5 py-2 text-sm font-medium aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                  >
                   {Icon ? <Icon className="size-4" /> : null}
                   {category.label}
-                </button>
-              );
-            })}
+                  </ToggleGroupItem>
+                );
+              })}
+            </ToggleGroup>
           </div>
         </div>
       ) : null}
@@ -214,7 +220,7 @@ function ProductGridContent({
 
             <div className="flex items-center gap-2 lg:w-64">
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="h-12 rounded-[calc(var(--radius-xl)+2px)] border-border/70 bg-background/80 px-4 text-sm font-medium shadow-[0_14px_36px_rgba(10,61,46,0.08),0_2px_6px_rgba(10,61,46,0.05)] transition-none hover:bg-background/80 focus:border-border/70 focus:ring-0">
+                <SelectTrigger className="h-12 rounded-xl border-border/70 bg-background/80 px-4 text-sm font-medium shadow-md transition-none hover:bg-background/80 focus:border-border/70 focus:ring-0">
                   <ArrowDownWideNarrow className="size-4 text-muted-foreground" />
                   <SelectValue placeholder="Sort products" />
                 </SelectTrigger>
@@ -237,7 +243,7 @@ function ProductGridContent({
             Showing <span className="font-semibold text-foreground">{displayedProducts.length}</span> of{" "}
             <span className="font-semibold text-foreground">{filteredProducts.length}</span> products
           </p>
-          {searchTerm ? <Badge variant="secondary">Search: "{searchTerm}"</Badge> : null}
+          {searchTerm ? <Badge variant="secondary">Search: &quot;{searchTerm}&quot;</Badge> : null}
         </div>
 
         {displayedProducts.length ? (
@@ -253,13 +259,17 @@ function ProductGridContent({
             ))}
           </div>
         ) : (
-          <div className="products-page-empty surface-card flex flex-col items-center justify-center rounded-xl px-6 py-16 text-center">
-            <div className="mb-4 flex size-16 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <PackageOpen className="size-7" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground">No products found</h3>
-            <p className="mt-2 max-w-sm text-sm text-muted-foreground">Try adjusting your search or selecting another category to explore the catalog.</p>
-          </div>
+          <Empty className="products-page-empty surface-card rounded-xl px-6 py-16">
+            <EmptyHeader>
+              <EmptyMedia variant="icon" className="size-16 rounded-xl bg-primary/10 text-primary">
+              <SearchX className="size-7" />
+              </EmptyMedia>
+              <EmptyTitle className="text-lg font-semibold text-foreground">No products found</EmptyTitle>
+              <EmptyDescription className="max-w-sm">
+                Try adjusting your search or selecting another category to explore the catalog.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
 
         {displayedProducts.length ? (

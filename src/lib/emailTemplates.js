@@ -1,5 +1,25 @@
 import 'server-only';
 
+const EMAIL_THEME = {
+  background: 'oklch(0.975 0.008 95)',
+  foreground: 'oklch(0.24 0.02 160)',
+  card: 'oklch(0.992 0.004 95)',
+  primary: 'oklch(0.34 0.07 166)',
+  primaryForeground: 'oklch(0.985 0.004 95)',
+  secondary: 'oklch(0.94 0.012 95)',
+  secondaryForeground: 'oklch(0.29 0.02 160)',
+  muted: 'oklch(0.955 0.01 95)',
+  mutedForeground: 'oklch(0.52 0.02 160)',
+  accent: 'oklch(0.78 0.11 92)',
+  accentForeground: 'oklch(0.23 0.02 160)',
+  border: 'oklch(0.9 0.01 95)',
+  success: 'oklch(0.72 0.13 155)',
+  destructive: 'oklch(0.62 0.2 27)',
+  radiusSm: '0.5rem',
+  radiusLg: '0.75rem',
+  radiusXl: '1rem',
+};
+
 /**
  * Generates a clean HTML template for order notification emails.
  * 
@@ -27,12 +47,12 @@ export function generateOrderEmailHtml(order) {
   // Generate items table rows
   const itemsHtml = items.map(item => `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #eee;">
-        <div style="font-weight: 600; color: #111;">${item.name || item.Name}</div>
-        ${item.variant ? `<div style="font-size: 12px; color: #666;">Variant: ${item.variant}</div>` : ''}
+      <td style="padding: 12px; border-bottom: 1px solid var(--email-border);">
+        <div style="font-weight: 600; color: var(--email-foreground);">${item.name || item.Name}</div>
+        ${item.variant ? `<div style="font-size: 12px; color: var(--email-muted-foreground);">Variant: ${item.variant}</div>` : ''}
       </td>
-      <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">PKR ${Number(item.price).toLocaleString('en-PK')}</td>
+      <td style="padding: 12px; border-bottom: 1px solid var(--email-border); text-align: center;">${item.quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid var(--email-border); text-align: right;">PKR ${Number(item.price).toLocaleString('en-PK')}</td>
     </tr>
   `).join('');
 
@@ -44,20 +64,39 @@ export function generateOrderEmailHtml(order) {
     <head>
       <meta charset="utf-8">
       <style>
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 20px auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
-        .header { background: #065f46; color: white; padding: 24px; text-align: center; }
+        :root {
+          --email-background: ${EMAIL_THEME.background};
+          --email-foreground: ${EMAIL_THEME.foreground};
+          --email-card: ${EMAIL_THEME.card};
+          --email-primary: ${EMAIL_THEME.primary};
+          --email-primary-foreground: ${EMAIL_THEME.primaryForeground};
+          --email-secondary: ${EMAIL_THEME.secondary};
+          --email-secondary-foreground: ${EMAIL_THEME.secondaryForeground};
+          --email-muted: ${EMAIL_THEME.muted};
+          --email-muted-foreground: ${EMAIL_THEME.mutedForeground};
+          --email-accent: ${EMAIL_THEME.accent};
+          --email-accent-foreground: ${EMAIL_THEME.accentForeground};
+          --email-border: ${EMAIL_THEME.border};
+          --email-success: ${EMAIL_THEME.success};
+          --email-destructive: ${EMAIL_THEME.destructive};
+          --email-radius-sm: ${EMAIL_THEME.radiusSm};
+          --email-radius-lg: ${EMAIL_THEME.radiusLg};
+          --email-radius-xl: ${EMAIL_THEME.radiusXl};
+        }
+        body { font-family: 'Geist', system-ui, sans-serif; line-height: 1.6; color: var(--email-foreground); margin: 0; padding: 0; background: var(--email-background); }
+        .container { max-width: 600px; margin: 20px auto; border: 1px solid var(--email-border); border-radius: var(--email-radius-xl); overflow: hidden; background: var(--email-card); }
+        .header { background: var(--email-primary); color: var(--email-primary-foreground); padding: 24px; text-align: center; }
         .content { padding: 24px; }
         .section { margin-bottom: 24px; }
-        .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #065f46; margin-bottom: 12px; border-bottom: 2px solid #ecfdf5; padding-bottom: 4px; }
+        .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--email-primary); margin-bottom: 12px; border-bottom: 2px solid color-mix(in oklab, var(--email-primary) 18%, var(--email-card)); padding-bottom: 4px; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-        .info-card { background: #f9fafb; padding: 16px; border-radius: 8px; }
-        .label { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
-        .value { font-weight: 600; color: #111827; }
+        .info-card { background: var(--email-muted); padding: 16px; border-radius: var(--email-radius-sm); }
+        .label { font-size: 12px; color: var(--email-muted-foreground); margin-bottom: 4px; }
+        .value { font-weight: 600; color: var(--email-foreground); }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        .total-row { background: #f0fdf4; font-weight: 700; font-size: 18px; color: #065f46; }
-        .footer { background: #f3f4f6; padding: 20px; text-align: center; font-size: 14px; color: #6b7280; }
-        .button { display: inline-block; background: #065f46; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 16px; transition: background 0.2s; }
+        .total-row { background: color-mix(in oklab, var(--email-success) 14%, var(--email-card)); font-weight: 700; font-size: 18px; color: var(--email-primary); }
+        .footer { background: var(--email-secondary); padding: 20px; text-align: center; font-size: 14px; color: var(--email-muted-foreground); }
+        .button { display: inline-block; background: var(--email-primary); color: var(--email-primary-foreground); padding: 12px 24px; border-radius: var(--email-radius-sm); text-decoration: none; font-weight: 600; margin-top: 16px; transition: background 0.2s; }
       </style>
     </head>
     <body>
@@ -70,7 +109,7 @@ export function generateOrderEmailHtml(order) {
         <div class="content">
           <div class="section">
             <div class="section-title">Customer Information</div>
-            <div style="background: #f9fafb; border-radius: 12px; padding: 20px; border: 1px solid #f3f4f6;">
+            <div style="background: var(--email-muted); border-radius: var(--email-radius-xl); padding: 20px; border: 1px solid var(--email-border);">
               <div style="margin-bottom: 12px;">
                 <div class="label">Name</div>
                 <div class="value" style="font-size: 16px;">${customerName}</div>
@@ -90,7 +129,7 @@ export function generateOrderEmailHtml(order) {
             <div class="section-title">Order Details</div>
             <table>
               <thead>
-                <tr style="text-align: left; font-size: 12px; color: #6b7280;">
+                <tr style="text-align: left; font-size: 12px; color: var(--email-muted-foreground);">
                   <th style="padding: 12px;">Product</th>
                   <th style="padding: 12px; text-align: center;">Qty</th>
                   <th style="padding: 12px; text-align: right;">Price</th>
@@ -109,7 +148,7 @@ export function generateOrderEmailHtml(order) {
           ${notes ? `
           <div class="section">
             <div class="section-title">Order Notes</div>
-            <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px; font-style: italic; color: #92400e;">
+            <div style="background: color-mix(in oklab, var(--email-accent) 16%, var(--email-card)); border-left: 4px solid var(--email-accent); padding: 12px; font-style: italic; color: var(--email-accent-foreground);">
               "${notes}"
             </div>
           </div>
@@ -117,7 +156,7 @@ export function generateOrderEmailHtml(order) {
 
           <div style="text-align: center; margin-top: 32px;">
             <a href="${adminUrl}" class="button">Manage Order in Admin Panel</a>
-            <div style="margin-top: 12px; font-size: 12px; color: #9ca3af;">
+            <div style="margin-top: 12px; font-size: 12px; color: var(--email-muted-foreground);">
               Received on ${dateStr}
             </div>
           </div>
@@ -157,11 +196,11 @@ export function generateCustomerOrderConfirmationHtml(order) {
   // Generate items table rows
   const itemsHtml = items.map(item => `
     <tr>
-      <td style="padding: 12px; border-bottom: 1px solid #eee;">
-        <div style="font-weight: 600; color: #111;">${item.name || item.Name}</div>
+      <td style="padding: 12px; border-bottom: 1px solid var(--email-border);">
+        <div style="font-weight: 600; color: var(--email-foreground);">${item.name || item.Name}</div>
       </td>
-      <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: right;">Rs. ${Number(item.price).toLocaleString('en-PK')}</td>
+      <td style="padding: 12px; border-bottom: 1px solid var(--email-border); text-align: center;">${item.quantity}</td>
+      <td style="padding: 12px; border-bottom: 1px solid var(--email-border); text-align: right;">Rs. ${Number(item.price).toLocaleString('en-PK')}</td>
     </tr>
   `).join('');
 
@@ -175,17 +214,32 @@ export function generateCustomerOrderConfirmationHtml(order) {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Thank You for Your Order</title>
       <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #374151; margin: 0; padding: 0; background-color: #f9fafb; }
-        .wrapper { width: 100%; padding: 20px 0; background-color: #f9fafb; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .header { background: #059669; padding: 40px 20px; text-align: center; color: white; }
+        :root {
+          --email-background: ${EMAIL_THEME.background};
+          --email-foreground: ${EMAIL_THEME.foreground};
+          --email-card: ${EMAIL_THEME.card};
+          --email-primary: ${EMAIL_THEME.primary};
+          --email-primary-foreground: ${EMAIL_THEME.primaryForeground};
+          --email-secondary: ${EMAIL_THEME.secondary};
+          --email-muted: ${EMAIL_THEME.muted};
+          --email-muted-foreground: ${EMAIL_THEME.mutedForeground};
+          --email-border: ${EMAIL_THEME.border};
+          --email-success: ${EMAIL_THEME.success};
+          --email-radius-sm: ${EMAIL_THEME.radiusSm};
+          --email-radius-lg: ${EMAIL_THEME.radiusLg};
+          --email-radius-xl: ${EMAIL_THEME.radiusXl};
+        }
+        body { font-family: 'Geist', system-ui, sans-serif; line-height: 1.6; color: var(--email-foreground); margin: 0; padding: 0; background-color: var(--email-background); }
+        .wrapper { width: 100%; padding: 20px 0; background-color: var(--email-background); }
+        .container { max-width: 600px; margin: 0 auto; background: var(--email-card); border-radius: var(--email-radius-xl); overflow: hidden; box-shadow: 0 4px 6px -1px color-mix(in oklab, var(--email-foreground) 10%, transparent); }
+        .header { background: var(--email-success); padding: 40px 20px; text-align: center; color: var(--email-primary-foreground); }
         .content { padding: 32px 24px; }
-        .invoice-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; margin: 24px 0; }
+        .invoice-card { border: 1px solid var(--email-border); border-radius: var(--email-radius-xl); padding: 24px; margin: 24px 0; }
         .item-table { width: 100%; border-collapse: collapse; }
-        .total-row { font-weight: 700; font-size: 18px; color: #059669; }
+        .total-row { font-weight: 700; font-size: 18px; color: var(--email-success); }
         .btn-container { text-align: center; margin-top: 32px; }
-        .button { display: inline-block; background: #059669; color: white !important; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px; }
-        .footer { padding: 32px; text-align: center; font-size: 14px; color: #6b7280; border-top: 1px solid #f3f4f6; }
+        .button { display: inline-block; background: var(--email-success); color: var(--email-primary-foreground) !important; padding: 14px 28px; border-radius: var(--email-radius-lg); text-decoration: none; font-weight: 600; font-size: 16px; }
+        .footer { padding: 32px; text-align: center; font-size: 14px; color: var(--email-muted-foreground); border-top: 1px solid var(--email-border); }
       </style>
     </head>
     <body>
@@ -202,14 +256,14 @@ export function generateCustomerOrderConfirmationHtml(order) {
             <p style="font-size: 16px;">Your order <strong>${orderId}</strong> has been placed successfully. We will notify you as soon as it's shipped!</p>
             
             <div class="invoice-card">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid #f3f4f6; padding-bottom: 12px;">
-                <span style="font-size: 12px; font-weight: 700; color: #9ca3af; text-transform: uppercase;">Order Invoice</span>
-                <span style="font-size: 12px; color: #6b7280;">${dateStr}</span>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid var(--email-border); padding-bottom: 12px;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--email-muted-foreground); text-transform: uppercase;">Order Invoice</span>
+                <span style="font-size: 12px; color: var(--email-muted-foreground);">${dateStr}</span>
               </div>
               
               <table class="item-table">
                 <thead>
-                  <tr style="text-align: left; font-size: 12px; color: #9ca3af; text-transform: uppercase;">
+                  <tr style="text-align: left; font-size: 12px; color: var(--email-muted-foreground); text-transform: uppercase;">
                     <th style="padding: 8px 0;">Item</th>
                     <th style="padding: 8px 0; text-align: center;">Qty</th>
                     <th style="padding: 8px 0; text-align: right;">Price</th>
@@ -219,14 +273,14 @@ export function generateCustomerOrderConfirmationHtml(order) {
                   ${itemsHtml}
                   <tr>
                     <td colspan="2" style="padding: 20px 0 0; text-align: right; font-weight: 600;">Total Amount</td>
-                    <td style="padding: 20px 0 0; text-align: right; font-weight: 700; color: #059669; font-size: 20px;">Rs. ${totalAmount.toLocaleString('en-PK')}</td>
+                    <td style="padding: 20px 0 0; text-align: right; font-weight: 700; color: var(--email-success); font-size: 20px;">Rs. ${totalAmount.toLocaleString('en-PK')}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <div style="background: #f0fdf4; border-radius: 12px; padding: 16px; border: 1px solid #d1fae5; margin-bottom: 24px;">
-              <p style="margin: 0; font-size: 14px; color: #065f46;">
+            <div style="background: color-mix(in oklab, var(--email-success) 14%, var(--email-card)); border-radius: var(--email-radius-xl); padding: 16px; border: 1px solid color-mix(in oklab, var(--email-success) 20%, var(--email-card)); margin-bottom: 24px;">
+              <p style="margin: 0; font-size: 14px; color: var(--email-primary);">
                 <strong>Shipping to:</strong><br>
                 ${customerAddress}
               </p>
@@ -238,9 +292,9 @@ export function generateCustomerOrderConfirmationHtml(order) {
           </div>
 
           <div class="footer">
-            <p style="margin: 0; font-weight: 700; color: #111827;">China Unique - Home & Lifestyle</p>
+            <p style="margin: 0; font-weight: 700; color: var(--email-foreground);">China Unique - Home & Lifestyle</p>
             <p style="margin: 4px 0 0;">Building beautiful homes together.</p>
-            <div style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
+            <div style="margin-top: 20px; font-size: 12px; color: var(--email-muted-foreground);">
               You received this email because you placed an order on chinaunique.pk
             </div>
           </div>
