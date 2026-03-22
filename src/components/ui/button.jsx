@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client"
 
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
@@ -42,8 +43,16 @@ const buttonVariants = cva(
   }
 )
 
+/**
+ * @param {Object} props
+ * @param {string} [props.className]
+ * @param {"default"|"outline"|"secondary"|"ghost"|"destructive"|"link"} [props.variant]
+ * @param {"default"|"xs"|"sm"|"lg"|"icon"|"icon-xs"|"icon-sm"|"icon-lg"} [props.size]
+ * @param {any} [props.children]
+ * @param {any} [props.rest]
+ */
 function Button({
-  className,
+  className = "",
   variant = "default",
   size = "default",
   ...props

@@ -1,14 +1,15 @@
+// @ts-nocheck
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { isAdminEmail } from '@/lib/admin';
+
 import mongooseConnect from '@/lib/mongooseConnect';
 import User from '@/models/User';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !isAdminEmail(session.user?.email)) {
+    if (!session || !session.user?.isAdmin) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
 
@@ -26,3 +27,4 @@ export async function GET() {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+

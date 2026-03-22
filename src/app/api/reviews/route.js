@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { getServerSession } from 'next-auth';
+import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import Review from '@/models/Review';
@@ -53,14 +54,24 @@ export async function POST(req) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
     }
 
-    // Find product to get its name for notification
-    const product = await Product.findById(productId);
+    // Resolve product — productId may be a real ObjectId string or a slug
+    let product = null;
+    if (mongoose.Types.ObjectId.isValid(productId)) {
+      product = await Product.findById(productId);
+    }
+    // If it wasn't a valid ObjectId, or the findById returned nothing, try slug fallback
     if (!product) {
-       return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
+      product = await Product.findOne({ slug: productId });
+    }
+    if (!product) {
+      return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
     }
 
+    // Always use the real Mongo _id for the review reference
+    const resolvedProductId = product._id;
+
     const review = await Review.create({
-      productId,
+      productId: resolvedProductId,
       userId: user._id,
       userName: user.name,
       rating: Number(rating),
@@ -73,13 +84,14 @@ export async function POST(req) {
       message: `${user.name} left a ${rating}-star rating on ${product.Name}`,
       link: `/admin/reviews?id=${review._id}`,
       metadata: {
-        id: productId,
+        id: resolvedProductId.toString(),
         userName: user.name,
         rating: Number(rating),
       }
     });
 
-    revalidateTag(`reviews-${productId}`);
+    revalidateTag(`reviews-${resolvedProductId.toString()}`);
+    revalidateTag(`reviews-${productId}`); // also bust cache keyed by original input
 
     return NextResponse.json({ success: true, data: review });
   } catch (error) {

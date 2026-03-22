@@ -1,7 +1,8 @@
+// @ts-nocheck
 'use client';
 
-import { useState } from 'react';
-import { BellRing, Loader2, MessageCircle, Save, Store, Truck } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { BellRing, Loader2, MessageCircle, Save, ShieldCheck, Store, Trash2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,141 @@ function SettingSection({ icon: Icon, title, description, children }) {
   );
 }
 
-export default function AdminSettingsClient({ initialSettings }) {
+function AdminAccessSection() {
+  const [adminEmails, setAdminEmails] = useState([]);
+  const [loadingList, setLoadingList] = useState(true);
+  const [newEmail, setNewEmail] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [removingEmail, setRemovingEmail] = useState(null);
+
+  useEffect(() => {
+    async function fetchAdmins() {
+      try {
+        const res = await fetch('/api/settings/admins');
+        const data = await res.json();
+        if (data.success) setAdminEmails(data.data);
+      } catch {
+        toast.error('Failed to load admin list.');
+      } finally {
+        setLoadingList(false);
+      }
+    }
+    fetchAdmins();
+  }, []);
+
+  async function handleAddAdmin(event) {
+    event.preventDefault();
+    const trimmed = newEmail.trim().toLowerCase();
+    if (!trimmed) return;
+
+    setAdding(true);
+    try {
+      const res = await fetch('/api/settings/admins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Failed to add admin');
+      setAdminEmails(data.data);
+      setNewEmail('');
+      toast.success(`${trimmed} added as admin.`);
+    } catch (error) {
+      toast.error(error.message || 'Failed to add admin.');
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleRemoveAdmin(email) {
+    setRemovingEmail(email);
+    try {
+      const res = await fetch('/api/settings/admins', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Failed to remove admin');
+      setAdminEmails(data.data);
+      toast.success(`${email} removed from admin access.`);
+    } catch (error) {
+      toast.error(error.message || 'Failed to remove admin.');
+    } finally {
+      setRemovingEmail(null);
+    }
+  }
+
+  return (
+    <SettingSection
+      icon={ShieldCheck}
+      title="Access Management"
+      description="Grant or revoke admin panel access by email. The primary admin account (set via environment variables) cannot be removed here."
+    >
+      <form onSubmit={handleAddAdmin} className="flex gap-2">
+        <Input
+          type="email"
+          value={newEmail}
+          onChange={(e) => setNewEmail(e.target.value)}
+          placeholder="admin@example.com"
+          className="rounded-md border-slate-300 flex-1"
+          required
+        />
+        <Button
+          type="submit"
+          disabled={adding || !newEmail.trim()}
+          className="rounded-md shrink-0"
+        >
+          {adding ? <Loader2 className="mr-2 size-4 animate-spin" /> : <UserPlus className="mr-2 size-4" />}
+          Add Admin
+        </Button>
+      </form>
+
+      {loadingList ? (
+        <div className="space-y-2 pt-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-11 animate-pulse rounded-lg bg-muted/50" />
+          ))}
+        </div>
+      ) : adminEmails.length === 0 ? (
+        <p className="py-3 text-center text-sm text-muted-foreground">
+          No additional admins yet. Add one above.
+        </p>
+      ) : (
+        <ul className="space-y-2 pt-1">
+          {adminEmails.map((email) => (
+            <li
+              key={email}
+              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/35 px-4 py-2.5"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <ShieldCheck className="size-4 shrink-0 text-primary" />
+                <span className="truncate text-sm font-medium text-foreground">{email}</span>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="rounded-md text-destructive hover:bg-destructive/10 hover:text-destructive shrink-0"
+                onClick={() => handleRemoveAdmin(email)}
+                disabled={removingEmail === email}
+                title={`Remove ${email}`}
+              >
+                {removingEmail === email ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Trash2 className="size-4" />
+                )}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </SettingSection>
+  );
+}
+
+export default function AdminSettingsClient({ initialSettings, isProAdmin }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState(initialSettings);
@@ -123,7 +258,6 @@ export default function AdminSettingsClient({ initialSettings }) {
           </div>
         </SettingSection>
 
-
         <SettingSection icon={BellRing} title="Announcement Bar">
           <div className="flex items-center justify-between rounded-lg border border-border bg-muted/35 px-4 py-3">
             <div>
@@ -167,7 +301,11 @@ export default function AdminSettingsClient({ initialSettings }) {
             <span className="text-sm font-medium text-primary">Settings updated successfully.</span>
           ) : null}
         </div>
+
+        {/* Admin Access Management */}
+        {isProAdmin && <AdminAccessSection />}
       </div>
     </div>
   );
 }
+

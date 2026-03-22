@@ -1,9 +1,13 @@
+// @ts-nocheck
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * @param {{ className?: string; [key: string]: any }} props
+ */
 function Textarea({
-  className,
+  className = "",
   ...props
 }) {
   return (

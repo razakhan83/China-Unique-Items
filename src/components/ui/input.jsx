@@ -1,10 +1,14 @@
+// @ts-nocheck
 import * as React from "react"
 import { Input as InputPrimitive } from "@base-ui/react/input"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * @param {{ className?: string; type?: string; [key: string]: any }} props
+ */
 function Input({
-  className,
+  className = "",
   type,
   ...props
 }) {

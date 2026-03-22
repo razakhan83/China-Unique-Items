@@ -2,7 +2,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { isAdminEmail } from '@/lib/admin';
+
 import mongooseConnect from '@/lib/mongooseConnect';
 import Category from '@/models/Category';
 import Product from '@/models/Product';
@@ -41,7 +41,7 @@ export async function GET(_request, { params }) {
 export async function PUT(request, { params }) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !isAdminEmail(session.user?.email)) {
+        if (!session || !session.user?.isAdmin) {
             return NextResponse.json({ success: false, message: 'Unauthorized Access' }, { status: 401 });
         }
 
@@ -133,7 +133,7 @@ export async function PUT(request, { params }) {
 export async function PATCH(request, { params }) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !isAdminEmail(session.user?.email)) {
+        if (!session || !session.user?.isAdmin) {
             return NextResponse.json({ success: false, message: 'Unauthorized Access' }, { status: 401 });
         }
 
@@ -266,7 +266,7 @@ export async function PATCH(request, { params }) {
 export async function DELETE(_request, { params }) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !isAdminEmail(session.user?.email)) {
+        if (!session || !session.user?.isAdmin) {
             return NextResponse.json({ success: false, message: 'Unauthorized Access' }, { status: 401 });
         }
 

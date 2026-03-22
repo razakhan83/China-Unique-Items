@@ -1,8 +1,9 @@
+// @ts-nocheck
 import { revalidateTag } from 'next/cache';
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { isAdminEmail } from "@/lib/admin";
+
 import mongooseConnect from "@/lib/mongooseConnect";
 import { optimizeCloudinaryUrl } from "@/lib/cloudinaryImage";
 import {
@@ -56,7 +57,7 @@ export async function GET() {
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !isAdminEmail(session.user?.email)) {
+    if (!session || !session.user?.isAdmin) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
@@ -127,7 +128,7 @@ export async function POST(req) {
 export async function PUT(req) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !isAdminEmail(session.user?.email)) {
+    if (!session || !session.user?.isAdmin) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
@@ -171,7 +172,7 @@ export async function PUT(req) {
 export async function DELETE(req) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !isAdminEmail(session.user?.email)) {
+    if (!session || !session.user?.isAdmin) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
@@ -212,3 +213,4 @@ export async function DELETE(req) {
     );
   }
 }
+
