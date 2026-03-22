@@ -202,7 +202,7 @@ export default function AdminNotificationCenter() {
                 <Bell className="size-6 text-muted-foreground/60" />
               </div>
               <p className="text-sm font-medium text-foreground">No notifications yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">We'll alert you when there's a new review, order, or user signup.</p>
+              <p className="mt-1 text-xs text-muted-foreground">We&apos;ll alert you when there&apos;s a new review, order, or user signup.</p>
             </div>
           )}
         </ScrollArea>

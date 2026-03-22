@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Trash2, Star, Loader2, MessageSquare, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,13 +21,8 @@ export default function AdminReviewsDialog({ open, onOpenChange, product }) {
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  useEffect(() => {
-    if (open && product) {
-      fetchReviews();
-    }
-  }, [open, product]);
-
-  async function fetchReviews() {
+  const fetchReviews = useCallback(async () => {
+    if (!product?._id) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/reviews?productId=${product._id}`);
@@ -41,7 +36,13 @@ export default function AdminReviewsDialog({ open, onOpenChange, product }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [product?._id]);
+
+  useEffect(() => {
+    if (open && product) {
+      fetchReviews();
+    }
+  }, [open, product, fetchReviews]);
 
   async function handleDelete(reviewId) {
     if (!confirm('Are you sure you want to delete this review?')) return;

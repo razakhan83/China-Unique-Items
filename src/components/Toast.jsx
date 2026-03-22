@@ -16,6 +16,7 @@ export default function Toast({ message, isVisible, onClose, type = 'success', a
         }
 
         if (isVisible) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setShouldRender(true);
             setIsExiting(false);
             hideTimerRef.current = setTimeout(() => {
