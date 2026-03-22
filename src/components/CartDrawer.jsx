@@ -8,6 +8,17 @@ import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import {
+  Card,
+  CardContent,
+} from '@/components/ui/card';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -66,10 +77,11 @@ export default function CartDrawer() {
                     : '';
 
                   return (
-                  <div
+                  <Card
                     key={item.id || item.slug || item._id || item.Name || item.name || index}
-                    className="surface-card rounded-xl p-3 transition-[background-color,border-color] duration-200 hover:bg-[color:color-mix(in_oklab,var(--color-card)_96%,white)]"
+                    className="transition-[background-color,border-color] duration-200 hover:bg-[color:color-mix(in_oklab,var(--color-card)_96%,white)]"
                   >
+                    <CardContent className="p-3">
                     <div className="flex gap-3">
                       <div className="relative size-20 overflow-hidden rounded-lg border border-border bg-muted">
                         {primaryImageSrc ? (
@@ -89,52 +101,63 @@ export default function CartDrawer() {
                             <p className="line-clamp-2 text-sm font-semibold text-foreground">{item.Name || item.name}</p>
                             <p className="mt-1 text-sm font-medium text-primary">{formatPriceLabel(item.discountedPrice != null ? item.discountedPrice : item.Price || item.price)}</p>
                           </div>
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon-sm"
                             onClick={() => removeFromCart(item)}
-                            className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                            className="text-muted-foreground hover:text-destructive"
                             aria-label="Remove item"
                           >
-                            <Trash2 className="size-4" />
-                          </button>
+                            <Trash2 />
+                          </Button>
                         </div>
 
                         <div className="mt-4 flex items-center justify-between">
                           <div className="inline-flex items-center rounded-lg border border-border bg-background">
-                            <button
+                            <Button
                               type="button"
+                              variant="ghost"
+                              size="icon-sm"
                               onClick={() => {
                                 updateQuantity(item, item.quantity - 1);
                               }}
-                              className="inline-flex size-9 items-center justify-center rounded-l-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              className="rounded-r-none text-muted-foreground hover:text-foreground"
                             >
-                              <Minus className="size-4" />
-                            </button>
+                              <Minus />
+                            </Button>
                             <span className="inline-flex min-w-10 items-center justify-center text-sm font-semibold">{item.quantity}</span>
-                            <button
+                            <Button
                               type="button"
+                              variant="ghost"
+                              size="icon-sm"
                               onClick={() => updateQuantity(item, item.quantity + 1)}
-                              className="inline-flex size-9 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              className="rounded-l-none text-muted-foreground hover:text-foreground"
                             >
-                              <Plus className="size-4" />
-                            </button>
+                              <Plus />
+                            </Button>
                           </div>
                           <span className="hidden text-sm text-muted-foreground sm:inline-flex">Ready to ship</span>
                         </div>
                       </div>
                     </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                   );
                 })}
               </>
             ) : (
-              <div className="surface-card flex min-h-[16rem] flex-col items-center justify-center rounded-xl px-6 py-12 text-center">
-                <div className="mb-4 flex size-16 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <ShoppingBag className="size-7" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground">Your cart is empty</h3>
-                <p className="mt-2 max-w-xs text-sm text-muted-foreground">Start adding premium kitchenware and decor to build your order.</p>
-              </div>
+              <Empty className="surface-card min-h-[16rem] rounded-xl px-6 py-12">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon" className="size-16 rounded-xl bg-primary/10 text-primary">
+                    <ShoppingBag className="size-7" />
+                  </EmptyMedia>
+                  <EmptyTitle className="text-lg font-semibold text-foreground">Your cart is empty</EmptyTitle>
+                  <EmptyDescription className="max-w-xs">
+                    Start adding premium kitchenware and decor to build your order.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </div>
         </ScrollArea>

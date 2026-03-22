@@ -7,11 +7,10 @@ import {
   User, 
   Mail, 
   Phone, 
-  MapPin, 
+  MapPin,
   Save, 
   Loader2, 
   ChevronLeft,
-  Home,
   Navigation,
   Building2,
   ShieldCheck,
@@ -22,11 +21,17 @@ import {
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field';
+import { Textarea } from '@/components/ui/textarea';
 import { PAKISTAN_CITIES } from '@/lib/cities';
 import { cn } from '@/lib/utils';
 
@@ -55,7 +60,7 @@ export default function SettingsClient() {
     if (status === 'authenticated') {
       fetchSettings();
     }
-  }, [status]);
+  }, [status, router]);
 
   const fetchSettings = async () => {
     try {
@@ -144,10 +149,10 @@ export default function SettingsClient() {
                 Basic account details synced from your login.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+            <CardContent>
+              <FieldGroup className="grid gap-4 sm:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="name">Full Name</FieldLabel>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
                     <Input 
@@ -158,12 +163,12 @@ export default function SettingsClient() {
                       placeholder="Your Full Name"
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center gap-2">
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="email" className="flex items-center gap-2">
                     Email Address
                     <ShieldCheck className="size-3 text-primary" title="Locked to your Google account" />
-                  </Label>
+                  </FieldLabel>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
                     <Input 
@@ -173,11 +178,11 @@ export default function SettingsClient() {
                       className="pl-10 bg-muted/30"
                     />
                   </div>
-                  <p className="text-[10px] text-muted-foreground px-1">
+                  <FieldDescription className="px-1 text-[10px]">
                     Email is locked to your signed-in Google account for security.
-                  </p>
-                </div>
-              </div>
+                  </FieldDescription>
+                </Field>
+              </FieldGroup>
             </CardContent>
           </Card>
 
@@ -191,9 +196,10 @@ export default function SettingsClient() {
                 These details will be pre-filled during checkout.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+            <CardContent>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
                   <Input 
@@ -204,84 +210,90 @@ export default function SettingsClient() {
                     className="pl-10 focus:ring-primary/20"
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Popover open={cityOpen} onOpenChange={setCityOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={cityOpen}
-                        className={cn("w-full justify-between font-normal", !formData.city && "text-muted-foreground")}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Building2 className="size-4 text-muted-foreground/60" />
-                          {formData.city || "Select your city"}
-                        </div>
-                        <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search city..." />
-                        <CommandList className="max-h-60 overflow-y-auto">
-                          <CommandEmpty>No city found.</CommandEmpty>
-                          <CommandGroup>
-                            {PAKISTAN_CITIES.map((city) => (
-                              <CommandItem
-                                key={city}
-                                value={city}
-                                onSelect={(currentValue) => {
-                                  const exactCity = PAKISTAN_CITIES.find(c => c.toLowerCase() === currentValue.toLowerCase()) || currentValue;
-                                  setFormData({ ...formData, city: exactCity === formData.city ? "" : exactCity });
-                                  setCityOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 size-4",
-                                    formData.city === city ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                                {city}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="landmark">Nearest Landmark</Label>
-                  <div className="relative">
-                    <Navigation className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
-                    <Input 
-                      id="landmark" 
-                      placeholder="e.g. Near ABC Hospital"
-                      value={formData.landmark}
-                      onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              </div>
+                </Field>
+                <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <Field>
+                    <FieldLabel htmlFor="city">City</FieldLabel>
+                    <Popover open={cityOpen} onOpenChange={setCityOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={cityOpen}
+                          className={cn("w-full justify-between font-normal", !formData.city && "text-muted-foreground")}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Building2 className="size-4 text-muted-foreground/60" />
+                            {formData.city || "Select your city"}
+                          </div>
+                          <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search city..." />
+                          <CommandList className="max-h-60 overflow-y-auto">
+                            <CommandEmpty>No city found.</CommandEmpty>
+                            <CommandGroup>
+                              {PAKISTAN_CITIES.map((city) => (
+                                <CommandItem
+                                  key={city}
+                                  value={city}
+                                  onSelect={(currentValue) => {
+                                    const exactCity = PAKISTAN_CITIES.find(c => c.toLowerCase() === currentValue.toLowerCase()) || currentValue;
+                                    setFormData({ ...formData, city: exactCity === formData.city ? "" : exactCity });
+                                    setCityOpen(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 size-4",
+                                      formData.city === city ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {city}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="landmark">Nearest Landmark</FieldLabel>
+                    <div className="relative">
+                      <Navigation className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
+                      <Input 
+                        id="landmark" 
+                        placeholder="e.g. Near ABC Hospital"
+                        value={formData.landmark}
+                        onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
+                        className="pl-10"
+                      />
+                    </div>
+                  </Field>
+                </FieldGroup>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Complete Address</Label>
-                <div className="relative">
-                  <MapPinned className="absolute left-3 top-3 size-4 text-muted-foreground/60" />
-                  <textarea
-                    id="address"
-                    className="flex min-h-[100px] w-full rounded-md border border-input bg-transparent px-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Enter your complete home or office address (Street, Area, etc.)"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  />
-                </div>
-              </div>
+                <Field>
+                  <FieldLabel htmlFor="address">Complete Address</FieldLabel>
+                  <FieldContent>
+                    <div className="relative">
+                      <MapPinned className="absolute left-3 top-3 size-4 text-muted-foreground/60" />
+                      <Textarea
+                        id="address"
+                        className="min-h-[100px] pl-10"
+                        placeholder="Enter your complete home or office address (Street, Area, etc.)"
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      />
+                    </div>
+                    <FieldDescription>
+                      These details are used to pre-fill checkout for faster ordering.
+                    </FieldDescription>
+                  </FieldContent>
+                </Field>
+              </FieldGroup>
             </CardContent>
             <CardFooter className="bg-muted/10 border-t border-border/40 px-6 py-4">
               <Button 

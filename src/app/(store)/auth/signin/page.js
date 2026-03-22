@@ -4,11 +4,13 @@ import { signIn } from 'next-auth/react';
 import { LockKeyhole, Store } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function SignInPage() {
   return (
     <section className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <div className="surface-card w-full max-w-md rounded-xl p-8 text-center sm:p-10">
+      <Card className="w-full max-w-md text-center sm:p-2">
+        <CardContent className="p-8 sm:p-10">
         <div className="mx-auto mb-6 flex size-18 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Store className="size-8" />
         </div>
@@ -23,7 +25,8 @@ export default function SignInPage() {
           <LockKeyhole className="size-3.5" />
           Authorized personnel only
         </div>
-      </div>
+        </CardContent>
+      </Card>
     </section>
   );
 }

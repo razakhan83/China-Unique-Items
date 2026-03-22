@@ -7,6 +7,14 @@ import { connection } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { getUserOrders } from '@/lib/data';
 import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import LinkOrdersForm from '@/components/LinkOrdersForm';
 import OrdersClient from './OrdersClient';
 
@@ -35,16 +43,20 @@ export default async function OrdersPage() {
 
         {orders.length === 0 ? (
           <div className="space-y-8">
-            <div className="surface-card rounded-xl p-12 text-center border border-dashed border-border">
-              <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
-                <ShoppingBag className="size-8 text-muted-foreground" />
-              </div>
-              <h2 className="text-xl font-semibold text-foreground">No orders yet</h2>
-              <p className="mt-2 text-muted-foreground">You haven't placed any orders with this account yet.</p>
-              <Button className="mt-6" render={<Link href="/products" />} nativeButton={false}>
-                Start Shopping
-              </Button>
-            </div>
+            <Empty className="surface-card rounded-xl border border-dashed border-border py-12">
+              <EmptyHeader>
+                <EmptyMedia variant="icon" className="size-16 rounded-full bg-muted text-muted-foreground">
+                  <ShoppingBag className="size-8" />
+                </EmptyMedia>
+                <EmptyTitle className="text-xl font-semibold text-foreground">No orders yet</EmptyTitle>
+                <EmptyDescription>You haven&apos;t placed any orders with this account yet.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button render={<Link href="/products" />} nativeButton={false}>
+                  Start Shopping
+                </Button>
+              </EmptyContent>
+            </Empty>
             
             <div className="pt-4 border-t border-border">
               <LinkOrdersForm />

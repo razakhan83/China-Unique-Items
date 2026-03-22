@@ -2,8 +2,16 @@
 
 import { useState, useTransition } from 'react';
 import { Phone, Link as LinkIcon, Loader2, CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupText,
+} from '@/components/ui/input-group';
 import { linkOrdersAction } from '@/app/actions';
 import { toast } from 'sonner';
 
@@ -11,10 +19,12 @@ export default function LinkOrdersForm() {
   const [phone, setPhone] = useState('');
   const [isPending, startTransition] = useTransition();
   const [isSuccess, setIsSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!phone.trim()) return;
+    setSubmitError('');
 
     startTransition(async () => {
       try {
@@ -27,9 +37,12 @@ export default function LinkOrdersForm() {
             window.location.reload();
           }, 1500);
         } else {
-          toast.error(result.message || 'Could not find any orders with this phone number.');
+          const message = result.message || 'Could not find any orders with this phone number.';
+          setSubmitError(message);
+          toast.error(message);
         }
-      } catch (error) {
+      } catch {
+        setSubmitError('Something went wrong. Please try again.');
         toast.error('Something went wrong. Please try again.');
       }
     });
@@ -37,42 +50,72 @@ export default function LinkOrdersForm() {
 
   if (isSuccess) {
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-success/20 bg-success/10 p-4 text-success">
+      <Alert className="border-success/20 bg-success/10 text-success">
         <CheckCircle2 className="size-5 shrink-0" />
-        <p className="text-sm font-medium">Orders linked successfully! Refreshing...</p>
-      </div>
+        <AlertTitle>Orders linked successfully</AlertTitle>
+        <AlertDescription className="text-success/90">
+          Refreshing your orders so the newly linked items appear.
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <LinkIcon className="size-5" />
+    <Card className="border-border/70 shadow-sm">
+      <CardHeader>
+        <div className="flex items-start gap-3">
+          <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <LinkIcon className="size-5" />
+          </div>
+          <div className="space-y-1">
+            <CardTitle>Missing an order?</CardTitle>
+            <CardDescription>
+              Enter the phone number used in previous orders to link them to your account.
+            </CardDescription>
+          </div>
         </div>
-        <div>
-          <h3 className="font-semibold text-foreground">Missing an order?</h3>
-          <p className="text-sm text-muted-foreground">Enter the phone number used in previous orders to link them to your account.</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Phone className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="tel"
-            placeholder="0300 1234567"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="pl-10 h-11"
-            disabled={isPending}
-            required
-          />
-        </div>
-        <Button type="submit" className="h-11 px-6 min-w-[140px]" disabled={isPending || !phone.trim()}>
-          {isPending ? <Loader2 className="size-4 animate-spin" /> : 'Link Orders'}
-        </Button>
-      </form>
-    </div>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit}>
+          <FieldGroup>
+            <Field data-invalid={submitError ? 'true' : undefined}>
+              <FieldLabel htmlFor="link-orders-phone">Phone number</FieldLabel>
+              <FieldDescription>
+                Use the number you gave at checkout, for example `0300 1234567`.
+              </FieldDescription>
+              <InputGroup className="min-h-11 rounded-xl">
+                <InputGroupAddon align="inline-start" className="pl-3 text-muted-foreground">
+                  <InputGroupText>
+                    <Phone />
+                  </InputGroupText>
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="link-orders-phone"
+                  type="tel"
+                  placeholder="0300 1234567"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="h-11"
+                  disabled={isPending}
+                  aria-invalid={Boolean(submitError)}
+                  required
+                />
+                <InputGroupAddon align="inline-end" className="pr-2">
+                  <InputGroupButton
+                    type="submit"
+                    size="sm"
+                    className="h-8 min-w-[120px] rounded-lg px-4"
+                    disabled={isPending || !phone.trim()}
+                  >
+                    {isPending ? <Loader2 className="animate-spin" /> : 'Link Orders'}
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+              <FieldError>{submitError}</FieldError>
+            </Field>
+          </FieldGroup>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Loader2 } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateInvoice } from '@/lib/invoice-generator';
 import { toast } from 'sonner';
@@ -33,7 +33,7 @@ export default function InvoiceButton({ order }) {
       {loading ? (
         <Loader2 className="size-3 animate-spin" />
       ) : (
-        <FileText className="size-3" />
+        <Download className="size-3" />
       )}
       <span>Invoice</span>
     </Button>

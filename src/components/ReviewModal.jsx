@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { Star, MessageSquare, Loader2, Package, X, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -12,7 +13,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Field, FieldContent, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
@@ -132,8 +135,8 @@ export default function ReviewModal({ isOpen, onOpenChange, order, onComplete, o
           {itemsToReview.map((item) => (
             <div key={item.productId} className="space-y-4 pb-6 border-b border-border last:border-0 last:pb-0">
               <div className="flex gap-4">
-                <div className="size-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
-                  <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                <div className="relative size-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+                  <Image src={item.image} alt={item.name} fill sizes="64px" className="object-cover" unoptimized />
                 </div>
                 <div className="flex-1 space-y-1">
                   <h4 className="font-semibold text-foreground text-sm line-clamp-1">{item.name}</h4>
@@ -158,19 +161,26 @@ export default function ReviewModal({ isOpen, onOpenChange, order, onComplete, o
               </div>
 
               {errors[item.productId] ? (
-                <div className="flex items-center gap-2 p-3 text-xs font-medium text-destructive bg-destructive/10 rounded-lg">
+                <Alert variant="destructive" className="rounded-lg px-3 py-3 text-xs">
                   <AlertCircle className="size-4" />
-                  {errors[item.productId]}
-                </div>
+                  <AlertTitle>Review unavailable</AlertTitle>
+                  <AlertDescription>{errors[item.productId]}</AlertDescription>
+                </Alert>
               ) : (
-                <div className="space-y-2">
-                  <Textarea
-                    placeholder="Share your thoughts about this product..."
-                    className="resize-none text-sm min-h-[80px]"
-                    value={item.comment}
-                    onChange={(e) => handleCommentChange(item.productId, e.target.value)}
-                  />
-                </div>
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel htmlFor={`review-${item.productId}`}>Comments</FieldLabel>
+                    <FieldContent>
+                      <Textarea
+                        id={`review-${item.productId}`}
+                        placeholder="Share your thoughts about this product..."
+                        className="min-h-[80px] resize-none text-sm"
+                        value={item.comment}
+                        onChange={(e) => handleCommentChange(item.productId, e.target.value)}
+                      />
+                    </FieldContent>
+                  </Field>
+                </FieldGroup>
               )}
             </div>
           ))}

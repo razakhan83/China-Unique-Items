@@ -6,9 +6,10 @@ import { useSession, signIn } from 'next-auth/react';
 import { Loader2, MessageSquarePlus, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
@@ -86,8 +87,9 @@ export default function ProductReviewsClient({ productId, productName, reviewCou
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6 pt-4">
-            <div className="space-y-2 text-center">
-              <Label className="block text-sm font-medium">Rating</Label>
+            <FieldGroup>
+            <Field>
+              <FieldLabel className="justify-center text-center">Rating</FieldLabel>
               <div className="flex justify-center gap-1">
                 {Array.from({ length: 5 }).map((_, index) => {
                   const starValue = index + 1;
@@ -113,18 +115,31 @@ export default function ProductReviewsClient({ productId, productName, reviewCou
                   );
                 })}
               </div>
-            </div>
+              <FieldDescription className="text-center">
+                Choose a star rating before submitting your review.
+              </FieldDescription>
+            </Field>
 
-            <div className="space-y-2">
-              <Label htmlFor="comment">Your Comments (Optional)</Label>
-              <Textarea
-                id="comment"
-                placeholder="What did you like or dislike?"
-                className="min-h-[100px] rounded-xl"
-                value={comment}
-                onChange={(event) => setComment(event.target.value)}
-              />
-            </div>
+            {rating === 0 ? (
+              <Alert variant="destructive">
+                <AlertTitle>Select a rating</AlertTitle>
+                <AlertDescription>Please choose at least one star before submitting.</AlertDescription>
+              </Alert>
+            ) : null}
+
+            <Field>
+              <FieldLabel htmlFor="comment">Your Comments (Optional)</FieldLabel>
+              <FieldContent>
+                <Textarea
+                  id="comment"
+                  placeholder="What did you like or dislike?"
+                  className="min-h-[100px] rounded-xl"
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                />
+              </FieldContent>
+            </Field>
+            </FieldGroup>
 
             <Button type="submit" className="h-11 w-full rounded-xl font-bold" disabled={submitting}>
               {submitting ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
