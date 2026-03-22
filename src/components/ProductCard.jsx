@@ -45,7 +45,7 @@ function getStatusBadge(product) {
   if (product.isBestSelling || product.bestSelling || product.isBestseller) {
     return {
       label: "Best Selling",
-      className: "bg-amber-100 text-amber-800 border-amber-200",
+      className: "bg-accent/18 text-accent-foreground border-accent/30",
     };
   }
 
@@ -53,7 +53,7 @@ function getStatusBadge(product) {
   if (product.isTrending || product.trending) {
     return {
       label: "Trending",
-      className: "bg-orange-100 text-orange-800 border-orange-200",
+      className: "bg-primary/10 text-primary border-primary/20",
     };
   }
 
@@ -61,7 +61,7 @@ function getStatusBadge(product) {
   if (product.isNewArrival) {
     return {
       label: "New",
-      className: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      className: "bg-success/12 text-success border-success/20",
     };
   }
 
@@ -192,7 +192,7 @@ export default function ProductCard({ product, className = "" }) {
                   {formatPrice(productPrice)}
                 </p>
                 <p
-                  className="text-base font-bold tracking-tight text-red-600 dark:text-red-500"
+                  className="text-base font-bold tracking-tight text-destructive"
                   draggable={false}
                 >
                   {formatPrice(discountedPrice)}

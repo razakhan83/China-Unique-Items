@@ -515,11 +515,11 @@ export default function AdminOrdersClient({
         <div className="flex items-center gap-2">
           {selectedOrders.length > 0 && (
             <div className="flex items-center gap-1.5 p-1 bg-primary/5 border border-primary/20 rounded-lg">
-              <Button onClick={handleDownloadExcel} size="sm" className="h-8 px-2.5 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
+              <Button onClick={handleDownloadExcel} size="sm" className="h-8 gap-1.5 bg-success px-2.5 text-xs font-bold text-success-foreground hover:bg-success/90">
                 <Download className="size-3.5" />
                 XLSX ({selectedOrders.length})
               </Button>
-              <Button onClick={handleDownloadPDF} size="sm" variant="outline" className="h-8 px-2.5 gap-1.5 text-xs font-bold border-red-200 text-red-600 hover:bg-red-50">
+              <Button onClick={handleDownloadPDF} size="sm" variant="outline" className="h-8 gap-1.5 border-destructive/20 px-2.5 text-xs font-bold text-destructive hover:bg-destructive/10">
                 <Download className="size-3.5" />
                 PDF ({selectedOrders.length})
               </Button>
@@ -529,7 +529,7 @@ export default function AdminOrdersClient({
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="h-10 gap-2 font-bold text-xs uppercase tracking-wider">
-                <Zap className="size-4 text-amber-500" />
+                <Zap className="size-4 text-accent" />
                 Reports
               </Button>
             </PopoverTrigger>
@@ -540,7 +540,7 @@ export default function AdminOrdersClient({
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="justify-start gap-2 h-9 text-xs font-medium border-emerald-100 hover:bg-emerald-50 text-emerald-700"
+                    className="h-9 justify-start gap-2 border-success/20 text-xs font-medium text-success hover:bg-success/10"
                     onClick={() => handleExportMonthlySales('excel')}
                   >
                     <Download className="size-3.5" />
@@ -549,7 +549,7 @@ export default function AdminOrdersClient({
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="justify-start gap-2 h-9 text-xs font-medium border-red-100 hover:bg-red-50 text-red-700"
+                    className="h-9 justify-start gap-2 border-destructive/20 text-xs font-medium text-destructive hover:bg-destructive/10"
                     onClick={() => handleExportMonthlySales('pdf')}
                   >
                     <Download className="size-3.5" />
@@ -662,7 +662,7 @@ export default function AdminOrdersClient({
                           }}
                         >
                           <PopoverTrigger asChild>
-                            <Button variant="outline" className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-muted-foreground hover:bg-amber-500 hover:text-white shadow-sm transition-all">
+                            <Button variant="outline" className="flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-muted-foreground shadow-sm transition-all hover:bg-accent hover:text-accent-foreground">
                               <Zap className="size-5 mr-2" />
                               <span className="text-sm font-semibold">Quick Update</span>
                             </Button>
@@ -713,7 +713,7 @@ export default function AdminOrdersClient({
                         {/* Edit Modal Trigger */}
                         <Button 
                           variant="outline" 
-                          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-muted-foreground hover:bg-blue-600 hover:text-white shadow-sm transition-all"
+                          className="flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-muted-foreground shadow-sm transition-all hover:bg-primary hover:text-primary-foreground"
                           onClick={() => {
                             setEditingOrder(order);
                             setIsEditModalOpen(true);

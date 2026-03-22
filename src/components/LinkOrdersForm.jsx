@@ -37,7 +37,7 @@ export default function LinkOrdersForm() {
 
   if (isSuccess) {
     return (
-      <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-700">
+      <div className="flex items-center gap-3 rounded-xl border border-success/20 bg-success/10 p-4 text-success">
         <CheckCircle2 className="size-5 shrink-0" />
         <p className="text-sm font-medium">Orders linked successfully! Refreshing...</p>
       </div>

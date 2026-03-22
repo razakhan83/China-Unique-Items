@@ -135,7 +135,7 @@ function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabl
         <div className="flex items-center gap-3">
           <span className={cn(
             "text-[9px] font-black uppercase tracking-widest",
-            category.isEnabled ? "text-emerald-500" : "text-muted-foreground/60"
+            category.isEnabled ? "text-success" : "text-muted-foreground/60"
           )}>
             {category.isEnabled ? "Visible" : "Hidden"}
           </span>
@@ -147,7 +147,7 @@ function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabl
             }}
             className={cn(
               "relative h-5 w-9 rounded-full transition-colors duration-300",
-              category.isEnabled ? "bg-emerald-500" : "bg-muted-foreground/30"
+              category.isEnabled ? "bg-success" : "bg-muted-foreground/30"
             )}
           >
             <span className={cn(

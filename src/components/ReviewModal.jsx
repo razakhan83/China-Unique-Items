@@ -147,7 +147,7 @@ export default function ReviewModal({ isOpen, onOpenChange, order, onComplete, o
                         disabled={!!errors[item.productId]}
                         className={cn(
                           "transition-transform hover:scale-110 disabled:opacity-50 disabled:hover:scale-100",
-                          item.rating >= star ? "text-amber-500" : "text-muted/40"
+                          item.rating >= star ? "text-accent" : "text-muted/40"
                         )}
                       >
                         <Star className={cn("size-5", item.rating >= star && "fill-current")} />

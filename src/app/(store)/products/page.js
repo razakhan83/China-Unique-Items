@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { SearchX } from 'lucide-react';
 
 import ProductCard from '@/components/ProductCard';
 import ProductsPagination from '@/components/ProductsPagination';
@@ -114,11 +115,23 @@ async function ProductsResultsContent({ productsPromise }) {
             ))}
           </div>
         ) : (
-          <div className="products-page-empty surface-card flex flex-col items-center justify-center rounded-xl px-6 py-16 text-center">
-            <h3 className="text-lg font-semibold text-foreground">No products found</h3>
-            <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-              Try adjusting your search, sort, or category to explore the catalog.
-            </p>
+          <div className="products-page-empty relative">
+            <div aria-hidden="true" className="grid auto-rows-max grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4">
+              {Array.from({ length: PRODUCTS_PAGE_SIZE }).map((_, index) => (
+                <ProductCardPlaceholder key={`empty-placeholder-${index}`} index={index} />
+              ))}
+            </div>
+            <div className="absolute inset-x-0 top-0 z-10 flex justify-center">
+              <div className="surface-card flex w-full flex-col items-center justify-center rounded-xl px-6 py-16 text-center">
+                <div className="mb-4 flex size-16 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <SearchX className="size-7" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">No products found</h3>
+                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                  Try adjusting your search, sort, or category to explore the catalog.
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </ProductsPendingResults>

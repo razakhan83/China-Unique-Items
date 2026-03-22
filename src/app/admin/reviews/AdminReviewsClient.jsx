@@ -139,26 +139,26 @@ export default function AdminReviewsClient({
           </CardContent>
         </Card>
 
-        <Card className="surface-card border-none bg-amber-500/5">
+        <Card className="surface-card border-none bg-accent/10">
           <CardHeader className="pb-2">
-            <CardDescription className="text-amber-600/70">Average Rating</CardDescription>
-            <CardTitle className="text-3xl font-bold text-amber-600">{summary.averageRating.toFixed(1)}</CardTitle>
+            <CardDescription className="text-accent-foreground/70">Average Rating</CardDescription>
+            <CardTitle className="text-3xl font-bold text-accent-foreground">{summary.averageRating.toFixed(1)}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2 text-xs text-amber-600/60">
-              <Star className="size-3 fill-amber-600" />
+            <div className="flex items-center gap-2 text-xs text-accent-foreground/60">
+              <Star className="size-3 fill-accent text-accent" />
               <span>Overall store satisfaction</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="surface-card border-none bg-emerald-500/5">
+        <Card className="surface-card border-none bg-success/8">
           <CardHeader className="pb-2">
-            <CardDescription className="text-emerald-600/70">Recent (7 Days)</CardDescription>
-            <CardTitle className="text-3xl font-bold text-emerald-600">{summary.recentReviews}</CardTitle>
+            <CardDescription className="text-success/70">Recent (7 Days)</CardDescription>
+            <CardTitle className="text-3xl font-bold text-success">{summary.recentReviews}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2 text-xs text-emerald-600/60">
+            <div className="flex items-center gap-2 text-xs text-success/60">
               <Calendar className="size-3" />
               <span>New reviews this week</span>
             </div>
@@ -229,7 +229,7 @@ export default function AdminReviewsClient({
                       {Array.from({ length: 5 }, (_, index) => (
                         <Star
                           key={index}
-                          className={cn('size-3', index < review.rating ? 'fill-amber-500 text-amber-500' : 'text-muted/40')}
+                          className={cn('size-3', index < review.rating ? 'fill-accent text-accent' : 'text-muted/40')}
                         />
                       ))}
                     </div>

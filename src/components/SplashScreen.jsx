@@ -11,21 +11,21 @@ export default function SplashScreen({ onComplete }) {
     }, [onComplete]);
 
     return (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0A3D2E] animate-fadeIn">
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-primary animate-fadeIn">
             <div className="flex flex-col items-center gap-4 animate-fadeInUp">
-                <i className="fa-solid fa-store text-6xl text-[#10b981] mb-2 drop-shadow-xl"></i>
-                <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-widest text-center">
-                    CHINA <span className="text-[#10b981]">UNIQUE</span>
-                    <span className="block text-2xl md:text-3xl tracking-normal font-medium text-gray-300 mt-2">
+                <i className="fa-solid fa-store mb-2 text-6xl text-accent drop-shadow-xl"></i>
+                <h1 className="text-center text-4xl font-extrabold tracking-widest text-primary-foreground md:text-5xl">
+                    CHINA <span className="text-accent">UNIQUE</span>
+                    <span className="mt-2 block text-2xl font-medium tracking-normal text-primary-foreground/70 md:text-3xl">
                         ITEMS
                     </span>
                 </h1>
             </div>
 
-            <div className="absolute bottom-20 flex items-center gap-3 text-white/70 text-sm font-semibold tracking-widest uppercase animate-fadeIn" style={{ animationDelay: '0.8s' }}>
-                <div className="w-2 h-2 rounded-full bg-[#10b981] animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-[#10b981] animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-[#10b981] animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            <div className="absolute bottom-20 flex animate-fadeIn items-center gap-3 text-sm font-semibold uppercase tracking-widest text-primary-foreground/70" style={{ animationDelay: '0.8s' }}>
+                <div className="h-2 w-2 rounded-xl bg-accent animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="h-2 w-2 rounded-xl bg-accent animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="h-2 w-2 rounded-xl bg-accent animate-bounce" style={{ animationDelay: '300ms' }}></div>
             </div>
         </div>
     );

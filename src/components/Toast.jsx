@@ -64,13 +64,13 @@ export default function Toast({ message, isVisible, onClose, type = 'success', a
         >
             <div
                 className={`toast-shell ${isExiting ? 'toast-shell-exit' : 'toast-shell-enter'} ${
-                    isSuccess ? 'border-emerald-100 text-gray-800' : 'border-red-100 text-gray-800'
+                    isSuccess ? 'border-success/20 text-foreground' : 'border-destructive/20 text-foreground'
                 }`}
             >
                 <div
-                    className={`toast-icon ${isSuccess ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}
+                    className={`toast-icon ${isSuccess ? 'bg-success/10' : 'bg-destructive/10'}`}
                 >
-                    <i className={`fa-solid ${isSuccess ? 'fa-check text-emerald-500' : 'fa-trash-can text-red-500'} drop-shadow-sm`}></i>
+                    <i className={`fa-solid ${isSuccess ? 'fa-check text-success' : 'fa-trash-can text-destructive'} drop-shadow-sm`}></i>
                 </div>
 
                 <div className="min-w-0 flex-1">
@@ -85,7 +85,7 @@ export default function Toast({ message, isVisible, onClose, type = 'success', a
                 {action ? (
                     <button
                         onClick={handleActionClick}
-                        className="whitespace-nowrap rounded-lg bg-[#0A3D2E] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-[#10b981]"
+                        className="whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition-colors hover:bg-success"
                     >
                         {action.label}
                     </button>
@@ -100,7 +100,7 @@ export default function Toast({ message, isVisible, onClose, type = 'success', a
 
                 <div
                     key={`progress-${toastKey}`}
-                    className={`toast-progress ${isSuccess ? 'bg-emerald-500/40' : 'bg-red-500/40'}`}
+                    className={`toast-progress ${isSuccess ? 'bg-success/40' : 'bg-destructive/40'}`}
                 />
             </div>
         </div>

@@ -225,7 +225,7 @@ export default function CheckoutClient({ settings }) {
       {/* Success Modal */}
       <Dialog open={!!orderState.orderId && !orderPopupShown} onOpenChange={(open) => !open && handleModalClose()}>
         <DialogContent className="sm:max-w-md text-center p-8" hideClose>
-          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+          <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-xl bg-success/10 text-success">
             <CheckCircle2 className="size-10" />
           </div>
           
@@ -246,7 +246,7 @@ export default function CheckoutClient({ settings }) {
                   className="inline-flex size-8 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-90"
                   title="Copy Order ID"
                 >
-                  {copied ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
+                  {copied ? <Check className="size-4 text-success" /> : <Copy className="size-4" />}
                 </button>
               </div>
             </div>
@@ -344,7 +344,7 @@ export default function CheckoutClient({ settings }) {
                             aria-expanded={cityOpen}
                             aria-invalid={Boolean(errors.city)}
                             className={cn(
-                              "h-11 w-full justify-between rounded-xl border px-3.5 text-sm font-normal shadow-[0_1px_0_color-mix(in_oklab,var(--color-background)_65%,white)] transition-[border-color,background-color,box-shadow,color] duration-200",
+                              "h-11 w-full justify-between rounded-xl border px-3.5 text-sm font-normal transition-[border-color,background-color,box-shadow,color] duration-200",
                               "border-[color:color-mix(in_oklab,var(--color-border)_82%,white)] bg-[color:color-mix(in_oklab,var(--color-input)_88%,white)] text-foreground",
                               "hover:border-[color:color-mix(in_oklab,var(--color-primary)_16%,var(--color-border))] hover:bg-[color:color-mix(in_oklab,var(--color-input)_94%,white)]",
                               "focus-visible:border-[color:color-mix(in_oklab,var(--color-primary)_34%,var(--color-border))] focus-visible:bg-[color:color-mix(in_oklab,var(--color-input)_96%,white)] focus-visible:ring-4 focus-visible:ring-[color:color-mix(in_oklab,var(--color-primary)_14%,transparent)] focus-visible:shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-primary)_18%,transparent),0_10px_24px_-18px_color-mix(in_oklab,var(--color-primary)_45%,transparent)]",
@@ -357,7 +357,7 @@ export default function CheckoutClient({ settings }) {
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent
-                          className="w-[var(--radix-popover-trigger-width)] rounded-xl border border-[color:color-mix(in_oklab,var(--color-border)_82%,white)] bg-[color:color-mix(in_oklab,var(--color-popover)_96%,white)] p-0 shadow-[0_18px_50px_rgba(10,61,46,0.12)]"
+                          className="w-[var(--radix-popover-trigger-width)] rounded-xl border border-[color:color-mix(in_oklab,var(--color-border)_82%,white)] bg-[color:color-mix(in_oklab,var(--color-popover)_96%,white)] p-0"
                           align="start"
                           sideOffset={8}
                         >

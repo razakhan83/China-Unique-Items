@@ -139,7 +139,7 @@ async function ProductHeroSection({ slugPromise }) {
           <div className="flex flex-wrap items-baseline gap-3">
             {product.isDiscounted && product.discountPercentage > 0 ? (
               <>
-                <span className="text-3xl font-extrabold text-red-600 dark:text-red-500 md:text-4xl">
+                <span className="text-3xl font-extrabold text-destructive md:text-4xl">
                   {formatPrice(product.discountedPrice != null ? product.discountedPrice : Math.round(product.Price * (1 - product.discountPercentage / 100)))}
                 </span>
                 <span className="text-lg font-medium text-muted-foreground line-through">

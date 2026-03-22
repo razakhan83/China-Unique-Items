@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDownWideNarrow, PackageOpen, Search, Sparkles } from "lucide-react";
+import { ArrowDownWideNarrow, Search, SearchX, Sparkles } from "lucide-react";
 
 import ProductCard from "@/components/ProductCard";
 import SearchField from "@/components/SearchField";
@@ -214,7 +214,7 @@ function ProductGridContent({
 
             <div className="flex items-center gap-2 lg:w-64">
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="h-12 rounded-[calc(var(--radius-xl)+2px)] border-border/70 bg-background/80 px-4 text-sm font-medium shadow-[0_14px_36px_rgba(10,61,46,0.08),0_2px_6px_rgba(10,61,46,0.05)] transition-none hover:bg-background/80 focus:border-border/70 focus:ring-0">
+                <SelectTrigger className="h-12 rounded-xl border-border/70 bg-background/80 px-4 text-sm font-medium shadow-md transition-none hover:bg-background/80 focus:border-border/70 focus:ring-0">
                   <ArrowDownWideNarrow className="size-4 text-muted-foreground" />
                   <SelectValue placeholder="Sort products" />
                 </SelectTrigger>
@@ -255,7 +255,7 @@ function ProductGridContent({
         ) : (
           <div className="products-page-empty surface-card flex flex-col items-center justify-center rounded-xl px-6 py-16 text-center">
             <div className="mb-4 flex size-16 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <PackageOpen className="size-7" />
+              <SearchX className="size-7" />
             </div>
             <h3 className="text-lg font-semibold text-foreground">No products found</h3>
             <p className="mt-2 max-w-sm text-sm text-muted-foreground">Try adjusting your search or selecting another category to explore the catalog.</p>

@@ -110,7 +110,7 @@ export default function AdminReviewsDialog({ open, onOpenChange, product }) {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <div className="flex gap-0.5 text-amber-500">
+                      <div className="flex gap-0.5 text-accent">
                         {Array.from({ length: 5 }).map((_, i) => (
                           <Star key={i} className={cn("size-3.5", i < review.rating ? "fill-current" : "text-muted/30")} />
                         ))}

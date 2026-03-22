@@ -23,9 +23,9 @@ const ICON_MAP = {
 };
 
 const COLOR_MAP = {
-  order: 'text-blue-500 bg-blue-50 dark:bg-blue-500/10',
-  review: 'text-amber-500 bg-amber-50 dark:bg-amber-500/10',
-  user: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10',
+  order: 'bg-primary/10 text-primary',
+  review: 'bg-accent/15 text-accent-foreground',
+  user: 'bg-success/12 text-success',
 };
 
 export default function AdminNotificationCenter() {
@@ -100,7 +100,7 @@ export default function AdminNotificationCenter() {
         <Button variant="ghost" size="icon" className="relative group">
           <Bell className={cn("size-5 transition-transform group-hover:rotate-12", unreadCount > 0 ? "text-primary" : "text-muted-foreground")} />
           {unreadCount > 0 && (
-            <span className="absolute right-2 top-2 flex size-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-background">
+            <span className="absolute right-2 top-2 flex size-4 items-center justify-center rounded-xl bg-destructive text-[10px] font-bold text-destructive-foreground shadow-sm ring-2 ring-background">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -111,7 +111,7 @@ export default function AdminNotificationCenter() {
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-foreground">Notifications</h3>
             {unreadCount > 0 && (
-              <Badge variant="secondary" className="bg-red-50 text-red-600 dark:bg-red-500/10">
+              <Badge variant="secondary" className="bg-destructive/10 text-destructive">
                 {unreadCount} New
               </Badge>
             )}
@@ -162,7 +162,7 @@ export default function AdminNotificationCenter() {
                   >
                     {!notification.isRead && (
                       <div className="absolute left-1 top-1/2 -translate-y-1/2">
-                        <Circle className="size-1.5 fill-red-500 text-red-500" />
+                        <Circle className="size-1.5 fill-destructive text-destructive" />
                       </div>
                     )}
                     <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", colorClass)}>

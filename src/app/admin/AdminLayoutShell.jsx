@@ -117,7 +117,7 @@ export default function AdminLayoutShell({ children, sessionUser }) {
   return (
     <div className="min-h-screen bg-background">
       <NextTopLoader
-        color="#0A3D2E"
+        color="var(--color-primary)"
         initialPosition={0.08}
         crawlSpeed={200}
         height={3}

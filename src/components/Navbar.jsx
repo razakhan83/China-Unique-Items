@@ -345,8 +345,10 @@ function NavbarContent({ categories }) {
             aria-label="Toggle search"
             aria-expanded={isSearchOpen}
             className={cn(
-              'nav-icon-button nav-search-toggle relative overflow-hidden rounded-2xl border border-transparent bg-transparent text-muted-foreground',
-              isSearchOpen && 'is-open border-primary/15 bg-primary/8 text-primary'
+              'nav-icon-button nav-search-toggle relative overflow-hidden rounded-2xl border border-border/60 bg-card/85 text-foreground transition-[transform,background-color,border-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] active:scale-[0.96]',
+              isSearchOpen
+                ? 'is-open border-primary/18 bg-background text-primary'
+                : 'hover:border-primary/18 hover:bg-background hover:text-foreground'
             )}
           >
             <span className="relative flex size-5 items-center justify-center">
@@ -357,7 +359,7 @@ function NavbarContent({ categories }) {
           <button
             type="button"
             onClick={openCart}
-            className="nav-cart-button relative inline-flex size-11 items-center justify-center rounded-2xl border border-border/75 bg-background/95 text-foreground shadow-[0_12px_28px_rgba(10,61,46,0.08),0_2px_6px_rgba(10,61,46,0.05)] transition-[transform,background-color,border-color,box-shadow] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/20 hover:bg-card hover:shadow-[0_18px_34px_rgba(10,61,46,0.12),0_3px_8px_rgba(10,61,46,0.06)] active:scale-[0.96]"
+            className="nav-cart-button relative inline-flex size-11 items-center justify-center rounded-2xl border border-border/60 bg-card/85 text-foreground transition-[transform,background-color,border-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:text-foreground active:scale-[0.96]"
             aria-label="Open cart"
           >
             <ShoppingBag className="size-[1.05rem]" />
@@ -375,7 +377,7 @@ function NavbarContent({ categories }) {
                   <Button
                     variant="ghost"
                     size="icon-lg"
-                    className="nav-icon-button nav-profile-button relative flex items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-card/85 p-0 text-foreground shadow-[0_10px_24px_rgba(10,61,46,0.06)] transition-[transform,background-color,border-color,box-shadow] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:shadow-[0_16px_30px_rgba(10,61,46,0.1)] active:scale-[0.96]"
+                    className="nav-icon-button nav-profile-button relative flex items-center justify-center overflow-hidden rounded-2xl border border-border/60 bg-card/85 p-0 text-foreground transition-[transform,background-color,border-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:text-foreground active:scale-[0.96]"
                   >
                     <Avatar className="size-9">
                       <AvatarImage src={session.user?.image} alt={session.user?.name || 'User'} />
@@ -421,7 +423,7 @@ function NavbarContent({ categories }) {
                 variant="ghost"
                 size="icon-lg"
                 onClick={() => setIsAuthModalOpen(true)}
-                className="nav-icon-button nav-profile-button rounded-2xl border border-border/60 bg-card/85 text-muted-foreground shadow-[0_10px_24px_rgba(10,61,46,0.06)] transition-[transform,background-color,border-color,box-shadow,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:text-foreground hover:shadow-[0_16px_30px_rgba(10,61,46,0.1)] active:scale-[0.96]"
+                className="nav-icon-button nav-profile-button rounded-2xl border border-border/60 bg-card/85 text-foreground transition-[transform,background-color,border-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:text-foreground active:scale-[0.96]"
               >
                 <User />
               </Button>

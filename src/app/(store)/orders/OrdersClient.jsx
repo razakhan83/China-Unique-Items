@@ -21,12 +21,12 @@ import ReviewModal from '@/components/ReviewModal';
 import { cn } from '@/lib/utils';
 
 const STATUS_COLORS = {
-  Pending: 'bg-amber-100 text-amber-700 border-amber-200',
-  Confirmed: 'bg-blue-100 text-blue-700 border-blue-200',
-  'In Process': 'bg-indigo-100 text-indigo-700 border-indigo-200',
-  Delivered: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  'Delivery Address Issue': 'bg-red-100 text-red-700 border-red-200',
-  Returned: 'bg-gray-100 text-gray-700 border-gray-200',
+  Pending: 'bg-accent/15 text-accent-foreground border-accent/25',
+  Confirmed: 'bg-primary/10 text-primary border-primary/20',
+  'In Process': 'bg-secondary text-secondary-foreground border-border',
+  Delivered: 'bg-success/12 text-success border-success/20',
+  'Delivery Address Issue': 'bg-destructive/10 text-destructive border-destructive/20',
+  Returned: 'bg-muted text-muted-foreground border-border',
 };
 
 export default function OrdersClient({ initialOrders }) {
@@ -173,7 +173,7 @@ export default function OrdersClient({ initialOrders }) {
                   )}
                   {item.isReviewed && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <Badge className="bg-emerald-500 hover:bg-emerald-600 text-[8px] h-4 px-1">Reviewed</Badge>
+                      <Badge className="h-4 bg-success px-1 text-[8px] text-success-foreground hover:bg-success/90">Reviewed</Badge>
                     </div>
                   )}
                 </div>
