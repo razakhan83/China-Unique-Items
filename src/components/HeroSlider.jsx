@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from '@/lib/cloudinaryImage';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
 
@@ -219,6 +220,27 @@ export default function HeroSlider({ slides = [] }) {
             );
           })}
         </div>
+
+        {resolvedSlides.length > 1 ? (
+          <div className="pointer-events-none absolute inset-y-0 left-0 right-0 z-10 hidden items-center justify-between px-4 md:flex lg:px-6">
+            <button
+              type="button"
+              onClick={goToPrevSlide}
+              className="pointer-events-auto flex size-11 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/45"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+            <button
+              type="button"
+              onClick={goToNextSlide}
+              className="pointer-events-auto flex size-11 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/45"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="size-5" />
+            </button>
+          </div>
+        ) : null}
 
         {resolvedSlides.length > 1 ? (
           <div className="absolute inset-x-0 bottom-5 z-10 flex justify-center gap-2">
