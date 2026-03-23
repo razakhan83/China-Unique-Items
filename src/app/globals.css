@@ -400,6 +400,7 @@
   opacity: 0;
   transition: opacity 950ms cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
+  contain: layout paint;
 }
 
 .hero-crossfade-slider__slide.is-active {
@@ -419,99 +420,105 @@
   animation: hero-fade-in 1200ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.category-icon-css-carousel,
-.category-products-css-carousel {
-  scrollbar-width: none;
+.category-product-carousel-shell {
+  position: relative;
 }
 
-.category-icon-css-carousel {
+.category-product-carousel {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 78%;
+  gap: 0.75rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+  scroll-padding-inline: 0;
+  scroll-snap-type: x mandatory;
+  padding-block: 0.125rem 0.625rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.category-product-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.category-product-carousel[data-interactive="false"] {
+  overflow-x: clip;
+}
+
+.category-product-carousel-item {
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.category-icon-carousel {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 31.25%;
   gap: 0.5rem;
   overflow-x: auto;
-  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
   scroll-snap-type: x proximity;
-  scroll-behavior: smooth;
+  padding-block: 0.125rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.category-icon-css-carousel__slide {
+.category-icon-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.category-icon-carousel[data-interactive="false"] {
+  overflow-x: clip;
+}
+
+.category-icon-carousel-item {
   min-width: 0;
   scroll-snap-align: start;
-  scroll-snap-stop: always;
-}
-
-.category-products-carousel-shell {
-  position: relative;
-  anchor-name: --category-products-shell;
-}
-
-.category-products-carousel-controls {
-  width: 5.5rem;
-  height: 2.5rem;
-  flex-shrink: 0;
-}
-
-.category-products-css-carousel {
-  position: relative;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-}
-
-.category-products-css-carousel__track {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 78%;
-  gap: 0.75rem;
-}
-
-.category-products-css-carousel__slide {
-  min-width: 0;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 
 @media (min-width: 640px) {
-  .category-icon-css-carousel {
-    grid-auto-columns: 24%;
-    gap: 0.75rem;
+  .category-product-carousel {
+    grid-auto-columns: 46%;
   }
 
-  .category-products-css-carousel__track {
-    grid-auto-columns: 46%;
+  .category-icon-carousel {
+    gap: 0.75rem;
+    grid-auto-columns: 24%;
   }
 }
 
 @media (min-width: 768px) {
-  .category-icon-css-carousel {
-    grid-auto-columns: 18%;
+  .category-product-carousel {
+    gap: 1rem;
+    grid-auto-columns: 34%;
   }
 
-  .category-products-css-carousel__track {
-    grid-auto-columns: 34%;
-    gap: 1rem;
+  .category-icon-carousel {
+    grid-auto-columns: 18%;
   }
 }
 
 @media (min-width: 1024px) {
-  .category-icon-css-carousel {
-    grid-auto-columns: 13.5%;
+  .category-product-carousel {
+    grid-auto-columns: 27%;
   }
 
-  .category-products-css-carousel__track {
-    grid-auto-columns: 27%;
+  .category-icon-carousel {
+    grid-auto-columns: 13.5%;
   }
 }
 
 @media (min-width: 1280px) {
-  .category-icon-css-carousel {
-    grid-auto-columns: 11.25%;
+  .category-product-carousel {
+    grid-auto-columns: 23%;
   }
 
-  .category-products-css-carousel__track {
-    grid-auto-columns: 23%;
+  .category-icon-carousel {
+    grid-auto-columns: 11.25%;
   }
 }
 
@@ -641,6 +648,14 @@
 }
 
 @media (hover: none), (pointer: coarse) {
+  .hero-crossfade-slider__slide {
+    transition-duration: 380ms;
+  }
+
+  .hero-crossfade-slider__slide.is-active img {
+    animation: none;
+  }
+
   .products-page-bar,
   .products-page-meta,
   .products-page-heading,

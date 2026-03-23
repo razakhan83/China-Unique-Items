@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 import CategoryIconCarousel from "@/components/CategoryIconCarousel";
 import HeroSlider from "@/components/HeroSlider";
-import HomepageCarouselCss from "@/components/HomepageCarouselCss";
 import SearchField from "@/components/SearchField";
 
 export default function HomeClientWrapper({ heroSlides, categories = [] }) {
@@ -89,7 +88,6 @@ export default function HomeClientWrapper({ heroSlides, categories = [] }) {
 
   return (
     <>
-      <HomepageCarouselCss />
       <HeroSlider slides={heroSlides} />
       <CategoryIconCarousel categories={categories} />
 

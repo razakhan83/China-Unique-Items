@@ -75,6 +75,14 @@ export default function HeroSlider({ slides = [] }) {
     .filter((slide) => slide.assets.desktop.src || slide.assets.tablet.src || slide.assets.mobile.src);
   const safeActiveIndex =
     resolvedSlides.length > 0 ? activeIndex % resolvedSlides.length : 0;
+  const previousIndex =
+    resolvedSlides.length > 1
+      ? (safeActiveIndex - 1 + resolvedSlides.length) % resolvedSlides.length
+      : safeActiveIndex;
+  const nextIndex =
+    resolvedSlides.length > 1
+      ? (safeActiveIndex + 1) % resolvedSlides.length
+      : safeActiveIndex;
 
   function goToSlide(nextIndex) {
     if (resolvedSlides.length === 0) return;
@@ -147,6 +155,8 @@ export default function HeroSlider({ slides = [] }) {
         <div className="hero-crossfade-slider" aria-label="Featured promotions">
           {resolvedSlides.map((slide, index) => {
             const isActive = index === safeActiveIndex;
+            const shouldRenderImage =
+              index === safeActiveIndex || index === previousIndex || index === nextIndex;
             const desktopAsset = getDesktopAsset(slide);
             const tabletAsset = getTabletAsset(slide);
             const mobileAsset = getMobileAsset(slide);
@@ -159,7 +169,7 @@ export default function HeroSlider({ slides = [] }) {
                   index === 0 ? 'is-initial-active' : ''
                 }`}
               >
-                {mobileAsset?.src ? (
+                {shouldRenderImage && mobileAsset?.src ? (
                   <div className="block h-full w-full md:hidden">
                     <Image
                       src={mobileAsset.src}
@@ -174,7 +184,7 @@ export default function HeroSlider({ slides = [] }) {
                   </div>
                 ) : null}
 
-                {tabletAsset?.src ? (
+                {shouldRenderImage && tabletAsset?.src ? (
                   <div className="hidden h-full w-full md:block lg:hidden">
                     <Image
                       src={tabletAsset.src}
@@ -189,7 +199,7 @@ export default function HeroSlider({ slides = [] }) {
                   </div>
                 ) : null}
 
-                {desktopAsset?.src ? (
+                {shouldRenderImage && desktopAsset?.src ? (
                   <div className="hidden h-full w-full lg:block">
                     <Image
                       src={desktopAsset.src}

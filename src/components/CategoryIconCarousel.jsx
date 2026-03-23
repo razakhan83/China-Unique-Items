@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import {
   Armchair,
   Beef,
@@ -17,6 +16,7 @@ import {
   Tag,
   UtensilsCrossed,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { getCategoryColor } from "@/lib/categoryColors";
 import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from "@/lib/cloudinaryImage";
@@ -43,6 +43,7 @@ function getCategoryIcon(name) {
 }
 
 export default function CategoryIconCarousel({ categories }) {
+  const router = useRouter();
   const categoryCount = categories?.length ?? 0;
 
   if (!categoryCount) return null;
@@ -59,7 +60,12 @@ export default function CategoryIconCarousel({ categories }) {
             className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 md:w-10"
             style={{ background: "linear-gradient(to left, var(--color-card), transparent)" }}
           />
-          <div className="category-icon-css-carousel">
+          <div
+            className="category-icon-carousel"
+            data-interactive={categoryCount > 1 ? "true" : "false"}
+            aria-label="Shop by category"
+            aria-roledescription="carousel"
+          >
             {categories.map((category, index) => {
               const colors = getCategoryColor(category.label);
               const Icon = getCategoryIcon(category.label);
@@ -70,11 +76,11 @@ export default function CategoryIconCarousel({ categories }) {
               return (
                 <div
                   key={`${category.id}-${index}`}
-                  className="category-icon-css-carousel__slide"
+                  className="category-icon-carousel-item"
                 >
-                  <Link
-                    href={`/products?category=${category.id}`}
-                    scroll={true}
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/products?category=${category.id}`, { scroll: true })}
                     className="flex w-full min-w-0 flex-col items-center gap-3 px-1 py-1 text-center"
                   >
                     <span
@@ -103,7 +109,7 @@ export default function CategoryIconCarousel({ categories }) {
                     <span className="line-clamp-2 min-h-10 max-w-[112px] text-sm font-medium leading-tight text-muted-foreground md:max-w-[132px]">
                       {category.label}
                     </span>
-                  </Link>
+                  </button>
                 </div>
               );
             })}
