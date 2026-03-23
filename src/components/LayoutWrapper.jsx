@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { ChevronRight, CreditCard, Facebook, Instagram, MapPin, Store, Truck } from 'lucide-react';
+import { AtSign, ChevronRight, CreditCard, Globe2, MapPin, Store, Truck } from 'lucide-react';
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 import FloatingWhatsApp from '@/components/FloatingWhatsApp';
 import Navbar from '@/components/Navbar';
@@ -34,10 +34,10 @@ function LayoutContent({ children, categories, settings }) {
                                 <p className="max-w-sm leading-relaxed text-primary-foreground/76">A premium destination for kitchenware, home decor, and lifestyle pieces chosen for everyday elegance.</p>
                                 <div className="mt-5 flex gap-3">
                                     <a href="#" className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-white/14 hover:border-white/20 hover:text-white" aria-label="Facebook">
-                                        <Facebook className="size-4" />
+                                        <Globe2 className="size-4" />
                                     </a>
                                     <a href="#" className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-white/14 hover:border-white/20 hover:text-white" aria-label="Instagram">
-                                        <Instagram className="size-4" />
+                                        <AtSign className="size-4" />
                                     </a>
                                     <a href={`https://wa.me/${settings.whatsappNumber}`} className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-white/14 hover:border-white/20 hover:text-white" aria-label="WhatsApp">
                                         <WhatsAppIcon className="size-5" />

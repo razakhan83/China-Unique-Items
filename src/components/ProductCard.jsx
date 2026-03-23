@@ -132,6 +132,7 @@ export default function ProductCard({ product, className = "" }) {
               fill
               draggable={false}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              loading="lazy"
               className="object-cover outline outline-1 outline-black/5 transition-transform duration-500 ease-out md:group-hover:scale-105"
               {...getBlurPlaceholderProps(primaryImage.blurDataURL)}
             />

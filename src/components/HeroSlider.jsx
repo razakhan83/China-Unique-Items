@@ -1,261 +1,221 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-
-import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel';
 import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from '@/lib/cloudinaryImage';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
 
 const HERO_AUTOPLAY_DELAY_MS = 5000;
+const HERO_SWIPE_THRESHOLD_PX = 40;
 
-function resolveViewport() {
-  if (typeof window === 'undefined') return 'desktop';
-  if (window.innerWidth < 768) return 'mobile';
-  if (window.innerWidth < 1024) return 'tablet';
-  return 'desktop';
-}
-
-function getActiveAsset(slide, viewport) {
+function getSlideAssets(slide) {
   const desktopAsset = slide?.desktopImage || null;
   const tabletAsset = slide?.tabletImage || desktopAsset;
   const mobileAsset = slide?.mobileImage || desktopAsset;
 
-  if (viewport === 'mobile') {
-    return {
+  return {
+    desktop: {
       src: optimizeCloudinaryUrl(
-        mobileAsset?.url || slide?.mobileSrc || slide?.image || slide?.src || '',
+        desktopAsset?.url || slide?.pcSrc || slide?.image || slide?.src || '',
         CLOUDINARY_IMAGE_PRESETS.heroOriginal
       ),
-      blurDataURL: mobileAsset?.blurDataURL || desktopAsset?.blurDataURL || slide?.blurDataURL || '',
-    };
-  }
-
-  if (viewport === 'tablet') {
-    return {
+      blurDataURL: desktopAsset?.blurDataURL || slide?.blurDataURL || '',
+    },
+    tablet: {
       src: optimizeCloudinaryUrl(
         tabletAsset?.url || slide?.tabletSrc || slide?.pcSrc || slide?.image || slide?.src || '',
         CLOUDINARY_IMAGE_PRESETS.heroOriginal
       ),
       blurDataURL: tabletAsset?.blurDataURL || desktopAsset?.blurDataURL || slide?.blurDataURL || '',
-    };
-  }
-
-  return {
-    src: optimizeCloudinaryUrl(
-      desktopAsset?.url || slide?.pcSrc || slide?.image || slide?.src || '',
-      CLOUDINARY_IMAGE_PRESETS.heroOriginal
-    ),
-    blurDataURL: desktopAsset?.blurDataURL || slide?.blurDataURL || '',
+    },
+    mobile: {
+      src: optimizeCloudinaryUrl(
+        mobileAsset?.url || slide?.mobileSrc || slide?.image || slide?.src || '',
+        CLOUDINARY_IMAGE_PRESETS.heroOriginal
+      ),
+      blurDataURL: mobileAsset?.blurDataURL || desktopAsset?.blurDataURL || slide?.blurDataURL || '',
+    },
   };
 }
 
+function getDesktopAsset(slide) {
+  return slide.assets.desktop.src
+    ? slide.assets.desktop
+    : slide.assets.tablet.src
+      ? slide.assets.tablet
+      : slide.assets.mobile;
+}
+
+function getTabletAsset(slide) {
+  return slide.assets.tablet.src
+    ? slide.assets.tablet
+    : slide.assets.desktop.src
+      ? slide.assets.desktop
+      : slide.assets.mobile;
+}
+
+function getMobileAsset(slide) {
+  return slide.assets.mobile.src
+    ? slide.assets.mobile
+    : slide.assets.tablet.src
+      ? slide.assets.tablet
+      : slide.assets.desktop;
+}
+
 export default function HeroSlider({ slides = [] }) {
-  const [viewport, setViewport] = useState('desktop');
-  const [carouselApi, setCarouselApi] = useState();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const sectionRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const touchStartXRef = useRef(null);
+  const touchStartYRef = useRef(null);
+  const resolvedSlides = slides
+    .map((slide, index) => ({
+      ...slide,
+      assets: getSlideAssets(slide),
+      alt: slide?.alt || `Slide ${index + 1}`,
+    }))
+    .filter((slide) => slide.assets.desktop.src || slide.assets.tablet.src || slide.assets.mobile.src);
+  const safeActiveIndex =
+    resolvedSlides.length > 0 ? activeIndex % resolvedSlides.length : 0;
 
-  useEffect(() => {
-    const syncViewport = () => setViewport(resolveViewport());
-    syncViewport();
-    window.addEventListener('resize', syncViewport);
-    return () => window.removeEventListener('resize', syncViewport);
-  }, []);
+  function goToSlide(nextIndex) {
+    if (resolvedSlides.length === 0) return;
+    const normalizedIndex = ((nextIndex % resolvedSlides.length) + resolvedSlides.length) % resolvedSlides.length;
+    setActiveIndex(normalizedIndex);
+  }
 
-  const resolvedSlides = useMemo(
-    () =>
-      slides
-        .map((slide, index) => ({
-          ...slide,
-          asset: getActiveAsset(slide, viewport),
-          alt: slide?.alt || `Slide ${index + 1}`,
-        }))
-        .filter((slide) => slide.asset?.src),
-    [slides, viewport]
-  );
-  const isInteractive = resolvedSlides.length > 1;
-  const carouselOptions = useMemo(
-    () => ({
-      active: isInteractive,
-      align: 'start',
-      focus: false,
-      loop: isInteractive,
-      slideChanges: false,
-      slidesToScroll: 1,
-      ssr: Array.from({ length: resolvedSlides.length }, () => 100),
-    }),
-    [isInteractive, resolvedSlides.length]
-  );
+  function goToNextSlide() {
+    goToSlide(safeActiveIndex + 1);
+  }
 
-  useEffect(() => {
-    if (!carouselApi) {
+  function goToPrevSlide() {
+    goToSlide(safeActiveIndex - 1);
+  }
+
+  function handleTouchStart(event) {
+    const touch = event.touches?.[0];
+    if (!touch) return;
+    touchStartXRef.current = touch.clientX;
+    touchStartYRef.current = touch.clientY;
+  }
+
+  function handleTouchEnd(event) {
+    const touch = event.changedTouches?.[0];
+    const startX = touchStartXRef.current;
+    const startY = touchStartYRef.current;
+
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+
+    if (!touch || startX == null || startY == null) return;
+
+    const deltaX = touch.clientX - startX;
+    const deltaY = touch.clientY - startY;
+
+    if (Math.abs(deltaX) < HERO_SWIPE_THRESHOLD_PX || Math.abs(deltaX) <= Math.abs(deltaY)) {
       return;
     }
 
-    const onSelect = () => {
-      setCurrentIndex(carouselApi.selectedSnap());
-    };
-
-    onSelect();
-    carouselApi.on('select', onSelect);
-    carouselApi.on('reinit', onSelect);
-
-    return () => {
-      carouselApi.off('select', onSelect);
-      carouselApi.off('reinit', onSelect);
-    };
-  }, [carouselApi]);
-
-  useEffect(() => {
-    if (!carouselApi || !isInteractive || !sectionRef.current) {
+    if (deltaX < 0) {
+      goToNextSlide();
       return;
     }
 
-    const sectionNode = sectionRef.current;
-    let isMouseOver = false;
-    let isPointerDown = false;
-    let hasFocusWithin = false;
-    let autoplayTimer;
+    goToPrevSlide();
+  }
 
-    const clearAutoplay = () => {
-      if (autoplayTimer) {
-        window.clearTimeout(autoplayTimer);
-        autoplayTimer = undefined;
-      }
-    };
+  useEffect(() => {
+    if (resolvedSlides.length <= 1) {
+      return;
+    }
 
-    const scheduleAutoplay = () => {
-      clearAutoplay();
+    const autoplayTimer = window.setTimeout(() => {
+      setActiveIndex((current) => (current + 1) % resolvedSlides.length);
+    }, HERO_AUTOPLAY_DELAY_MS);
 
-      if (document.hidden || isMouseOver || isPointerDown || hasFocusWithin) {
-        return;
-      }
-
-      autoplayTimer = window.setTimeout(() => {
-        carouselApi.goToNext();
-      }, HERO_AUTOPLAY_DELAY_MS);
-    };
-
-    const handlePointerDown = () => {
-      isPointerDown = true;
-      clearAutoplay();
-    };
-
-    const handlePointerUp = () => {
-      isPointerDown = false;
-      scheduleAutoplay();
-    };
-
-    const handleMouseEnter = () => {
-      isMouseOver = true;
-      clearAutoplay();
-    };
-
-    const handleMouseLeave = () => {
-      isMouseOver = false;
-      scheduleAutoplay();
-    };
-
-    const handleFocusIn = () => {
-      hasFocusWithin = true;
-      clearAutoplay();
-    };
-
-    const handleFocusOut = (event) => {
-      if (sectionNode.contains(event.relatedTarget)) {
-        return;
-      }
-
-      hasFocusWithin = false;
-      scheduleAutoplay();
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        clearAutoplay();
-        return;
-      }
-
-      scheduleAutoplay();
-    };
-
-    carouselApi.on('select', scheduleAutoplay);
-    carouselApi.on('reinit', scheduleAutoplay);
-    sectionNode.addEventListener('pointerdown', handlePointerDown);
-    sectionNode.addEventListener('pointerup', handlePointerUp);
-    sectionNode.addEventListener('pointercancel', handlePointerUp);
-    sectionNode.addEventListener('mouseenter', handleMouseEnter);
-    sectionNode.addEventListener('mouseleave', handleMouseLeave);
-    sectionNode.addEventListener('focusin', handleFocusIn);
-    sectionNode.addEventListener('focusout', handleFocusOut);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    scheduleAutoplay();
-
-    return () => {
-      carouselApi.off('select', scheduleAutoplay);
-      carouselApi.off('reinit', scheduleAutoplay);
-      sectionNode.removeEventListener('pointerdown', handlePointerDown);
-      sectionNode.removeEventListener('pointerup', handlePointerUp);
-      sectionNode.removeEventListener('pointercancel', handlePointerUp);
-      sectionNode.removeEventListener('mouseenter', handleMouseEnter);
-      sectionNode.removeEventListener('mouseleave', handleMouseLeave);
-      sectionNode.removeEventListener('focusin', handleFocusIn);
-      sectionNode.removeEventListener('focusout', handleFocusOut);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearAutoplay();
-    };
-  }, [carouselApi, isInteractive]);
+    return () => window.clearTimeout(autoplayTimer);
+  }, [resolvedSlides.length, safeActiveIndex]);
 
   if (resolvedSlides.length === 0) return null;
 
   return (
     <section
-      ref={sectionRef}
       data-testid="hero-main-slider"
       className="relative w-full overflow-hidden bg-black"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <div className="relative h-[54vh] min-h-[320px] w-full overflow-hidden bg-black md:h-[460px] lg:h-[560px]">
-        <Carousel
-          setApi={setCarouselApi}
-          opts={carouselOptions}
-          className="h-full w-full"
-        >
-          <CarouselContent viewportClassName="h-full" className="ml-0 h-full">
-            {resolvedSlides.map((slide, index) => (
-              <CarouselItem
-                key={slide.id || `${slide.asset.src}-${viewport}-${index}`}
-                className="h-full basis-full pl-0"
+        <div className="hero-crossfade-slider" aria-label="Featured promotions">
+          {resolvedSlides.map((slide, index) => {
+            const isActive = index === safeActiveIndex;
+            const desktopAsset = getDesktopAsset(slide);
+            const tabletAsset = getTabletAsset(slide);
+            const mobileAsset = getMobileAsset(slide);
+
+            return (
+              <div
+                key={slide.id || `${desktopAsset.src || tabletAsset.src || mobileAsset.src}-${index}`}
+                aria-hidden={!isActive}
+                className={`hero-crossfade-slider__slide ${isActive ? 'is-active' : ''}`}
               >
-                <div className="relative h-full w-full">
-                  <Image
-                    src={slide.asset.src}
-                    alt={slide.alt}
-                    fill
-                    sizes="100vw"
-                    priority={index === 0}
-                    className="object-cover"
-                    {...getBlurPlaceholderProps(slide.asset.blurDataURL)}
-                  />
+                {mobileAsset?.src ? (
+                  <div className="block h-full w-full md:hidden">
+                    <Image
+                      src={mobileAsset.src}
+                      alt={slide.alt}
+                      fill
+                      sizes="100vw"
+                      fetchPriority={isActive ? 'high' : undefined}
+                      className="object-cover"
+                      {...getBlurPlaceholderProps(mobileAsset.blurDataURL)}
+                    />
+                  </div>
+                ) : null}
 
-                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.16))]" />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
+                {tabletAsset?.src ? (
+                  <div className="hidden h-full w-full md:block lg:hidden">
+                    <Image
+                      src={tabletAsset.src}
+                      alt={slide.alt}
+                      fill
+                      sizes="100vw"
+                      fetchPriority={isActive ? 'high' : undefined}
+                      className="object-cover"
+                      {...getBlurPlaceholderProps(tabletAsset.blurDataURL)}
+                    />
+                  </div>
+                ) : null}
 
-        {isInteractive ? (
+                {desktopAsset?.src ? (
+                  <div className="hidden h-full w-full lg:block">
+                    <Image
+                      src={desktopAsset.src}
+                      alt={slide.alt}
+                      fill
+                      sizes="100vw"
+                      fetchPriority={isActive ? 'high' : undefined}
+                      className="object-cover"
+                      {...getBlurPlaceholderProps(desktopAsset.blurDataURL)}
+                    />
+                  </div>
+                ) : null}
+
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.16))]" />
+              </div>
+            );
+          })}
+        </div>
+
+        {resolvedSlides.length > 1 ? (
           <div className="absolute inset-x-0 bottom-5 z-10 flex justify-center gap-2">
             {resolvedSlides.map((slide, index) => (
               <button
                 key={slide.id || `dot-${index}`}
                 type="button"
                 aria-label={`Go to slide ${index + 1}`}
-                aria-pressed={currentIndex === index}
-                onClick={() => carouselApi?.goTo(index)}
+                aria-pressed={safeActiveIndex === index}
+                onClick={() => goToSlide(index)}
                 className={`h-2 rounded-full transition-all duration-300 ${
-                  currentIndex === index ? 'w-5 bg-white' : 'w-2 bg-white/50'
+                  safeActiveIndex === index ? 'w-5 bg-white' : 'w-2 bg-white/50'
                 }`}
               />
             ))}
