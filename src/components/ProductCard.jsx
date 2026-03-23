@@ -1,13 +1,19 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart } from "lucide-react";
+import { Heart, ShoppingCart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ProductCardAddToCartButton from "@/components/ProductCardAddToCartButton";
 import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from "@/lib/cloudinaryImage";
 import { getPrimaryProductImage } from "@/lib/productImages";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
+
+const OVERLAY_SURFACE =
+  "border border-border/60 bg-background/90 text-foreground shadow-[0_10px_24px_rgba(15,23,42,0.12)] backdrop-blur-md";
 
 const formatPrice = (raw) => {
   let cleanNumbers = String(raw).replace(/[^\d.]/g, "");
@@ -15,62 +21,17 @@ const formatPrice = (raw) => {
   return `Rs. ${Number(cleanNumbers).toLocaleString("en-PK")}`;
 };
 
-/**
- * Determines the discount badge (top-left).
- * Uses real `discountPercentage` when the product has an active discount,
- * otherwise falls back to a stable dummy badge for visual variety.
- */
 function getDiscountBadge(product) {
-  // Real discount from DB
   if (product.isDiscounted && product.discountPercentage > 0) {
     return `${product.discountPercentage}% OFF`;
   }
   return null;
 }
 
-/**
- * Determines the status badge (top-right).
- * Priority: Best Selling → Trending → New (last 30 days).
- * Each has a unique color.
- */
-function getStatusBadge(product) {
-  if (product.StockStatus === "Out of Stock") {
-    return {
-      label: "Out of Stock",
-      className: "bg-destructive text-destructive-foreground border-destructive",
-    };
-  }
-
-  // Best Selling
-  if (product.isBestSelling || product.bestSelling || product.isBestseller) {
-    return {
-      label: "Best Selling",
-      className: "bg-accent/18 text-accent-foreground border-accent/30",
-    };
-  }
-
-  // Trending
-  if (product.isTrending || product.trending) {
-    return {
-      label: "Trending",
-      className: "bg-primary/10 text-primary border-primary/20",
-    };
-  }
-
-  // New Arrivals Toggle
-  if (product.isNewArrival) {
-    return {
-      label: "New",
-      className: "bg-success/12 text-success border-success/20",
-    };
-  }
-
-  return null;
-}
-
 export default function ProductCard({ product, className = "" }) {
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
   const productName = product.Name || product.name || "Unknown";
-  const productDescription = product.Description || product.description || "";
   const primaryImage = getPrimaryProductImage(product);
   const primaryImageSrc = primaryImage?.url
     ? optimizeCloudinaryUrl(primaryImage.url, CLOUDINARY_IMAGE_PRESETS.productCard)
@@ -80,12 +41,13 @@ export default function ProductCard({ product, className = "" }) {
   const productHref = `/products/${productSlug}`;
 
   const discountLabel = getDiscountBadge(product);
-  const statusBadge = getStatusBadge(product);
+  const dummyReviewLabel = product.averageRating || product.rating || "4.2";
 
-  // Real discount computed values
   const hasRealDiscount = Boolean(product.isDiscounted && product.discountPercentage > 0);
   const discountedPrice = hasRealDiscount
-    ? (product.discountedPrice != null ? product.discountedPrice : Math.round(productPrice * (1 - product.discountPercentage / 100)))
+    ? (product.discountedPrice != null
+        ? product.discountedPrice
+        : Math.round(productPrice * (1 - product.discountPercentage / 100)))
     : null;
 
   return (
@@ -97,62 +59,90 @@ export default function ProductCard({ product, className = "" }) {
       )}
       draggable={false}
     >
-      {/* Image Section */}
-      <Link
-        href={productHref}
-        scroll={true}
-        className="relative block aspect-square w-full overflow-hidden bg-muted/30"
-        draggable={false}
-      >
-        {/* Discount Badge — top left */}
-        {discountLabel && (
+      <div className="relative">
+        <div className="pointer-events-none absolute left-2.5 top-2.5 z-10 flex flex-col items-start gap-1.5">
           <Badge
             className={cn(
-              "absolute left-2.5 top-2.5 z-10",
-              "rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider",
-              "bg-secondary text-secondary-foreground border-border",
-              "shadow-sm md:backdrop-blur-sm"
+              "pointer-events-auto rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums",
+              OVERLAY_SURFACE,
+              "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
             )}
           >
-            {discountLabel}
+            <Star className="mr-1 size-3.5 fill-current" />
+            {dummyReviewLabel}
           </Badge>
-        )}
 
-        {/* Status Badge — top right (New / Best Selling / Trending) */}
-        {statusBadge && (
-          <Badge
-            className={cn(
-              "absolute right-2.5 top-2.5 z-10",
-              "rounded-md px-2 py-1 text-[10px] font-bold tracking-wider",
-              "shadow-sm md:backdrop-blur-sm",
-              statusBadge.className
-            )}
-          >
-            {statusBadge.label}
-          </Badge>
-        )}
+          {discountLabel && (
+            <Badge
+              className={cn(
+                "pointer-events-auto rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]",
+                OVERLAY_SURFACE,
+                "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+              )}
+            >
+              {discountLabel}
+            </Badge>
+          )}
+        </div>
 
-        {/* Product Image */}
-        {primaryImageSrc ? (
-          <Image
-            src={primaryImageSrc}
-            alt={productName}
-            fill
-            draggable={false}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-transform duration-500 ease-out md:group-hover:scale-105"
-            {...getBlurPlaceholderProps(primaryImage.blurDataURL)}
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center bg-muted/50">
-            <ShoppingCart className="size-10 text-muted-foreground/30" />
-          </div>
-        )}
-      </Link>
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={isWishlisted}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          data-slot="checkbox"
+          data-state={isWishlisted ? "checked" : "unchecked"}
+          value="on"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsWishlisted((current) => !current);
+          }}
+          className={cn(
+            "group/wishlist absolute bottom-2.5 right-2.5 z-10 inline-flex rounded-full border border-border/60 bg-background p-2.5 text-foreground shadow-xs outline-none transition-[transform,border-color,box-shadow] duration-200 ease-out hover:scale-[1.03] active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-ring/50 md:hover:border-destructive/30 md:hover:shadow-sm"
+          )}
+        >
+          <span className="relative block size-4">
+            <Heart
+              className={cn(
+                "absolute inset-0 size-4 transition-all duration-200 ease-out md:group-hover/wishlist:text-destructive/70",
+                isWishlisted ? "scale-75 opacity-0 blur-[4px]" : "scale-100 opacity-100 blur-0"
+              )}
+            />
+            <Heart
+              className={cn(
+                "absolute inset-0 size-4 fill-destructive stroke-destructive transition-all duration-200 ease-out",
+                isWishlisted ? "scale-100 opacity-100 blur-0" : "scale-75 opacity-0 blur-[4px]"
+              )}
+            />
+          </span>
+        </button>
 
-      {/* Content Section — white background */}
-      <CardContent className="flex flex-col gap-1.5 bg-card p-3 pt-3">
-        {/* Product Title */}
+        <Link
+          href={productHref}
+          scroll={true}
+          className="relative block aspect-square w-full overflow-hidden bg-muted/30"
+          draggable={false}
+        >
+          {primaryImageSrc ? (
+            <Image
+              src={primaryImageSrc}
+              alt={productName}
+              fill
+              draggable={false}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover outline outline-1 outline-black/5 transition-transform duration-500 ease-out md:group-hover:scale-105"
+              {...getBlurPlaceholderProps(primaryImage.blurDataURL)}
+            />
+          ) : (
+            <div className="flex size-full items-center justify-center bg-muted/50">
+              <ShoppingCart className="size-10 text-muted-foreground/30" />
+            </div>
+          )}
+        </Link>
+      </div>
+
+      <CardContent className="flex flex-col gap-0.5 bg-card p-3 pt-3">
         <Link
           href={productHref}
           scroll={true}
@@ -160,7 +150,7 @@ export default function ProductCard({ product, className = "" }) {
           draggable={false}
         >
           <h3
-            className="line-clamp-1 text-sm font-semibold leading-tight text-primary"
+            className="line-clamp-1 text-[15px] font-semibold leading-tight text-primary"
             title={productName}
             draggable={false}
           >
@@ -168,34 +158,21 @@ export default function ProductCard({ product, className = "" }) {
           </h3>
         </Link>
 
-        {/* Description */}
-        {productDescription ? (
-          <p
-            className="line-clamp-2 text-xs text-muted-foreground"
-            draggable={false}
-          >
-            {productDescription}
-          </p>
-        ) : (
-          <div className="h-4" />
-        )}
-
-        {/* Price Row + Add to Cart */}
         <div className="flex items-center justify-between gap-2 pt-1">
           <div className="flex flex-col gap-0.5">
             {hasRealDiscount ? (
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <p
+                  className="text-base font-bold tracking-tight text-foreground"
+                  draggable={false}
+                >
+                  {formatPrice(discountedPrice)}
+                </p>
                 <p
                   className="text-xs font-medium text-muted-foreground line-through"
                   draggable={false}
                 >
                   {formatPrice(productPrice)}
-                </p>
-                <p
-                  className="text-base font-bold tracking-tight text-destructive"
-                  draggable={false}
-                >
-                  {formatPrice(discountedPrice)}
                 </p>
               </div>
             ) : (
