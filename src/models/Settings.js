@@ -52,6 +52,12 @@ const SettingsSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
+
+        // Dynamically managed admin emails (in addition to ADMIN_EMAIL / ADMIN_EMAILS env vars)
+        adminEmails: {
+            type: [String],
+            default: [],
+        },
     },
     {
         timestamps: true,

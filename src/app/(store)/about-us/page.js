@@ -65,7 +65,7 @@ export default function AboutUsPage() {
             <h2 className="mb-4 text-3xl font-bold text-white">Inspired Living</h2>
             <p className="mx-auto mb-8 max-w-xl text-primary-foreground/80">
               Join thousands of Pakistani families who have transformed their homes with China Unique Store. 
-              We're more than just a brand; we're your partner in creating a home that feels like yours.
+              We&apos;re more than just a brand; we&apos;re your partner in creating a home that feels like yours.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Button size="lg" variant="secondary" className="group h-14 rounded-2xl px-8 font-semibold" render={<Link href="/products" />} nativeButton={false}>

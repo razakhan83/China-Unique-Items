@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client"
 
 import * as React from "react"
@@ -46,8 +47,11 @@ function DialogOverlay({
   );
 }
 
+/**
+ * @param {{ className?: string; children?: any; showCloseButton?: boolean; [key: string]: any }} props
+ */
 function DialogContent({
-  className,
+  className = "",
   children,
   showCloseButton = true,
   ...props
@@ -80,8 +84,11 @@ function DialogContent({
   );
 }
 
+/**
+ * @param {{ className?: string; [key: string]: any }} props
+ */
 function DialogHeader({
-  className,
+  className = "",
   ...props
 }) {
   return (
@@ -92,8 +99,11 @@ function DialogHeader({
   );
 }
 
+/**
+ * @param {{ className?: string; showCloseButton?: boolean; children?: any; [key: string]: any }} props
+ */
 function DialogFooter({
-  className,
+  className = "",
   showCloseButton = false,
   children,
   ...props
@@ -116,8 +126,11 @@ function DialogFooter({
   );
 }
 
+/**
+ * @param {{ className?: string; [key: string]: any }} props
+ */
 function DialogTitle({
-  className,
+  className = "",
   ...props
 }) {
   return (
@@ -128,8 +141,11 @@ function DialogTitle({
   );
 }
 
+/**
+ * @param {{ className?: string; [key: string]: any }} props
+ */
 function DialogDescription({
-  className,
+  className = "",
   ...props
 }) {
   return (

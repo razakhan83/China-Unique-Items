@@ -2,7 +2,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { isAdminEmail } from '@/lib/admin';
+
 import mongooseConnect from '@/lib/mongooseConnect';
 import Category from '@/models/Category';
 import Product from '@/models/Product';
@@ -54,7 +54,7 @@ export async function POST(req) {
         const session = await getServerSession(authOptions);
         console.log('[API] Session check:', session?.user?.email || 'No session');
 
-        if (!session || !isAdminEmail(session.user?.email)) {
+        if (!session || !session.user?.isAdmin) {
             console.log('[API] Unauthorized access attempt');
             return NextResponse.json({ success: false, message: 'Unauthorized Access' }, { status: 401 });
         }

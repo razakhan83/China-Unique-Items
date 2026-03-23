@@ -7,6 +7,7 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -22,11 +23,12 @@ import {
   GripVertical,
   ImageIcon,
   Loader2,
+  MoreVertical,
+  Pencil,
   Plus,
   Save,
   Trash2,
   Upload,
-  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,6 +42,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from "@/lib/cloudinaryImage";
@@ -106,84 +114,63 @@ function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabl
         <p className="mt-1 text-sm font-semibold text-primary">{index + 1}</p>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="rounded-xl"
-          onClick={() => onEdit?.(category)}
-          title="Edit Category"
-        >
-          <Pencil className="size-4" />
-        </Button>
-        {category.slug !== 'special-offers' && (
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            className="rounded-xl"
-            onClick={() => onDelete(category)}
-            title="Delete Category"
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        )}
-      </div>
-
-      <div className="flex flex-col items-end gap-2 pr-2">
-        <div className="flex items-center gap-3">
+      {/* Home On/Off toggle */}
+      {category.slug !== "special-offers" ? (
+        <div className="flex flex-col items-end gap-1 pr-1">
           <span className={cn(
             "text-[9px] font-black uppercase tracking-widest",
-            category.isEnabled ? "text-success" : "text-muted-foreground/60"
+            category.showOnHome !== false ? "text-primary" : "text-muted-foreground/60"
           )}>
-            {category.isEnabled ? "Visible" : "Hidden"}
+            {category.showOnHome !== false ? "Home On" : "Home Off"}
           </span>
           <button
             type="button"
             onClick={(event) => {
               event.stopPropagation();
-              onToggleEnabled?.(category._id, category.isEnabled);
+              onToggleHome?.(category._id, category.showOnHome !== false);
             }}
             className={cn(
               "relative h-5 w-9 rounded-full transition-colors duration-300",
-              category.isEnabled ? "bg-success" : "bg-muted-foreground/30"
+              category.showOnHome !== false ? "bg-primary" : "bg-muted-foreground/30"
             )}
           >
             <span className={cn(
               "absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-300 shadow-sm",
-              category.isEnabled ? "translate-x-4" : "translate-x-0"
+              category.showOnHome !== false ? "translate-x-4" : "translate-x-0"
             )} />
           </button>
         </div>
+      ) : <div className="w-16" />}
 
-        {category.slug !== "special-offers" ? (
-          <div className="flex items-center gap-3">
-            <span className={cn(
-              "text-[9px] font-black uppercase tracking-widest",
-              category.showOnHome !== false ? "text-primary" : "text-muted-foreground/60"
-            )}>
-              {category.showOnHome !== false ? "Home On" : "Home Off"}
-            </span>
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation();
-                onToggleHome?.(category._id, category.showOnHome !== false);
-              }}
-              className={cn(
-                "relative h-5 w-9 rounded-full transition-colors duration-300",
-                category.showOnHome !== false ? "bg-primary" : "bg-muted-foreground/30"
-              )}
+      {/* Three-dot actions dropdown */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="rounded-xl shrink-0"
+            aria-label="Category actions"
+          >
+            <MoreVertical className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onEdit?.(category)}>
+            <Pencil className="mr-2 size-4" />
+            Edit
+          </DropdownMenuItem>
+          {category.slug !== "special-offers" && (
+            <DropdownMenuItem
+              className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+              onClick={() => onDelete(category)}
             >
-              <span className={cn(
-                "absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-300 shadow-sm",
-                category.showOnHome !== false ? "translate-x-4" : "translate-x-0"
-              )} />
-            </button>
-          </div>
-        ) : null}
-      </div>
+              <Trash2 className="mr-2 size-4" />
+              Delete
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }
@@ -209,6 +196,12 @@ export default function AdminCategoriesClient() {
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -274,7 +267,7 @@ export default function AdminCategoriesClient() {
     if (!file || !file.type.startsWith("image/")) return;
 
     const reader = new FileReader();
-    reader.onload = (loadEvent) => setNewImage(loadEvent.target?.result || "");
+    reader.onload = (loadEvent) => setNewImage(/** @type {string} */ (loadEvent.target?.result) || "");
     reader.readAsDataURL(file);
     event.target.value = "";
   }
@@ -341,7 +334,7 @@ export default function AdminCategoriesClient() {
     if (!file || !file.type.startsWith("image/")) return;
 
     const reader = new FileReader();
-    reader.onload = (loadEvent) => setEditImage(loadEvent.target?.result || "");
+    reader.onload = (loadEvent) => setEditImage(/** @type {string} */ (loadEvent.target?.result) || "");
     reader.readAsDataURL(file);
     event.target.value = "";
   }

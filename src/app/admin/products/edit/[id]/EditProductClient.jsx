@@ -473,7 +473,7 @@ export default function EditProduct({ id }) {
                   <p className="text-sm font-semibold text-foreground">Drag & Drop Images Here</p>
                   <p className="text-xs text-muted-foreground">or click to browse multiple files</p>
                   <p className="mt-1 text-[10px] text-muted-foreground">PNG, JPG up to 10MB each</p>
-                  <p className="mt-1 text-[10px] text-muted-foreground">Use "Set Main" on a preview to move it to the first slot.</p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">Use &quot;Set Main&quot; on a preview to move it to the first slot.</p>
                 </div>
               </div>
             </div>

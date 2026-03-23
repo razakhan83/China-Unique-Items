@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client"
 
 import * as React from "react"
@@ -32,12 +33,15 @@ function DropdownMenuTrigger({
   );
 }
 
+/**
+ * @param {{ align?: string; alignOffset?: number; side?: string; sideOffset?: number; className?: string; [key: string]: any }} props
+ */
 function DropdownMenuContent({
   align = "start",
   alignOffset = 0,
   side = "bottom",
   sideOffset = 4,
-  className,
+  className = "",
   ...props
 }) {
   return (
@@ -83,8 +87,11 @@ function DropdownMenuLabel({
   );
 }
 
+/**
+ * @param {{ className?: string; inset?: boolean; variant?: string; [key: string]: any }} props
+ */
 function DropdownMenuItem({
-  className,
+  className = "",
   inset,
   variant = "default",
   ...props

@@ -5,6 +5,7 @@ import { isAdminEmail, normalizeEmail } from "@/lib/admin";
 import mongooseConnect from "@/lib/mongooseConnect";
 import User from "@/models/User";
 
+/** @type {import("next-auth").NextAuthOptions} */
 export const authOptions = {
   providers: [
     GoogleProvider({
@@ -82,7 +83,23 @@ export const authOptions = {
       
       if (email) {
         token.email = normalizeEmail(email);
-        token.isAdmin = isAdminEmail(email);
+        // Check env-configured admins first
+        let isAdmin = isAdminEmail(email);
+        
+        // Also check dynamically managed admin emails stored in DB
+        if (!isAdmin) {
+          try {
+            const Settings = (await import('@/models/Settings')).default;
+            const settings = await Settings.findOne({ singletonKey: 'site-settings' }).select('adminEmails').lean();
+            if (settings?.adminEmails?.includes(normalizeEmail(email))) {
+              isAdmin = true;
+            }
+          } catch (err) {
+            console.error('DB admin check failed:', err);
+          }
+        }
+
+        token.isAdmin = isAdmin;
 
         // Phase 2: Strict Session Validation
         // Avoid DB check for static admin if possible, but for regular users we must check status
@@ -120,6 +137,7 @@ export const authOptions = {
     async session({ session, token }) {
       if (session?.user) {
         session.user.email = normalizeEmail(session.user.email || token?.email);
+        // @ts-ignore - isAdmin is custom
         session.user.isAdmin = Boolean(token?.isAdmin);
       }
       return session;

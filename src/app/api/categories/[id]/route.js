@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { isAdminEmail } from '@/lib/admin';
+
 import mongooseConnect from '@/lib/mongooseConnect';
 import Category from '@/models/Category';
 import { optimizeCloudinaryUrl } from '@/lib/cloudinaryImage';
@@ -23,7 +23,7 @@ function slugifyCategory(name = "") {
 export async function PATCH(req, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !isAdminEmail(session.user?.email)) {
+    if (!session || !session.user?.isAdmin) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 

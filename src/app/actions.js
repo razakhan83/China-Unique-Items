@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { updateTag } from 'next/cache';
 import { after } from 'next/server';
 
-import { isAdminEmail, normalizeEmail, normalizePhone, getPhoneRegex } from '@/lib/admin';
+import { normalizeEmail, normalizePhone, getPhoneRegex } from '@/lib/admin';
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import Order from '@/models/Order';
@@ -73,7 +73,7 @@ function makeOrderId() {
 
 async function assertAdmin() {
   const session = await getServerSession(authOptions);
-  if (!session || !isAdminEmail(session.user?.email)) {
+  if (!session || !session.user?.isAdmin) {
     throw new Error('Unauthorized access');
   }
   return session;

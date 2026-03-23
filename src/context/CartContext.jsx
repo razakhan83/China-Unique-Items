@@ -39,6 +39,7 @@ function CartProviderContent({ children }) {
       if (savedCart) {
         const parsed = JSON.parse(savedCart);
         const cart = Array.isArray(parsed?.items) ? parsed.items.map(normalizeCartItem) : [];
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setState((current) => ({ ...current, cart, isInitialized: true }));
         return;
       }
@@ -46,6 +47,7 @@ function CartProviderContent({ children }) {
       console.error('Failed to parse cart from local storage', error);
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState((current) => ({ ...current, isInitialized: true }));
   }, []);
 

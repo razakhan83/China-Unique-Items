@@ -549,7 +549,12 @@ export async function getApprovedReviews(productId) {
   await mongooseConnect();
   const Review = (await import('@/models/Review')).default;
 
-  const reviews = await Review.find({ productId: safeProductId, isApproved: true })
+  // Cast to ObjectId when valid so Mongoose can use the indexed ObjectId field correctly
+  const queryId = mongoose.Types.ObjectId.isValid(safeProductId)
+    ? new mongoose.Types.ObjectId(safeProductId)
+    : safeProductId;
+
+  const reviews = await Review.find({ productId: queryId, isApproved: true })
     .sort({ createdAt: -1 })
     .lean();
 

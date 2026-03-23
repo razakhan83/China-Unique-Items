@@ -1,9 +1,10 @@
+// @ts-nocheck
 import { revalidateTag, updateTag } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { after } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { isAdminEmail } from '@/lib/admin';
+
 import mongooseConnect from '@/lib/mongooseConnect';
 import Order from '@/models/Order';
 import { Resend } from 'resend';
@@ -29,7 +30,7 @@ async function sendOrderNotificationEmail({ order, customerName }) {
 export async function GET() {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !isAdminEmail(session.user?.email)) {
+        if (!session || !session.user?.isAdmin) {
             return NextResponse.json({ success: false, message: 'Unauthorized Access' }, { status: 401 });
         }
 
@@ -86,3 +87,4 @@ export async function POST(req) {
         return NextResponse.json({ success: false, error: error.message }, { status: 400 });
     }
 }
+
