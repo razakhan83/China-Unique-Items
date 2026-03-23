@@ -407,6 +407,14 @@
   pointer-events: auto;
 }
 
+.hero-crossfade-slider__slide.is-initial-active {
+  transition: none;
+}
+
+.hero-crossfade-slider__slide.is-initial-active img {
+  animation: none;
+}
+
 .hero-crossfade-slider__slide.is-active img {
   animation: hero-fade-in 1200ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }

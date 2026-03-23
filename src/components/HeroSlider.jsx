@@ -155,7 +155,9 @@ export default function HeroSlider({ slides = [] }) {
               <div
                 key={slide.id || `${desktopAsset.src || tabletAsset.src || mobileAsset.src}-${index}`}
                 aria-hidden={!isActive}
-                className={`hero-crossfade-slider__slide ${isActive ? 'is-active' : ''}`}
+                className={`hero-crossfade-slider__slide ${isActive ? 'is-active' : ''} ${
+                  index === 0 ? 'is-initial-active' : ''
+                }`}
               >
                 {mobileAsset?.src ? (
                   <div className="block h-full w-full md:hidden">
@@ -164,6 +166,7 @@ export default function HeroSlider({ slides = [] }) {
                       alt={slide.alt}
                       fill
                       sizes="100vw"
+                      priority={index === 0}
                       fetchPriority={isActive ? 'high' : undefined}
                       className="object-cover"
                       {...getBlurPlaceholderProps(mobileAsset.blurDataURL)}
@@ -178,6 +181,7 @@ export default function HeroSlider({ slides = [] }) {
                       alt={slide.alt}
                       fill
                       sizes="100vw"
+                      priority={index === 0}
                       fetchPriority={isActive ? 'high' : undefined}
                       className="object-cover"
                       {...getBlurPlaceholderProps(tabletAsset.blurDataURL)}
@@ -192,6 +196,7 @@ export default function HeroSlider({ slides = [] }) {
                       alt={slide.alt}
                       fill
                       sizes="100vw"
+                      priority={index === 0}
                       fetchPriority={isActive ? 'high' : undefined}
                       className="object-cover"
                       {...getBlurPlaceholderProps(desktopAsset.blurDataURL)}
