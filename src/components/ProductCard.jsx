@@ -12,8 +12,6 @@ import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from "@/lib/cloudinar
 import { getPrimaryProductImage } from "@/lib/productImages";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
 
-const OVERLAY_SURFACE =
-  "border border-border/60 bg-background/90 text-foreground shadow-[0_10px_24px_rgba(15,23,42,0.12)] backdrop-blur-md";
 const BADGE_OVERLAY_SURFACE =
   "border border-border/60 bg-background/90 text-foreground backdrop-blur-md";
 
@@ -101,19 +99,20 @@ export default function ProductCard({ product, className = "" }) {
             setIsWishlisted((current) => !current);
           }}
           className={cn(
-            "group/wishlist absolute bottom-2.5 right-2.5 z-10 inline-flex rounded-full border border-border/60 bg-background p-2.5 text-foreground shadow-xs outline-none transition-[transform,border-color,box-shadow] duration-200 ease-out hover:scale-[1.03] active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-ring/50 md:hover:border-destructive/30 md:hover:shadow-sm"
+            "group/wishlist absolute right-2.5 top-2.5 z-10 inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-border/60 bg-background/90 px-2 text-foreground shadow-xs backdrop-blur-md outline-none transition-[transform,opacity,border-color,box-shadow,color] duration-200 ease-out hover:scale-[1.03] active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-ring/50 md:hover:border-destructive/30 md:hover:text-destructive md:hover:shadow-sm after:absolute after:-inset-2 after:content-['']",
+            isWishlisted ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
           )}
         >
-          <span className="relative block size-4">
+          <span className="relative block size-3.5">
             <Heart
               className={cn(
-                "absolute inset-0 size-4 transition-all duration-200 ease-out md:group-hover/wishlist:text-destructive/70",
+                "absolute inset-0 size-3.5 transition-all duration-200 ease-out md:group-hover/wishlist:text-destructive/70",
                 isWishlisted ? "scale-75 opacity-0" : "scale-100 opacity-100"
               )}
             />
             <Heart
               className={cn(
-                "absolute inset-0 size-4 fill-destructive stroke-destructive transition-all duration-200 ease-out",
+                "absolute inset-0 size-3.5 fill-destructive stroke-destructive transition-all duration-200 ease-out",
                 isWishlisted ? "scale-100 opacity-100" : "scale-75 opacity-0"
               )}
             />
@@ -144,7 +143,7 @@ export default function ProductCard({ product, className = "" }) {
         </Link>
       </div>
 
-      <CardContent className="flex flex-col gap-0.5 bg-card p-3 pt-3">
+      <CardContent className="flex flex-col gap-2 bg-card p-4 pt-4">
         <Link
           href={productHref}
           scroll={true}
@@ -152,7 +151,7 @@ export default function ProductCard({ product, className = "" }) {
           draggable={false}
         >
           <h3
-            className="line-clamp-1 text-[15px] font-semibold leading-tight text-primary"
+            className="line-clamp-1 text-base font-semibold leading-snug text-primary/80"
             title={productName}
             draggable={false}
           >
@@ -160,18 +159,18 @@ export default function ProductCard({ product, className = "" }) {
           </h3>
         </Link>
 
-        <div className="flex items-center justify-between gap-2 pt-1">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex flex-col gap-0.5">
             {hasRealDiscount ? (
               <div className="flex flex-wrap items-center gap-1.5">
                 <p
-                  className="text-base font-bold tracking-tight text-foreground"
+                  className="text-xl font-semibold text-foreground tabular-nums"
                   draggable={false}
                 >
                   {formatPrice(discountedPrice)}
                 </p>
                 <p
-                  className="text-xs font-medium text-muted-foreground line-through"
+                  className="text-sm font-medium text-muted-foreground/75 line-through"
                   draggable={false}
                 >
                   {formatPrice(productPrice)}
@@ -179,7 +178,7 @@ export default function ProductCard({ product, className = "" }) {
               </div>
             ) : (
               <p
-                className="text-base font-bold tracking-tight text-foreground"
+                className="text-xl font-semibold text-foreground tabular-nums"
                 draggable={false}
               >
                 {formatPrice(productPrice)}
