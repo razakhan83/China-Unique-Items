@@ -25,7 +25,7 @@ export default function ProductCardAddToCartButton({ product }) {
             event.stopPropagation();
             updateQuantity(product, quantity - 1);
           }}
-          className="relative size-8 rounded-md p-0 text-primary shadow-none transition-[transform,background-color,color] duration-200 ease-out hover:bg-primary/10 hover:text-primary active:scale-[0.96] after:absolute after:-inset-2 after:content-['']"
+          className="relative size-8 touch-manipulation rounded-md p-0 text-primary shadow-none transition-[transform,background-color,color] duration-200 ease-out hover:bg-primary/10 hover:text-primary active:scale-[0.96] active:bg-primary/10 active:text-primary after:absolute after:-inset-2 after:content-['']"
           aria-label="Decrease quantity"
         >
           <Minus className="size-4" />
@@ -43,7 +43,7 @@ export default function ProductCardAddToCartButton({ product }) {
             event.stopPropagation();
             updateQuantity(product, quantity + 1);
           }}
-          className="relative size-8 rounded-md p-0 text-primary shadow-none transition-[transform,background-color,color] duration-200 ease-out hover:bg-primary/10 hover:text-primary active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 after:absolute after:-inset-2 after:content-['']"
+          className="relative size-8 touch-manipulation rounded-md p-0 text-primary shadow-none transition-[transform,background-color,color] duration-200 ease-out hover:bg-primary/10 hover:text-primary active:scale-[0.96] active:bg-primary/10 active:text-primary disabled:pointer-events-none disabled:opacity-50 after:absolute after:-inset-2 after:content-['']"
           aria-label="Increase quantity"
         >
           <Plus className="size-4" />
@@ -63,7 +63,7 @@ export default function ProductCardAddToCartButton({ product }) {
         event.stopPropagation();
         addToCart(product);
       }}
-      className="add-to-cart-button relative size-8 cursor-pointer rounded-md bg-transparent p-0 text-primary shadow-none transition-[transform,background-color,color] duration-200 ease-out hover:bg-primary/10 hover:text-primary active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 after:absolute after:-inset-2 after:content-['']"
+      className="add-to-cart-button relative size-8 cursor-pointer touch-manipulation rounded-md bg-transparent p-0 text-primary shadow-none transition-[transform,background-color,color] duration-200 ease-out hover:bg-primary/10 hover:text-primary active:scale-[0.96] active:bg-primary/10 active:text-primary disabled:pointer-events-none disabled:opacity-50 after:absolute after:-inset-2 after:content-['']"
       aria-label="Add to cart"
     >
       <Plus className={cn('size-4 text-primary')} />
