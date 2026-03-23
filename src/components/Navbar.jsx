@@ -69,6 +69,7 @@ function AnnouncementMarquee() {
   const animationFrameRef = useRef(null);
   const lastTimestampRef = useRef(null);
   const offsetRef = useRef(0);
+  const initialItems = [...ANNOUNCEMENT_ITEMS, ...ANNOUNCEMENT_ITEMS];
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -192,9 +193,20 @@ function AnnouncementMarquee() {
   return (
     <div
       ref={viewportRef}
-      className="w-full overflow-hidden text-xs font-medium uppercase tracking-[0.16em]"
+      className="flex min-h-4 w-full items-center overflow-hidden text-xs font-medium uppercase tracking-[0.16em] leading-none"
     >
-      <div ref={trackRef} className="flex whitespace-nowrap will-change-transform" />
+      <div
+        ref={trackRef}
+        className="flex whitespace-nowrap will-change-transform"
+        style={{ gap: `${MARQUEE_GAP}px` }}
+      >
+        {initialItems.map((text, index) => (
+          <span key={`${text}-${index}`} className="flex shrink-0 items-center gap-2">
+            <Sparkles className="size-3.5" aria-hidden="true" />
+            <span>{text}</span>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -259,11 +271,11 @@ function NavbarContent({ categories }) {
   const mobileSidebarButtonClass =
     'flex w-full min-h-10 items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-[background-color,transform,color] duration-200 active:scale-[0.96]';
   const navActionButtonClass =
-    'nav-icon-button relative overflow-hidden rounded-2xl border border-border/60 bg-card/85 p-0 text-foreground transition-[transform,background-color,border-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:text-foreground active:scale-[0.96]';
+    'nav-icon-button relative rounded-2xl border border-border/60 bg-card/85 p-0 text-foreground transition-[transform,background-color,border-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:text-foreground active:scale-[0.96]';
 
   return (
     <div className="sticky top-0 z-40 border-b border-border/60 bg-card/95 backdrop-blur">
-      <div className="relative border-b border-border/60 bg-primary py-2 text-primary-foreground">
+      <div className="relative flex min-h-9 items-center border-b border-border/60 bg-primary px-4 py-2 text-primary-foreground">
         <AnnouncementMarquee />
       </div>
 
@@ -326,7 +338,7 @@ function NavbarContent({ categories }) {
             aria-label="Toggle search"
             aria-expanded={isSearchOpen}
             className={cn(
-              `nav-search-toggle ${navActionButtonClass}`,
+              `nav-search-toggle overflow-hidden ${navActionButtonClass}`,
               isSearchOpen
                 ? 'is-open border-primary/18 bg-background text-primary'
                 : ''
@@ -342,14 +354,14 @@ function NavbarContent({ categories }) {
             variant="ghost"
             size="icon-lg"
             onClick={openCart}
-            className={`nav-cart-button ${navActionButtonClass}`}
+            className={`nav-cart-button overflow-visible ${navActionButtonClass}`}
             aria-label="Open cart"
           >
             <span className="relative flex size-5 items-center justify-center">
               <ShoppingBag className="size-[1.05rem]" />
             </span>
             {cartCount > 0 ? (
-              <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-md bg-primary px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary-foreground">
+              <span className="absolute -right-2 -top-2 inline-flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold leading-none text-primary-foreground">
                 {cartCount}
               </span>
             ) : null}
@@ -362,7 +374,7 @@ function NavbarContent({ categories }) {
                   <Button
                     variant="ghost"
                     size="icon-lg"
-                    className={`nav-profile-button flex items-center justify-center ${navActionButtonClass}`}
+                    className={`nav-profile-button flex items-center justify-center overflow-hidden ${navActionButtonClass}`}
                   >
                     <Avatar className="size-9">
                       <AvatarImage src={session.user?.image} alt={session.user?.name || 'User'} />
@@ -408,7 +420,7 @@ function NavbarContent({ categories }) {
                 variant="ghost"
                 size="icon-lg"
                 onClick={() => setIsAuthModalOpen(true)}
-                className={`nav-profile-button ${navActionButtonClass}`}
+                className={`nav-profile-button overflow-hidden ${navActionButtonClass}`}
               >
                 <span className="relative flex size-5 items-center justify-center">
                   <User className="size-5" />
