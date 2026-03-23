@@ -14,6 +14,8 @@ import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
 
 const OVERLAY_SURFACE =
   "border border-border/60 bg-background/90 text-foreground shadow-[0_10px_24px_rgba(15,23,42,0.12)] backdrop-blur-md";
+const BADGE_OVERLAY_SURFACE =
+  "border border-border/60 bg-background/90 text-foreground backdrop-blur-md";
 
 const formatPrice = (raw) => {
   let cleanNumbers = String(raw).replace(/[^\d.]/g, "");
@@ -64,7 +66,7 @@ export default function ProductCard({ product, className = "" }) {
           <Badge
             className={cn(
               "pointer-events-auto rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums",
-              OVERLAY_SURFACE,
+              BADGE_OVERLAY_SURFACE,
               "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
             )}
           >
@@ -76,7 +78,7 @@ export default function ProductCard({ product, className = "" }) {
             <Badge
               className={cn(
                 "pointer-events-auto rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]",
-                OVERLAY_SURFACE,
+                BADGE_OVERLAY_SURFACE,
                 "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
               )}
             >
@@ -106,13 +108,13 @@ export default function ProductCard({ product, className = "" }) {
             <Heart
               className={cn(
                 "absolute inset-0 size-4 transition-all duration-200 ease-out md:group-hover/wishlist:text-destructive/70",
-                isWishlisted ? "scale-75 opacity-0 blur-[4px]" : "scale-100 opacity-100 blur-0"
+                isWishlisted ? "scale-75 opacity-0" : "scale-100 opacity-100"
               )}
             />
             <Heart
               className={cn(
                 "absolute inset-0 size-4 fill-destructive stroke-destructive transition-all duration-200 ease-out",
-                isWishlisted ? "scale-100 opacity-100 blur-0" : "scale-75 opacity-0 blur-[4px]"
+                isWishlisted ? "scale-100 opacity-100" : "scale-75 opacity-0"
               )}
             />
           </span>
