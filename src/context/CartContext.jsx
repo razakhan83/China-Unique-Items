@@ -119,10 +119,19 @@ function CartProviderContent({ children }) {
         const safeQuantity = Math.max(0, Number(newQuantity) || 0);
 
         if (safeQuantity < 1) {
+          const itemName = product?.Name || product?.name || 'Item';
           setState((current) => ({
             ...current,
             cart: current.cart.filter((item) => item.id !== itemId),
           }));
+          toast.success(`${itemName} removed from cart`, {
+            duration: 2200,
+            action: {
+              label: 'View Cart',
+              onClick: () =>
+                setState((current) => ({ ...current, isSidebarOpen: false, isCartOpen: true })),
+            },
+          });
           return;
         }
 
