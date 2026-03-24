@@ -466,6 +466,7 @@
 
 .category-product-carousel-shell {
   position: relative;
+  overflow: visible;
 }
 
 .category-product-carousel {
