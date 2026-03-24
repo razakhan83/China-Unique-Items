@@ -387,37 +387,23 @@
   pointer-events: auto;
 }
 
-.hero-crossfade-slider {
-  position: relative;
-  height: 100%;
-  width: 100%;
-  background: #000;
-}
-
-.hero-crossfade-slider__slide {
+.hero-fade-slide {
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 950ms cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
-  contain: layout paint;
+  transition: opacity 520ms ease;
 }
 
-.hero-crossfade-slider__slide.is-active {
+.hero-fade-slide.is-active {
   opacity: 1;
   pointer-events: auto;
 }
 
-.hero-crossfade-slider__slide.is-initial-active {
-  transition: none;
-}
-
-.hero-crossfade-slider__slide.is-initial-active img {
-  animation: none;
-}
-
-.hero-crossfade-slider__slide.is-active img {
-  animation: hero-fade-in 1200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+.hero-fade-slide img {
+  position: relative;
+  height: 100%;
+  width: 100%;
 }
 
 .category-product-carousel-shell {
@@ -648,14 +634,6 @@
 }
 
 @media (hover: none), (pointer: coarse) {
-  .hero-crossfade-slider__slide {
-    transition-duration: 380ms;
-  }
-
-  .hero-crossfade-slider__slide.is-active img {
-    animation: none;
-  }
-
   .products-page-bar,
   .products-page-meta,
   .products-page-heading,

@@ -9,81 +9,69 @@ import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
 const HERO_AUTOPLAY_DELAY_MS = 5000;
 const HERO_SWIPE_THRESHOLD_PX = 40;
 
-function getSlideAssets(slide) {
+function resolveViewport() {
+  if (typeof window === 'undefined') return 'desktop';
+  if (window.innerWidth < 768) return 'mobile';
+  if (window.innerWidth < 1024) return 'tablet';
+  return 'desktop';
+}
+
+function getActiveAsset(slide, viewport) {
   const desktopAsset = slide?.desktopImage || null;
   const tabletAsset = slide?.tabletImage || desktopAsset;
   const mobileAsset = slide?.mobileImage || desktopAsset;
 
-  return {
-    desktop: {
-      src: optimizeCloudinaryUrl(
-        desktopAsset?.url || slide?.pcSrc || slide?.image || slide?.src || '',
-        CLOUDINARY_IMAGE_PRESETS.heroOriginal
-      ),
-      blurDataURL: desktopAsset?.blurDataURL || slide?.blurDataURL || '',
-    },
-    tablet: {
-      src: optimizeCloudinaryUrl(
-        tabletAsset?.url || slide?.tabletSrc || slide?.pcSrc || slide?.image || slide?.src || '',
-        CLOUDINARY_IMAGE_PRESETS.heroOriginal
-      ),
-      blurDataURL: tabletAsset?.blurDataURL || desktopAsset?.blurDataURL || slide?.blurDataURL || '',
-    },
-    mobile: {
+  if (viewport === 'mobile') {
+    return {
       src: optimizeCloudinaryUrl(
         mobileAsset?.url || slide?.mobileSrc || slide?.image || slide?.src || '',
         CLOUDINARY_IMAGE_PRESETS.heroOriginal
       ),
       blurDataURL: mobileAsset?.blurDataURL || desktopAsset?.blurDataURL || slide?.blurDataURL || '',
-    },
+    };
+  }
+
+  if (viewport === 'tablet') {
+    return {
+      src: optimizeCloudinaryUrl(
+        tabletAsset?.url || slide?.tabletSrc || slide?.pcSrc || slide?.image || slide?.src || '',
+        CLOUDINARY_IMAGE_PRESETS.heroOriginal
+      ),
+      blurDataURL: tabletAsset?.blurDataURL || desktopAsset?.blurDataURL || slide?.blurDataURL || '',
+    };
+  }
+
+  return {
+    src: optimizeCloudinaryUrl(
+      desktopAsset?.url || slide?.pcSrc || slide?.image || slide?.src || '',
+      CLOUDINARY_IMAGE_PRESETS.heroOriginal
+    ),
+    blurDataURL: desktopAsset?.blurDataURL || slide?.blurDataURL || '',
   };
 }
 
-function getDesktopAsset(slide) {
-  return slide.assets.desktop.src
-    ? slide.assets.desktop
-    : slide.assets.tablet.src
-      ? slide.assets.tablet
-      : slide.assets.mobile;
-}
-
-function getTabletAsset(slide) {
-  return slide.assets.tablet.src
-    ? slide.assets.tablet
-    : slide.assets.desktop.src
-      ? slide.assets.desktop
-      : slide.assets.mobile;
-}
-
-function getMobileAsset(slide) {
-  return slide.assets.mobile.src
-    ? slide.assets.mobile
-    : slide.assets.tablet.src
-      ? slide.assets.tablet
-      : slide.assets.desktop;
-}
-
 export default function HeroSlider({ slides = [] }) {
+  const [viewport, setViewport] = useState('desktop');
   const [activeIndex, setActiveIndex] = useState(0);
   const touchStartXRef = useRef(null);
   const touchStartYRef = useRef(null);
+
+  useEffect(() => {
+    const syncViewport = () => setViewport(resolveViewport());
+    syncViewport();
+    window.addEventListener('resize', syncViewport);
+    return () => window.removeEventListener('resize', syncViewport);
+  }, []);
+
   const resolvedSlides = slides
     .map((slide, index) => ({
       ...slide,
-      assets: getSlideAssets(slide),
+      asset: getActiveAsset(slide, viewport),
       alt: slide?.alt || `Slide ${index + 1}`,
     }))
-    .filter((slide) => slide.assets.desktop.src || slide.assets.tablet.src || slide.assets.mobile.src);
+    .filter((slide) => slide.asset?.src);
   const safeActiveIndex =
     resolvedSlides.length > 0 ? activeIndex % resolvedSlides.length : 0;
-  const previousIndex =
-    resolvedSlides.length > 1
-      ? (safeActiveIndex - 1 + resolvedSlides.length) % resolvedSlides.length
-      : safeActiveIndex;
-  const nextIndex =
-    resolvedSlides.length > 1
-      ? (safeActiveIndex + 1) % resolvedSlides.length
-      : safeActiveIndex;
 
   function goToSlide(nextIndex) {
     if (resolvedSlides.length === 0) return;
@@ -153,73 +141,25 @@ export default function HeroSlider({ slides = [] }) {
       onTouchEnd={handleTouchEnd}
     >
       <div className="relative h-[54vh] min-h-[320px] w-full overflow-hidden bg-black md:h-[460px] lg:h-[560px]">
-        <div className="hero-crossfade-slider" aria-label="Featured promotions">
-          {resolvedSlides.map((slide, index) => {
-            const isActive = index === safeActiveIndex;
-            const shouldRenderImage =
-              index === safeActiveIndex || index === previousIndex || index === nextIndex;
-            const desktopAsset = getDesktopAsset(slide);
-            const tabletAsset = getTabletAsset(slide);
-            const mobileAsset = getMobileAsset(slide);
+        {resolvedSlides.map((slide, index) => (
+          <div
+            key={slide.id || `${slide.asset.src}-${viewport}-${index}`}
+            className={`hero-fade-slide ${safeActiveIndex === index ? 'is-active' : ''}`}
+            aria-hidden={safeActiveIndex !== index}
+          >
+            <Image
+              src={slide.asset.src}
+              alt={slide.alt}
+              fill
+              sizes="100vw"
+              priority={index === 0}
+              className="object-cover"
+              {...getBlurPlaceholderProps(slide.asset.blurDataURL)}
+            />
 
-            return (
-              <div
-                key={slide.id || `${desktopAsset.src || tabletAsset.src || mobileAsset.src}-${index}`}
-                aria-hidden={!isActive}
-                className={`hero-crossfade-slider__slide ${isActive ? 'is-active' : ''} ${
-                  index === 0 ? 'is-initial-active' : ''
-                }`}
-              >
-                {shouldRenderImage && mobileAsset?.src ? (
-                  <div className="block h-full w-full md:hidden">
-                    <Image
-                      src={mobileAsset.src}
-                      alt={slide.alt}
-                      fill
-                      sizes="100vw"
-                      priority={index === 0}
-                      fetchPriority={isActive ? 'high' : undefined}
-                      className="object-cover"
-                      {...getBlurPlaceholderProps(mobileAsset.blurDataURL)}
-                    />
-                  </div>
-                ) : null}
-
-                {shouldRenderImage && tabletAsset?.src ? (
-                  <div className="hidden h-full w-full md:block lg:hidden">
-                    <Image
-                      src={tabletAsset.src}
-                      alt={slide.alt}
-                      fill
-                      sizes="100vw"
-                      priority={index === 0}
-                      fetchPriority={isActive ? 'high' : undefined}
-                      className="object-cover"
-                      {...getBlurPlaceholderProps(tabletAsset.blurDataURL)}
-                    />
-                  </div>
-                ) : null}
-
-                {shouldRenderImage && desktopAsset?.src ? (
-                  <div className="hidden h-full w-full lg:block">
-                    <Image
-                      src={desktopAsset.src}
-                      alt={slide.alt}
-                      fill
-                      sizes="100vw"
-                      priority={index === 0}
-                      fetchPriority={isActive ? 'high' : undefined}
-                      className="object-cover"
-                      {...getBlurPlaceholderProps(desktopAsset.blurDataURL)}
-                    />
-                  </div>
-                ) : null}
-
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.16))]" />
-              </div>
-            );
-          })}
-        </div>
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.08),rgba(0,0,0,0.16))]" />
+          </div>
+        ))}
 
         {resolvedSlides.length > 1 ? (
           <div className="pointer-events-none absolute inset-y-0 left-0 right-0 z-10 hidden items-center justify-between px-4 md:flex lg:px-6">
