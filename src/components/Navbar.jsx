@@ -101,13 +101,23 @@ function AnnouncementMarquee() {
     track.replaceChildren(...ANNOUNCEMENT_ITEMS.map(createItemNode));
     track.style.gap = `${MARQUEE_GAP}px`;
 
+    const widthsByIndex = new Array(ANNOUNCEMENT_ITEMS.length).fill(0);
+
+    const getWidth = (node) => {
+      const idx = parseInt(node.dataset.sourceIndex, 10);
+      if (!widthsByIndex[idx]) {
+        widthsByIndex[idx] = node.getBoundingClientRect().width;
+      }
+      return widthsByIndex[idx];
+    };
+
     const getTrackWidth = () => {
       const children = Array.from(track.children);
       if (!children.length) {
         return 0;
       }
 
-      return children.reduce((total, child) => total + child.getBoundingClientRect().width, 0) + (children.length - 1) * MARQUEE_GAP;
+      return children.reduce((total, child) => total + getWidth(child), 0) + (children.length - 1) * MARQUEE_GAP;
     };
 
     const fillViewport = () => {
@@ -131,19 +141,27 @@ function AnnouncementMarquee() {
       }
     };
 
+
     const recycleLeadingItems = () => {
       let firstChild = track.firstElementChild;
+      const nodesToMove = [];
+      let totalShift = 0;
 
       while (firstChild) {
-        const shiftWidth = firstChild.getBoundingClientRect().width + MARQUEE_GAP;
+        const shiftWidth = getWidth(firstChild) + MARQUEE_GAP;
 
-        if (-offsetRef.current < shiftWidth) {
+        if (-offsetRef.current < totalShift + shiftWidth) {
           break;
         }
 
-        offsetRef.current += shiftWidth;
-        track.append(firstChild);
-        firstChild = track.firstElementChild;
+        totalShift += shiftWidth;
+        nodesToMove.push(firstChild);
+        firstChild = firstChild.nextElementSibling;
+      }
+
+      if (nodesToMove.length > 0) {
+        offsetRef.current += totalShift;
+        track.append(...nodesToMove);
       }
     };
 
@@ -173,6 +191,7 @@ function AnnouncementMarquee() {
     };
 
     const resizeObserver = new ResizeObserver(() => {
+      widthsByIndex.fill(0);
       fillViewport();
       recycleLeadingItems();
       updateTrackPosition();
