@@ -1,77 +1,17 @@
 'use client';
 
-import { Children, useEffect, useId, useRef, useState } from 'react';
+import { Children, useId, useRef } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-const SCROLL_TOLERANCE = 8;
-const SCROLL_SETTLE_DELAY_MS = 120;
-
-function getControlsState(element) {
-  if (!element) {
-    return { prev: false, next: false };
-  }
-
-  const maxScrollLeft = element.scrollWidth - element.clientWidth;
-
-  if (maxScrollLeft <= SCROLL_TOLERANCE) {
-    return { prev: false, next: false };
-  }
-
-  return {
-    prev: element.scrollLeft > SCROLL_TOLERANCE,
-    next: element.scrollLeft < maxScrollLeft - SCROLL_TOLERANCE,
-  };
-}
 
 export default function CategoryProductSlider({ categoryLabel, children, viewAllHref }) {
   const slides = Children.toArray(children);
   const slideCount = slides.length;
   const carouselId = useId();
   const carouselRef = useRef(null);
-  const [controlsState, setControlsState] = useState({ prev: false, next: slideCount > 1 });
   const isInteractive = slideCount > 1;
-
-  useEffect(() => {
-    const element = carouselRef.current;
-
-    if (!element) {
-      return undefined;
-    }
-
-    let settleTimer;
-
-    const syncControls = () => {
-      const nextState = getControlsState(element);
-      setControlsState((currentState) =>
-        currentState.prev === nextState.prev && currentState.next === nextState.next
-          ? currentState
-          : nextState
-      );
-    };
-
-    const scheduleControlsSync = () => {
-      window.clearTimeout(settleTimer);
-      settleTimer = window.setTimeout(syncControls, SCROLL_SETTLE_DELAY_MS);
-    };
-
-    syncControls();
-
-    element.addEventListener('scroll', scheduleControlsSync, { passive: true });
-    element.addEventListener('scrollend', syncControls);
-
-    const resizeObserver = new ResizeObserver(scheduleControlsSync);
-    resizeObserver.observe(element);
-
-    return () => {
-      window.clearTimeout(settleTimer);
-      element.removeEventListener('scroll', scheduleControlsSync);
-      element.removeEventListener('scrollend', syncControls);
-      resizeObserver.disconnect();
-    };
-  }, [slideCount]);
 
   if (slideCount === 0) return null;
 
@@ -86,10 +26,6 @@ export default function CategoryProductSlider({ categoryLabel, children, viewAll
       left: direction * Math.max(element.clientWidth * 0.85, 260),
       behavior: 'smooth',
     });
-
-    window.setTimeout(() => {
-      setControlsState(getControlsState(element));
-    }, SCROLL_SETTLE_DELAY_MS);
   };
 
   return (
@@ -105,16 +41,14 @@ export default function CategoryProductSlider({ categoryLabel, children, viewAll
           <button
             type="button"
             onClick={() => scrollByPage(-1)}
-            disabled={!controlsState.prev}
             className={cn(
               'flex size-10 items-center justify-center rounded-lg border border-primary/15 bg-primary/10 text-primary transition-[transform,background-color,color,box-shadow] duration-300',
-              controlsState.prev
+              isInteractive
                 ? 'hover:bg-primary hover:text-primary-foreground hover:shadow-[0_14px_34px_rgba(10,61,46,0.14)] active:scale-[0.96]'
                 : 'cursor-not-allowed opacity-45'
             )}
             aria-label={`Scroll ${categoryLabel} products left`}
             aria-controls={carouselId}
-            aria-disabled={!controlsState.prev}
           >
             <ChevronLeft className="size-5" />
           </button>
@@ -122,16 +56,14 @@ export default function CategoryProductSlider({ categoryLabel, children, viewAll
           <button
             type="button"
             onClick={() => scrollByPage(1)}
-            disabled={!controlsState.next}
             className={cn(
               'flex size-10 items-center justify-center rounded-lg border border-primary/15 bg-primary/10 text-primary transition-[transform,background-color,color,box-shadow] duration-300',
-              controlsState.next
+              isInteractive
                 ? 'hover:bg-primary hover:text-primary-foreground hover:shadow-[0_14px_34px_rgba(10,61,46,0.14)] active:scale-[0.96]'
                 : 'cursor-not-allowed opacity-45'
             )}
             aria-label={`Scroll ${categoryLabel} products right`}
             aria-controls={carouselId}
-            aria-disabled={!controlsState.next}
           >
             <ChevronRight className="size-5" />
           </button>

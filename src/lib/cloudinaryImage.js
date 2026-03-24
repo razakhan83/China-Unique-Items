@@ -3,7 +3,7 @@ const CLOUDINARY_HOSTS = new Set(['res.cloudinary.com']);
 export const CLOUDINARY_IMAGE_PRESETS = {
   categoryCircle: { width: 216, height: 216, crop: 'fill', gravity: 'auto' },
   heroOriginal: { includeDpr: false },
-  productCard: { width: 720, height: 720, crop: 'fill', gravity: 'auto' },
+  productCard: { width: 285, crop: 'fill', gravity: 'auto', format: 'avif' },
   productGalleryMain: { width: 1400, height: 1400, crop: 'fill', gravity: 'auto' },
   productGalleryThumb: { width: 240, height: 240, crop: 'fill', gravity: 'auto' },
   searchSuggestion: { width: 96, height: 96, crop: 'fill', gravity: 'auto' },

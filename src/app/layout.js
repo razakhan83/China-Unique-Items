@@ -40,6 +40,8 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning={true}>
       <head>
         <meta name="google" content="notranslate" />
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

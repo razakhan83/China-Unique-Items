@@ -79,6 +79,8 @@ function AnnouncementMarquee() {
       return undefined;
     }
 
+    let isVisible = false;
+
     const createItemNode = (text, index) => {
       const item = document.createElement('span');
       item.className = 'flex shrink-0 items-center gap-2';
@@ -152,7 +154,7 @@ function AnnouncementMarquee() {
     };
 
     const step = (timestamp) => {
-      if (mediaQuery.matches) {
+      if (!isVisible || mediaQuery.matches) {
         lastTimestampRef.current = timestamp;
         animationFrameRef.current = window.requestAnimationFrame(step);
         return;
@@ -178,12 +180,25 @@ function AnnouncementMarquee() {
 
     resizeObserver.observe(viewport);
 
+    const intersectionObserver = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible) {
+          lastTimestampRef.current = null;
+        }
+      },
+      { threshold: 0 }
+    );
+
+    intersectionObserver.observe(viewport);
+
     fillViewport();
     updateTrackPosition();
     animationFrameRef.current = window.requestAnimationFrame(step);
 
     return () => {
       resizeObserver.disconnect();
+      intersectionObserver.disconnect();
       if (animationFrameRef.current) {
         window.cancelAnimationFrame(animationFrameRef.current);
       }
@@ -275,7 +290,7 @@ function NavbarContent({ categories }) {
 
   return (
     <div className="sticky top-0 z-40 border-b border-border/60 bg-card/95 backdrop-blur">
-      <div className="relative flex min-h-9 items-center border-b border-border/60 bg-primary px-4 py-2 text-primary-foreground">
+      <div className="relative flex min-h-9 items-center border-b border-border/60 bg-primary py-2 text-primary-foreground">
         <AnnouncementMarquee />
       </div>
 
