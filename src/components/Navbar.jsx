@@ -153,7 +153,7 @@ function NavbarContent({ categories }) {
     'nav-icon-button relative rounded-2xl border border-border/60 bg-card/85 p-0 text-foreground transition-[transform,background-color,border-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:text-foreground active:scale-[0.96]';
 
   return (
-    <div className="sticky top-0 z-40 border-b border-border/60 bg-card/95 backdrop-blur">
+    <div className="navbar-shell sticky top-0 z-40 border-b border-border/60 bg-card/95 backdrop-blur">
       <div className="relative flex min-h-9 items-center border-b border-border/60 bg-primary py-2 text-primary-foreground">
         <AnnouncementMarquee />
       </div>

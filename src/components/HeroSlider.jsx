@@ -166,7 +166,7 @@ export default function HeroSlider({ slides = [] }) {
             <button
               type="button"
               onClick={goToPrevSlide}
-              className="pointer-events-auto flex size-11 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/45"
+              className="hero-slider-control pointer-events-auto flex size-11 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/45"
               aria-label="Previous slide"
             >
               <ChevronLeft className="size-5" />
@@ -174,7 +174,7 @@ export default function HeroSlider({ slides = [] }) {
             <button
               type="button"
               onClick={goToNextSlide}
-              className="pointer-events-auto flex size-11 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/45"
+              className="hero-slider-control pointer-events-auto flex size-11 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/45"
               aria-label="Next slide"
             >
               <ChevronRight className="size-5" />

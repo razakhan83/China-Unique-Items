@@ -5,13 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ProductCardAddToCartButton from "@/components/ProductCardAddToCartButton";
-import ProductWishlistButton from "@/components/ProductWishlistButton";
+import ProductCardWishlistSlot from "@/components/ProductCardWishlistSlot";
 import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from "@/lib/cloudinaryImage";
 import { getPrimaryProductImage } from "@/lib/productImages";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
 
 const BADGE_OVERLAY_SURFACE =
-  "border border-border/60 bg-background/90 text-foreground backdrop-blur-md";
+  "product-card-overlay-badge border border-border/60 bg-background/90 text-foreground backdrop-blur-md";
 
 const formatPrice = (raw) => {
   let cleanNumbers = String(raw).replace(/[^\d.]/g, "");
@@ -49,7 +49,7 @@ export default function ProductCard({ product, className = "" }) {
   return (
     <Card
       className={cn(
-        "group relative flex flex-col gap-0 overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-300 md:hover:shadow-md",
+        "product-card-surface group relative flex flex-col gap-0 overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-300 md:hover:shadow-md",
         "py-0",
         className
       )}
@@ -81,7 +81,7 @@ export default function ProductCard({ product, className = "" }) {
           )}
         </div>
 
-        <ProductWishlistButton />
+        <ProductCardWishlistSlot />
 
         <Link
           href={productHref}
