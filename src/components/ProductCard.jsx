@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ProductCardAddToCartButton from "@/components/ProductCardAddToCartButton";
+import ProductWishlistButton from "@/components/ProductWishlistButton";
 import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from "@/lib/cloudinaryImage";
 import { getPrimaryProductImage } from "@/lib/productImages";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
@@ -80,6 +81,8 @@ export default function ProductCard({ product, className = "" }) {
           )}
         </div>
 
+        <ProductWishlistButton />
+
         <Link
           href={productHref}
           scroll={true}
@@ -153,3 +156,4 @@ export default function ProductCard({ product, className = "" }) {
     </Card>
   );
 }
+
