@@ -265,6 +265,64 @@
   }
 }
 
+@keyframes announcement-marquee-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.announcement-marquee {
+  --announcement-marquee-gap: clamp(2.5rem, 5vw, 4rem);
+  --announcement-marquee-duration: 32s;
+  position: relative;
+  min-height: 1rem;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  overflow-x: hidden;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.announcement-marquee__track {
+  position: relative;
+  display: flex;
+  width: max-content;
+  min-width: max-content;
+  white-space: nowrap;
+  will-change: transform;
+  animation: announcement-marquee-scroll var(--announcement-marquee-duration) linear infinite;
+}
+
+.announcement-marquee__content {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--announcement-marquee-gap);
+  padding-inline-end: var(--announcement-marquee-gap);
+}
+
+.announcement-marquee__item {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announcement-marquee__track {
+    animation: none;
+  }
+}
+
 .animate-fadeIn {
   animation: fade-in 220ms ease-out both;
 }

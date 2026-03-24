@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
+import { useEffect, useMemo, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -60,185 +60,30 @@ const ANNOUNCEMENT_ITEMS = [
   'Free delivery above Rs. 3000',
 ];
 
-const MARQUEE_GAP = 64;
-const MARQUEE_SPEED = 72;
-
 function AnnouncementMarquee() {
-  const viewportRef = useRef(null);
-  const trackRef = useRef(null);
-  const animationFrameRef = useRef(null);
-  const lastTimestampRef = useRef(null);
-  const offsetRef = useRef(0);
-  const initialItems = [...ANNOUNCEMENT_ITEMS, ...ANNOUNCEMENT_ITEMS];
-
-  useEffect(() => {
-    const viewport = viewportRef.current;
-    const track = trackRef.current;
-
-    if (!viewport || !track) {
-      return undefined;
-    }
-
-    let isVisible = false;
-
-    const createItemNode = (text, index) => {
-      const item = document.createElement('span');
-      item.className = 'flex shrink-0 items-center gap-2';
-      item.dataset.sourceIndex = String(index);
-      item.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles size-3.5" aria-hidden="true">
-          <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063A2 2 0 0 0 14.063 15.5l-1.582 6.135a.5.5 0 0 1-.962 0z"></path>
-          <path d="M20 3v4"></path>
-          <path d="M22 5h-4"></path>
-          <path d="M4 17v2"></path>
-          <path d="M5 18H3"></path>
-        </svg>
-      `;
-      item.append(document.createTextNode(text));
-      return item;
-    };
-
-    track.replaceChildren(...ANNOUNCEMENT_ITEMS.map(createItemNode));
-    track.style.gap = `${MARQUEE_GAP}px`;
-
-    const widthsByIndex = new Array(ANNOUNCEMENT_ITEMS.length).fill(0);
-
-    const getWidth = (node) => {
-      const idx = parseInt(node.dataset.sourceIndex, 10);
-      if (!widthsByIndex[idx]) {
-        widthsByIndex[idx] = node.getBoundingClientRect().width;
-      }
-      return widthsByIndex[idx];
-    };
-
-    const getTrackWidth = () => {
-      const children = Array.from(track.children);
-      if (!children.length) {
-        return 0;
-      }
-
-      return children.reduce((total, child) => total + getWidth(child), 0) + (children.length - 1) * MARQUEE_GAP;
-    };
-
-    const fillViewport = () => {
-      const viewportWidth = viewport.getBoundingClientRect().width;
-
-      if (!viewportWidth) {
-        return;
-      }
-
-      let totalWidth = getTrackWidth();
-      if (!totalWidth) {
-        return;
-      }
-
-      let nextIndex = track.children.length % ANNOUNCEMENT_ITEMS.length;
-
-      while (totalWidth < viewportWidth * 2) {
-        track.append(createItemNode(ANNOUNCEMENT_ITEMS[nextIndex], nextIndex));
-        totalWidth = getTrackWidth();
-        nextIndex = (nextIndex + 1) % ANNOUNCEMENT_ITEMS.length;
-      }
-    };
-
-
-    const recycleLeadingItems = () => {
-      let firstChild = track.firstElementChild;
-      const nodesToMove = [];
-      let totalShift = 0;
-
-      while (firstChild) {
-        const shiftWidth = getWidth(firstChild) + MARQUEE_GAP;
-
-        if (-offsetRef.current < totalShift + shiftWidth) {
-          break;
-        }
-
-        totalShift += shiftWidth;
-        nodesToMove.push(firstChild);
-        firstChild = firstChild.nextElementSibling;
-      }
-
-      if (nodesToMove.length > 0) {
-        offsetRef.current += totalShift;
-        track.append(...nodesToMove);
-      }
-    };
-
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    const updateTrackPosition = () => {
-      track.style.transform = `translate3d(${offsetRef.current}px, 0, 0)`;
-    };
-
-    const step = (timestamp) => {
-      if (!isVisible || mediaQuery.matches) {
-        lastTimestampRef.current = timestamp;
-        animationFrameRef.current = window.requestAnimationFrame(step);
-        return;
-      }
-
-      if (lastTimestampRef.current == null) {
-        lastTimestampRef.current = timestamp;
-      }
-
-      const deltaSeconds = (timestamp - lastTimestampRef.current) / 1000;
-      lastTimestampRef.current = timestamp;
-      offsetRef.current -= MARQUEE_SPEED * deltaSeconds;
-      recycleLeadingItems();
-      updateTrackPosition();
-      animationFrameRef.current = window.requestAnimationFrame(step);
-    };
-
-    const resizeObserver = new ResizeObserver(() => {
-      widthsByIndex.fill(0);
-      fillViewport();
-      recycleLeadingItems();
-      updateTrackPosition();
-    });
-
-    resizeObserver.observe(viewport);
-
-    const intersectionObserver = new IntersectionObserver(
-      ([entry]) => {
-        isVisible = entry.isIntersecting;
-        if (isVisible) {
-          lastTimestampRef.current = null;
-        }
-      },
-      { threshold: 0 }
-    );
-
-    intersectionObserver.observe(viewport);
-
-    fillViewport();
-    updateTrackPosition();
-    animationFrameRef.current = window.requestAnimationFrame(step);
-
-    return () => {
-      resizeObserver.disconnect();
-      intersectionObserver.disconnect();
-      if (animationFrameRef.current) {
-        window.cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
+  const marqueeItems = Array.from({ length: 6 }, (_, repeatIndex) =>
+    ANNOUNCEMENT_ITEMS.map((text) => ({
+      id: `${repeatIndex}-${text}`,
+      text,
+    }))
+  ).flat();
 
   return (
-    <div
-      ref={viewportRef}
-      className="flex min-h-4 w-full items-center overflow-hidden text-xs font-medium uppercase tracking-[0.16em] leading-none"
-    >
-      <div
-        ref={trackRef}
-        className="flex whitespace-nowrap will-change-transform"
-        style={{ gap: `${MARQUEE_GAP}px` }}
-      >
-        {initialItems.map((text, index) => (
-          <span key={`${text}-${index}`} className="flex shrink-0 items-center gap-2">
-            <Sparkles className="size-3.5" aria-hidden="true" />
-            <span>{text}</span>
-          </span>
+    <div className="announcement-marquee mask-edge">
+      <div className="announcement-marquee__track">
+        {[0, 1].map((copyIndex) => (
+          <div
+            key={copyIndex}
+            className="announcement-marquee__content"
+            aria-hidden={copyIndex === 1 ? 'true' : undefined}
+          >
+            {marqueeItems.map(({ id, text }) => (
+              <span key={`${copyIndex}-${id}`} className="announcement-marquee__item">
+                <Sparkles className="size-3.5" aria-hidden="true" />
+                <span>{text}</span>
+              </span>
+            ))}
+          </div>
         ))}
       </div>
     </div>
