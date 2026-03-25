@@ -688,6 +688,53 @@ export async function getProductReviewSummary(productId) {
   };
 }
 
+function stripHtml(value) {
+  return String(value || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function formatFeedPrice(value) {
+  const amount = Number(value || 0);
+  return `${amount.toFixed(2)} PKR`;
+}
+
+function getCatalogSiteUrl() {
+  const configuredUrl = String(process.env.NEXTAUTH_URL || '').trim();
+  if (configuredUrl && !/localhost/i.test(configuredUrl)) {
+    return configuredUrl.replace(/\/$/, '');
+  }
+
+  return 'https://china-unique-items.vercel.app';
+}
+
+function buildCatalogFeedItem(product, siteUrl, storeName) {
+  const productUrl = `${siteUrl}/products/${product.slug || product._id}`;
+  const primaryImage = product.Images?.[0]?.url || `${siteUrl}/opengraph-image.png`;
+  const additionalImages = product.Images?.slice(1).map((image) => image.url).filter(Boolean) || [];
+  const categoryNames = getProductCategoryNames(product);
+  const basePrice = Number(product.Price || 0);
+  const salePrice = product.isDiscounted === true && product.discountedPrice != null
+    ? Number(product.discountedPrice)
+    : null;
+
+  return {
+    id: product.slug || product._id,
+    title: product.Name,
+    description: stripHtml(product.Description || `Buy ${product.Name} from ${storeName}.`),
+    availability: product.StockStatus === 'In Stock' ? 'in stock' : 'out of stock',
+    condition: 'new',
+    price: formatFeedPrice(basePrice),
+    salePrice: salePrice != null ? formatFeedPrice(salePrice) : null,
+    link: productUrl,
+    imageLink: primaryImage,
+    additionalImageLinks: additionalImages,
+    brand: storeName,
+    productType: categoryNames.join(' > '),
+  };
+}
+
 export async function getProductBySlug(slug) {
   'use cache';
   cacheLife('foreverish');
@@ -764,6 +811,27 @@ export async function getRelatedProducts({ category = '', excludeSlug = '', limi
     })
     .slice(0, limit)
     .map(toProductCardItem);
+}
+
+export async function getCatalogFeed() {
+  'use cache';
+  cacheLife('hours');
+  cacheTag('products', 'settings', 'categories');
+
+  const siteUrl = getCatalogSiteUrl();
+  const [products, settings] = await Promise.all([
+    getLiveProductsRaw(),
+    getSettingsRaw(),
+  ]);
+
+  const items = products.map((product) => buildCatalogFeedItem(product, siteUrl, settings.storeName));
+
+  return {
+    generatedAt: new Date().toISOString(),
+    storeName: settings.storeName,
+    currency: 'PKR',
+    items,
+  };
 }
 
 export async function getAdminProducts() {
