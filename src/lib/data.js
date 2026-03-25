@@ -58,7 +58,6 @@ function serializeProduct(product) {
     createdAt: safeProduct.createdAt ? new Date(safeProduct.createdAt).toISOString() : null,
     updatedAt: safeProduct.updatedAt ? new Date(safeProduct.updatedAt).toISOString() : null,
     isNewArrival: safeProduct.isNewArrival === true,
-    isTrending: safeProduct.isTrending === true,
     isBestSelling: safeProduct.isBestSelling === true,
   };
 }
@@ -116,12 +115,99 @@ function toAdminProductRow(product) {
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
     isNewArrival: product.isNewArrival === true,
-    isTrending: product.isTrending === true,
     isBestSelling: product.isBestSelling === true,
     discountPercentage: Number(product.discountPercentage || 0),
     isDiscounted: product.isDiscounted === true,
     discountedPrice: product.discountedPrice != null ? Number(product.discountedPrice) : null,
   };
+}
+
+function buildCustomerAggregationPipeline({ search = '', skip = 0, limit = 12 } = {}) {
+  const safeSearch = String(search || '').trim();
+  const searchRegex = safeSearch ? new RegExp(escapeRegex(safeSearch), 'i') : null;
+
+  const pipeline = [];
+
+  if (searchRegex) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { customerName: searchRegex },
+          { customerEmail: searchRegex },
+          { customerPhone: searchRegex },
+          { customerCity: searchRegex },
+          { customerAddress: searchRegex },
+          { orderId: searchRegex },
+        ],
+      },
+    });
+  }
+
+  pipeline.push(
+    { $sort: { createdAt: -1 } },
+    {
+      $group: {
+        _id: {
+          $cond: [
+            { $ne: [{ $ifNull: ['$customerEmail', ''] }, ''] },
+            { $ifNull: ['$customerEmail', ''] },
+            {
+              $cond: [
+                { $ne: [{ $ifNull: ['$customerPhone', ''] }, ''] },
+                { $ifNull: ['$customerPhone', ''] },
+                { $toString: '$_id' },
+              ],
+            },
+          ],
+        },
+        name: { $first: '$customerName' },
+        email: { $first: { $ifNull: ['$customerEmail', ''] } },
+        phone: { $first: '$customerPhone' },
+        city: { $first: '$customerCity' },
+        address: { $first: '$customerAddress' },
+        landmark: { $first: '$landmark' },
+        lastOrderAt: { $max: '$createdAt' },
+        firstOrderAt: { $min: '$createdAt' },
+        ordersCount: { $sum: 1 },
+        totalSpent: { $sum: '$totalAmount' },
+      },
+    },
+    { $sort: { lastOrderAt: -1 } },
+    {
+      $facet: {
+        items: [
+          { $skip: skip },
+          { $limit: limit },
+        ],
+        totalCount: [{ $count: 'count' }],
+        summary: [
+          {
+            $group: {
+              _id: null,
+              totalCustomers: { $sum: 1 },
+              withEmail: {
+                $sum: {
+                  $cond: [{ $ne: ['$email', ''] }, 1, 0],
+                },
+              },
+              withPhone: {
+                $sum: {
+                  $cond: [{ $ne: ['$phone', ''] }, 1, 0],
+                },
+              },
+              withAddress: {
+                $sum: {
+                  $cond: [{ $ne: ['$address', ''] }, 1, 0],
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
+  );
+
+  return pipeline;
 }
 
 function toOrderSummaryRow(order) {
@@ -405,7 +491,6 @@ export async function getHomeSections() {
   // Add the dynamic marketing sections (New Arrivals, Trending, Best Selling)
   const marketingSections = [
     { id: 'new-arrivals', label: 'New Arrivals', flag: 'isNewArrival', iconName: 'Sparkles' },
-    { id: 'trending', label: 'Trending This Week', flag: 'isTrending', iconName: 'Flame' },
     { id: 'best-selling', label: 'Best Selling', flag: 'isBestSelling', iconName: 'Trophy' },
   ].map(m => {
     const items = products
@@ -459,8 +544,6 @@ export async function getProductsList({ category = 'all', search = '', sort = 'n
 
   if (safeCategory === 'new-arrivals') {
     query.isNewArrival = true;
-  } else if (safeCategory === 'trending') {
-    query.isTrending = true;
   } else if (safeCategory === 'best-selling') {
     query.isBestSelling = true;
   } else if (safeCategory === 'special-offers') {
@@ -833,6 +916,7 @@ export async function getAdminOrdersPage({
 export async function getAdminUsersPage({
   search = '',
   status = 'all',
+  type = 'registered',
   page = 1,
   limit = 12,
 } = {}) {
@@ -840,8 +924,56 @@ export async function getAdminUsersPage({
 
   const safeSearch = String(search || '').trim();
   const safeStatus = String(status || 'all').trim() || 'all';
+  const safeType = String(type || 'registered').trim() || 'registered';
   const safePage = Math.max(1, Number(page) || 1);
   const safeLimit = Math.max(1, Number(limit) || 12);
+  const skip = (safePage - 1) * safeLimit;
+
+  if (safeType === 'customers') {
+    const [result] = await Order.aggregate(
+      buildCustomerAggregationPipeline({
+        search: safeSearch,
+        skip,
+        limit: safeLimit,
+      }),
+    );
+
+    const items = Array.isArray(result?.items) ? result.items : [];
+    const total = Number(result?.totalCount?.[0]?.count || 0);
+    const summary = result?.summary?.[0] || {};
+
+    return {
+      items: items.map((customer) => ({
+        ...customer,
+        _id: String(customer._id || ''),
+        email: customer.email || '',
+        phone: customer.phone || '',
+        city: customer.city || '',
+        address: customer.address || '',
+        landmark: customer.landmark || '',
+        ordersCount: Number(customer.ordersCount || 0),
+        totalSpent: Number(customer.totalSpent || 0),
+        createdAt: customer.firstOrderAt?.toISOString?.() || null,
+        updatedAt: customer.lastOrderAt?.toISOString?.() || null,
+        customerType: 'customer',
+      })),
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages: Math.ceil(total / safeLimit),
+      hasMore: skip + safeLimit < total,
+      searchTerm: safeSearch,
+      status: 'all',
+      type: safeType,
+      summary: {
+        totalUsers: Number(summary.totalCustomers || 0),
+        activeUsers: Number(summary.withPhone || 0),
+        disabledUsers: Math.max(0, Number(summary.totalCustomers || 0) - Number(summary.withPhone || 0)),
+        withEmail: Number(summary.withEmail || 0),
+        withAddress: Number(summary.withAddress || 0),
+      },
+    };
+  }
 
   const query = {};
 
@@ -852,8 +984,6 @@ export async function getAdminUsersPage({
     const searchRegex = new RegExp(escapeRegex(safeSearch), 'i');
     query.$or = [{ name: searchRegex }, { email: searchRegex }];
   }
-
-  const skip = (safePage - 1) * safeLimit;
 
   const [items, total, totalUsers, disabledUsers] = await Promise.all([
     User.find(query).sort({ createdAt: -1 }).skip(skip).limit(safeLimit).lean(),
@@ -876,6 +1006,7 @@ export async function getAdminUsersPage({
     hasMore: skip + safeLimit < total,
     searchTerm: safeSearch,
     status: safeStatus,
+    type: safeType,
     summary: {
       totalUsers,
       disabledUsers,
@@ -1007,6 +1138,11 @@ export async function getOrderLogs(orderId) {
 export async function getAdminDashboardData() {
   await mongooseConnect();
 
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfTomorrow = new Date(startOfToday);
+  startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+
   const [
     totalOrders,
     pendingOrders,
@@ -1015,14 +1151,38 @@ export async function getAdminDashboardData() {
     revenueAgg,
     customersAgg,
     recentOrders,
+    dailyConfirmedOrders,
   ] = await Promise.all([
     Order.countDocuments(),
     Order.countDocuments({ status: 'Pending' }),
     Product.countDocuments(),
     Product.countDocuments({ isLive: true }),
     Order.aggregate([{ $group: { _id: null, total: { $sum: '$totalAmount' } } }]),
-    Order.aggregate([{ $group: { _id: '$customerPhone' } }, { $count: 'count' }]),
+    Order.aggregate([
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $ne: [{ $ifNull: ['$customerEmail', ''] }, ''] },
+              { $ifNull: ['$customerEmail', ''] },
+              {
+                $cond: [
+                  { $ne: [{ $ifNull: ['$customerPhone', ''] }, ''] },
+                  { $ifNull: ['$customerPhone', ''] },
+                  { $toString: '$_id' },
+                ],
+              },
+            ],
+          },
+        },
+      },
+      { $count: 'count' },
+    ]),
     Order.find({}).sort({ createdAt: -1 }).limit(5).lean(),
+    Order.countDocuments({
+      status: { $in: ['Confirmed', 'Pending'] },
+      createdAt: { $gte: startOfToday, $lt: startOfTomorrow },
+    }),
   ]);
 
   return {
@@ -1033,6 +1193,7 @@ export async function getAdminDashboardData() {
       liveProducts,
       totalRevenue: Number(revenueAgg[0]?.total || 0),
       totalCustomers: Number(customersAgg[0]?.count || 0),
+      dailyConfirmedOrders: Number(dailyConfirmedOrders || 0),
     },
     recentOrders: recentOrders.map(toOrderSummaryRow),
   };

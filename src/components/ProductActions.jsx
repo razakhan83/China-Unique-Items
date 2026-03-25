@@ -7,8 +7,9 @@ import { cn } from '@/lib/utils';
 import { ShoppingCart, Share2, Minus, Plus } from 'lucide-react';
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 import { toast } from 'sonner';
+import { buildProductWhatsAppMessage, createWhatsAppUrl } from '@/lib/whatsapp';
 
-export default function ProductActions({ product }) {
+export default function ProductActions({ product, whatsappNumber = '', storeName = 'China Unique Store' }) {
     const { addToCart } = useCart();
     const [isAdding, setIsAdding] = useState(false);
     const [didJustAdd, setDidJustAdd] = useState(false);
@@ -37,8 +38,17 @@ export default function ProductActions({ product }) {
     const handleWhatsApp = () => {
         const name = product.Name || product.name || 'this product';
         const url = typeof window !== 'undefined' ? window.location.href : '';
-        const message = `Hi! I'm interested in *${name}*.\n${url}`;
-        window.open(`https://wa.me/923052622043?text=${encodeURIComponent(message)}`, '_blank');
+        const message = buildProductWhatsAppMessage({
+            productName: name,
+            productUrl: url,
+            storeName,
+        });
+        const whatsappUrl = createWhatsAppUrl(whatsappNumber, message);
+        if (!whatsappUrl) {
+            toast.error('WhatsApp number is not available right now.');
+            return;
+        }
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     };
 
     const handleShare = async () => {

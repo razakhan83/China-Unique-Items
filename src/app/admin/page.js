@@ -58,6 +58,22 @@ async function DashboardContent() {
         <div className="surface-card rounded-xl p-5">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <ShoppingBag className="size-4" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">Daily Stats</h2>
+              <p className="text-sm text-muted-foreground">Confirmed orders recorded today.</p>
+            </div>
+          </div>
+          <div className="flex h-[280px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/40 text-center">
+            <p className="text-5xl font-black text-foreground">{summary.dailyConfirmedOrders}</p>
+            <p className="mt-2 text-sm text-muted-foreground">Fresh count since midnight server time.</p>
+          </div>
+        </div>
+
+        <div className="surface-card rounded-xl p-5">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <CircleDollarSign className="size-4" />
             </div>
             <div>

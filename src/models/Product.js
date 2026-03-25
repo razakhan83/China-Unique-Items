@@ -86,10 +86,6 @@ const ProductSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
-        isTrending: {
-            type: Boolean,
-            default: false,
-        },
         isBestSelling: {
             type: Boolean,
             default: false,

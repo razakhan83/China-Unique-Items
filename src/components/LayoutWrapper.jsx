@@ -7,9 +7,11 @@ import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 import FloatingWhatsApp from '@/components/FloatingWhatsApp';
 import Navbar from '@/components/Navbar';
 import CartDrawer from '@/components/CartDrawer';
+import { createWhatsAppUrl } from '@/lib/whatsapp';
 
 function LayoutContent({ children, categories, settings }) {
     const year = new Date().getFullYear();
+    const whatsappLink = createWhatsAppUrl(settings.whatsappNumber);
 
     return (
         <>
@@ -39,7 +41,7 @@ function LayoutContent({ children, categories, settings }) {
                                     <a href="#" className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-white/14 hover:border-white/20 hover:text-white" aria-label="Instagram">
                                         <AtSign className="size-4" />
                                     </a>
-                                    <a href={`https://wa.me/${settings.whatsappNumber}`} className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-white/14 hover:border-white/20 hover:text-white" aria-label="WhatsApp">
+                                    <a href={whatsappLink || '#'} className="inline-flex size-10 items-center justify-center rounded-lg border border-white/10 bg-white/8 transition-all duration-300 hover:-translate-y-1 hover:bg-white/14 hover:border-white/20 hover:text-white" aria-label="WhatsApp">
                                         <WhatsAppIcon className="size-5" />
                                     </a>
                                 </div>
@@ -69,7 +71,7 @@ function LayoutContent({ children, categories, settings }) {
                                         <WhatsAppIcon className="mt-1 size-4 shrink-0" />
                                         <div>
                                             <span className="block font-semibold text-primary-foreground">WhatsApp</span>
-                                            <a href={`https://wa.me/${settings.whatsappNumber}`} className="transition-colors hover:text-primary-foreground">{settings.whatsappNumber}</a>
+                                            <a href={whatsappLink || '#'} className="transition-colors hover:text-primary-foreground">{settings.whatsappNumber}</a>
                                         </div>
                                     </li>
                                     <li className="flex items-start gap-3">
@@ -102,7 +104,7 @@ function LayoutContent({ children, categories, settings }) {
                 </footer>
             </div>
             <FloatingWhatsApp whatsappNumber={settings.whatsappNumber} storeName={settings.storeName} />
-            <CartDrawer />
+            <CartDrawer whatsappNumber={settings.whatsappNumber} storeName={settings.storeName} />
         </>
     );
 }

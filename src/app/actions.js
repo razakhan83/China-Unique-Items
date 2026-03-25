@@ -234,7 +234,6 @@ export async function submitOrderAction(input) {
 
   // Simplified fields from Phase 13
   const landmark = String(input?.landmark || '').trim();
-  const updateProfile = Boolean(input?.updateProfile);
 
   if (!customerName || !customerPhone || !customerAddress || items.length === 0 || totalAmount <= 0) {
     throw new Error('Missing required checkout details');
@@ -282,22 +281,20 @@ export async function submitOrderAction(input) {
   // Update User Profile (Background)
   if (userEmail) {
     try {
-      const dbUser = await User.findOne({ email: userEmail });
-      const isFirstOrder = dbUser && !dbUser.phone && !dbUser.address;
-
-      if (isFirstOrder || updateProfile) {
-        await User.findOneAndUpdate(
-          { email: userEmail },
-          { 
+      await User.findOneAndUpdate(
+        { email: userEmail },
+        {
+          $set: {
+            email: userEmail,
             name: customerName,
-            phone: customerPhone, 
+            phone: customerPhone,
             city: customerCity,
             address: customerAddress,
-            landmark: landmark
+            landmark,
           },
-          { upsert: true }
-        );
-      }
+        },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      );
 
       // 2. Link all previous orders using fuzzy phone matching
       const phoneRegex = getPhoneRegex(customerPhone);
@@ -375,11 +372,9 @@ export async function getLastOrderDetailsAction() {
   return {
     phone: lastOrder.customerPhone || '',
     address: lastOrder.customerAddress || '',
-    // Extract landmark and city from address string if possible (best effort)
-    // Assuming format from CheckoutClient: "address, landmark, city"
-    addressOnly: lastOrder.customerAddress.split(',')[0]?.trim() || lastOrder.customerAddress,
-    city: lastOrder.customerAddress.split(',').pop()?.trim() || '',
-    landmark: lastOrder.customerAddress.split(',').length > 2 ? lastOrder.customerAddress.split(',')[1]?.trim() : '',
+    addressOnly: lastOrder.customerAddress || '',
+    city: lastOrder.customerCity || '',
+    landmark: lastOrder.landmark || '',
   };
 }
 

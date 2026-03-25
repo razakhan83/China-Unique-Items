@@ -90,7 +90,6 @@ export async function PUT(request, { params }) {
         
         // Marketing flags
         existingProduct.isNewArrival = body.isNewArrival === true || body.isNewArrival === 'true';
-        existingProduct.isTrending = body.isTrending === true || body.isTrending === 'true';
         existingProduct.isBestSelling = body.isBestSelling === true || body.isBestSelling === 'true';
 
         // Discount fields
@@ -171,10 +170,9 @@ export async function PATCH(request, { params }) {
         }
 
         // Handle Marketing flags toggle
-        if (body.isNewArrival !== undefined || body.isTrending !== undefined || body.isBestSelling !== undefined) {
+        if (body.isNewArrival !== undefined || body.isBestSelling !== undefined) {
             const updateFields = {};
             if (body.isNewArrival !== undefined) updateFields.isNewArrival = body.isNewArrival === true || body.isNewArrival === 'true';
-            if (body.isTrending !== undefined) updateFields.isTrending = body.isTrending === true || body.isTrending === 'true';
             if (body.isBestSelling !== undefined) updateFields.isBestSelling = body.isBestSelling === true || body.isBestSelling === 'true';
 
             const updatedProduct = await Product.findByIdAndUpdate(
@@ -199,7 +197,6 @@ export async function PATCH(request, { params }) {
                 data: {
                     _id: updatedProduct._id.toString(),
                     isNewArrival: updatedProduct.isNewArrival,
-                    isTrending: updatedProduct.isTrending,
                     isBestSelling: updatedProduct.isBestSelling,
                 },
             });

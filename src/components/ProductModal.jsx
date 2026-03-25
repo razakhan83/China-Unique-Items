@@ -8,8 +8,9 @@ import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from '@/lib/cloudinar
 import { getProductCategoryNames } from '@/lib/productCategories';
 import { getPrimaryProductImage } from '@/lib/productImages';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
+import { buildProductWhatsAppMessage, createWhatsAppUrl } from '@/lib/whatsapp';
 
-export default function ProductModal({ product, onClose }) {
+export default function ProductModal({ product, onClose, whatsappNumber = '', storeName = 'China Unique Store' }) {
     const { addToCart } = useCart();
 
     if (!product) return null;
@@ -25,6 +26,15 @@ export default function ProductModal({ product, onClose }) {
     const primaryImageSrc = primaryImage?.url
         ? optimizeCloudinaryUrl(primaryImage.url, CLOUDINARY_IMAGE_PRESETS.productModal)
         : '';
+    const productUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const whatsappUrl = createWhatsAppUrl(
+        whatsappNumber,
+        buildProductWhatsAppMessage({
+            productName: product.Name || product.name || 'Premium Item',
+            productUrl,
+            storeName,
+        }),
+    );
 
     return (
         <>
@@ -98,7 +108,7 @@ export default function ProductModal({ product, onClose }) {
                                 </Button>
 
                                 <a
-                                    href={`https://wa.me/923001234567?text=${encodeURIComponent(`Hi Kifayatly Store, I would like to order:\n\n*${product.Name || product.name || 'Premium Item'}*\nPrice: ${formatPrice(product.Price || product.price)}`)}`}
+                                    href={whatsappUrl || '#'}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex-1 w-full"

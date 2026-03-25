@@ -43,7 +43,6 @@ export default function AddProduct() {
   const [images, setImages] = useState([]); // Array of { url, file }
   const [isLive, setIsLive] = useState(true);
   const [isNewArrival, setIsNewArrival] = useState(true);
-  const [isTrending, setIsTrending] = useState(false);
   const [isBestSelling, setIsBestSelling] = useState(false);
 
   const [isDragOver, setIsDragOver] = useState(false);
@@ -207,7 +206,6 @@ export default function AddProduct() {
           Category: Categories,
           isLive,
           isNewArrival,
-          isTrending,
           isBestSelling,
         }),
       });
@@ -345,7 +343,7 @@ export default function AddProduct() {
           {/* Marketing Flags */}
           <div className="rounded-xl border border-border bg-muted/35 p-4 space-y-4">
             <p className="text-sm font-semibold text-foreground">Marketing Flags</p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-4 sm:border-0 sm:pb-0">
                 <Label className="text-xs text-muted-foreground mr-2 cursor-pointer" htmlFor="toggle-new">New Arrival</Label>
                 <button
@@ -358,20 +356,6 @@ export default function AddProduct() {
                   )}
                 >
                   <span className={cn("absolute left-0.5 top-0.5 h-4 w-4 rounded-md bg-background shadow transition-transform duration-300", isNewArrival ? "translate-x-5" : "translate-x-0")} />
-                </button>
-              </div>
-              <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-4 sm:border-0 sm:pb-0">
-                <Label className="text-xs text-muted-foreground mr-2 cursor-pointer" htmlFor="toggle-trending">Trending</Label>
-                <button
-                  id="toggle-trending"
-                  type="button"
-                  onClick={() => setIsTrending(!isTrending)}
-                  className={cn(
-                    "relative h-5 w-10 rounded-lg transition-colors duration-300",
-                    isTrending ? "bg-primary" : "bg-border",
-                  )}
-                >
-                  <span className={cn("absolute left-0.5 top-0.5 h-4 w-4 rounded-md bg-background shadow transition-transform duration-300", isTrending ? "translate-x-5" : "translate-x-0")} />
                 </button>
               </div>
               <div className="flex items-center justify-between gap-2">

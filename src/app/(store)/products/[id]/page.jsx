@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { getProductBySlug, getProductPrerenderParams, getRelatedProducts } from '@/lib/data';
+import { getProductBySlug, getProductPrerenderParams, getRelatedProducts, getStoreSettings } from '@/lib/data';
 import { getCategoryColor } from '@/lib/categoryColors';
 import { getProductCategories } from '@/lib/productCategories';
 
@@ -109,7 +109,10 @@ async function ProductBreadcrumb({ slugPromise }) {
 
 async function ProductHeroSection({ slugPromise }) {
   const slug = await slugPromise;
-  const product = await getProductBySlug(slug);
+  const [product, settings] = await Promise.all([
+    getProductBySlug(slug),
+    getStoreSettings(),
+  ]);
 
   if (!product) {
     notFound();
@@ -167,7 +170,7 @@ async function ProductHeroSection({ slugPromise }) {
           </div>
 
           <Separator />
-          <ProductActions product={product} />
+          <ProductActions product={product} whatsappNumber={settings.whatsappNumber} storeName={settings.storeName} />
 
           <div className="mt-2 border-t border-border pt-5">
             <div className="grid grid-cols-3 gap-3 text-center">

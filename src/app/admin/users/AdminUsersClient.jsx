@@ -7,8 +7,10 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  MapPin,
   Mail,
   MoreVertical,
+  Phone,
   Search,
   ShieldAlert,
   UserCheck,
@@ -67,6 +69,7 @@ export default function AdminUsersClient({
   currentPage,
   initialSearchQuery,
   initialStatusFilter,
+  initialTypeFilter,
   summary,
 }) {
   const router = useRouter();
@@ -76,8 +79,10 @@ export default function AdminUsersClient({
   const [users, setUsers] = useState(initialUsers);
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
+  const [typeFilter, setTypeFilter] = useState(initialTypeFilter);
   const [loadingId, setLoadingId] = useState(null);
   const [highlightedId, setHighlightedId] = useState(null);
+  const isCustomersView = typeFilter === 'customers';
 
   useEffect(() => {
     setUsers(initialUsers);
@@ -90,6 +95,10 @@ export default function AdminUsersClient({
   useEffect(() => {
     setStatusFilter(initialStatusFilter);
   }, [initialStatusFilter]);
+
+  useEffect(() => {
+    setTypeFilter(initialTypeFilter);
+  }, [initialTypeFilter]);
 
   useEffect(() => {
     const id = searchParams.get('id');
@@ -121,8 +130,10 @@ export default function AdminUsersClient({
 
   function clearFilters() {
     setSearchQuery('');
-    setStatusFilter('all');
-    navigate({ search: null, status: null, page: null });
+    if (!isCustomersView) {
+      setStatusFilter('all');
+    }
+    navigate({ search: null, status: isCustomersView ? null : null, page: null });
   }
 
   async function handleUserAction(user, updateData) {
@@ -164,46 +175,72 @@ export default function AdminUsersClient({
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">User Management</h1>
-          <p className="text-muted-foreground">View and manage registered users for your store.</p>
+          <p className="text-muted-foreground">
+            {isCustomersView ? 'Verified buyers captured from placed orders.' : 'View and manage registered users for your store.'}
+          </p>
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant={isCustomersView ? 'outline' : 'default'}
+          onClick={() => {
+            setTypeFilter('registered');
+            navigate({ type: null, status: statusFilter === 'all' ? null : statusFilter, page: null });
+          }}
+        >
+          Registered Users
+        </Button>
+        <Button
+          type="button"
+          variant={isCustomersView ? 'default' : 'outline'}
+          onClick={() => {
+            setTypeFilter('customers');
+            setStatusFilter('all');
+            navigate({ type: 'customers', status: null, page: null });
+          }}
+        >
+          Customers
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="surface-card border-none bg-primary/5">
           <CardHeader className="pb-2">
-            <CardDescription className="text-primary/70">Total Users</CardDescription>
+            <CardDescription className="text-primary/70">{isCustomersView ? 'Verified Buyers' : 'Total Users'}</CardDescription>
             <CardTitle className="text-3xl font-bold text-primary">{summary.totalUsers}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-xs text-primary/60">
               <UsersIcon className="size-3" />
-              <span>All registered accounts</span>
+              <span>{isCustomersView ? 'Unique customers with orders' : 'All registered accounts'}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card className="surface-card border-none bg-success/8">
           <CardHeader className="pb-2">
-            <CardDescription className="text-success/70">Active Users</CardDescription>
-            <CardTitle className="text-3xl font-bold text-success">{summary.activeUsers}</CardTitle>
+            <CardDescription className="text-success/70">{isCustomersView ? 'Profiles With Email' : 'Active Users'}</CardDescription>
+            <CardTitle className="text-3xl font-bold text-success">{isCustomersView ? summary.withEmail : summary.activeUsers}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-xs text-success/60">
               <UserCheck className="size-3" />
-              <span>Allowed to login</span>
+              <span>{isCustomersView ? 'Customers with email captured' : 'Allowed to login'}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card className="surface-card border-none bg-destructive/6">
           <CardHeader className="pb-2">
-            <CardDescription className="text-destructive/70">Disabled Users</CardDescription>
-            <CardTitle className="text-3xl font-bold text-destructive">{summary.disabledUsers}</CardTitle>
+            <CardDescription className="text-destructive/70">{isCustomersView ? 'Profiles With Address' : 'Disabled Users'}</CardDescription>
+            <CardTitle className="text-3xl font-bold text-destructive">{isCustomersView ? summary.withAddress : summary.disabledUsers}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-xs text-destructive/60">
-              <UserX className="size-3" />
-              <span>Blocked from login</span>
+              {isCustomersView ? <MapPin className="size-3" /> : <UserX className="size-3" />}
+              <span>{isCustomersView ? 'Customers with saved delivery address' : 'Blocked from login'}</span>
             </div>
           </CardContent>
         </Card>
@@ -226,24 +263,26 @@ export default function AdminUsersClient({
           />
         </form>
         <div className="flex items-center gap-2">
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => {
-              setStatusFilter(value);
-              navigate({ status: value, page: null });
-            }}
-          >
-            <SelectTrigger className="h-10 w-[140px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active Only</SelectItem>
-              <SelectItem value="disabled">Disabled Only</SelectItem>
-            </SelectContent>
-          </Select>
+          {!isCustomersView ? (
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => {
+                setStatusFilter(value);
+                navigate({ status: value, page: null });
+              }}
+            >
+              <SelectTrigger className="h-10 w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active Only</SelectItem>
+                <SelectItem value="disabled">Disabled Only</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : null}
 
-          {(searchQuery || statusFilter !== 'all') && (
+          {(searchQuery || (!isCustomersView && statusFilter !== 'all')) && (
             <Button
               variant="ghost"
               size="sm"
@@ -263,9 +302,9 @@ export default function AdminUsersClient({
             <TableRow>
               <TableHead className="w-[300px]">User</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Joining Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{isCustomersView ? 'Profile' : 'Joining Date'}</TableHead>
+              <TableHead>{isCustomersView ? 'Orders' : 'Status'}</TableHead>
+              <TableHead className="text-right">{isCustomersView ? 'Last Order' : 'Actions'}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -303,62 +342,88 @@ export default function AdminUsersClient({
                   <TableCell>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Mail className="size-3" />
-                      {user.email}
+                      {user.email || 'Not provided'}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="size-3" />
-                      <span suppressHydrationWarning>
-                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {user.disabled ? (
-                      <Badge variant="destructive" className="flex w-fit items-center gap-1 font-bold">
-                        <UserX className="size-3" />
-                        Disabled
-                      </Badge>
+                    {isCustomersView ? (
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <Phone className="size-3" />
+                          <span>{user.phone || 'Not provided'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="size-3" />
+                          <span className="line-clamp-2">{[user.address, user.city].filter(Boolean).join(', ') || 'Not provided'}</span>
+                        </div>
+                      </div>
                     ) : (
-                      <Badge variant="secondary" className="flex w-fit items-center gap-1 bg-success/10 font-bold text-success">
-                        <UserCheck className="size-3" />
-                        Active
-                      </Badge>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="size-3" />
+                        <span suppressHydrationWarning>
+                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                        </span>
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isCustomersView ? (
+                      <div className="space-y-1 text-sm">
+                        <p className="font-semibold text-foreground">{user.ordersCount} order{user.ordersCount === 1 ? '' : 's'}</p>
+                        <p className="text-muted-foreground">Rs. {Number(user.totalSpent || 0).toLocaleString('en-PK')}</p>
+                      </div>
+                    ) : (
+                      user.disabled ? (
+                        <Badge variant="destructive" className="flex w-fit items-center gap-1 font-bold">
+                          <UserX className="size-3" />
+                          Disabled
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="flex w-fit items-center gap-1 bg-success/10 font-bold text-success">
+                          <UserCheck className="size-3" />
+                          Active
+                        </Badge>
+                      )
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="size-8">
-                          <MoreVertical className="size-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuGroup>
-                          <DropdownMenuLabel>User Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className={user.disabled ? 'text-success focus:text-success' : 'text-destructive focus:text-destructive'}
-                            onClick={() => handleUserAction(user, { disabled: !user.disabled })}
-                            disabled={loadingId === user._id}
-                          >
-                            {user.disabled ? (
-                              <><UserCheck className="mr-2 size-4" /> Enable User</>
-                            ) : (
-                              <><UserX className="mr-2 size-4" /> Disable User</>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleUserAction(user, { action: 'force-logout' })}
-                            disabled={loadingId === user._id || user.disabled}
-                          >
-                            <LogOut className="mr-2 size-4" /> Force Logout
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {isCustomersView ? (
+                      <span className="text-sm text-muted-foreground" suppressHydrationWarning>
+                        {user.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : 'N/A'}
+                      </span>
+                    ) : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="size-8">
+                            <MoreVertical className="size-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel>User Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className={user.disabled ? 'text-success focus:text-success' : 'text-destructive focus:text-destructive'}
+                              onClick={() => handleUserAction(user, { disabled: !user.disabled })}
+                              disabled={loadingId === user._id}
+                            >
+                              {user.disabled ? (
+                                <><UserCheck className="mr-2 size-4" /> Enable User</>
+                              ) : (
+                                <><UserX className="mr-2 size-4" /> Disable User</>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleUserAction(user, { action: 'force-logout' })}
+                              disabled={loadingId === user._id || user.disabled}
+                            >
+                              <LogOut className="mr-2 size-4" /> Force Logout
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -384,7 +449,7 @@ export default function AdminUsersClient({
           <p className="text-sm text-muted-foreground">
             Showing <span className="font-medium text-foreground">{((currentPage - 1) * 12) + 1}</span> to{' '}
             <span className="font-medium text-foreground">{Math.min(currentPage * 12, total)}</span> of{' '}
-            <span className="font-medium text-foreground">{total}</span> users
+            <span className="font-medium text-foreground">{total}</span> {isCustomersView ? 'customers' : 'users'}
           </p>
           <AppPagination
             page={currentPage}
@@ -394,17 +459,19 @@ export default function AdminUsersClient({
         </div>
       )}
 
-      <div className="flex items-start gap-4 rounded-xl border border-accent/25 bg-accent/12 p-4">
-        <div className="shrink-0 rounded-lg bg-accent/18 p-2 text-accent-foreground">
-          <ShieldAlert className="size-5" />
+      {!isCustomersView ? (
+        <div className="flex items-start gap-4 rounded-xl border border-accent/25 bg-accent/12 p-4">
+          <div className="shrink-0 rounded-lg bg-accent/18 p-2 text-accent-foreground">
+            <ShieldAlert className="size-5" />
+          </div>
+          <div>
+            <h4 className="font-bold text-accent-foreground">Security Note</h4>
+            <p className="mt-1 text-sm leading-relaxed text-accent-foreground/80">
+              Disabling a user will prevent them from signing in to their account. If the user is currently logged in, they will be blocked upon their next authentication request. This action is manually reversible at any time by an administrator.
+            </p>
+          </div>
         </div>
-        <div>
-          <h4 className="font-bold text-accent-foreground">Security Note</h4>
-          <p className="mt-1 text-sm leading-relaxed text-accent-foreground/80">
-            Disabling a user will prevent them from signing in to their account. If the user is currently logged in, they will be blocked upon their next authentication request. This action is manually reversible at any time by an administrator.
-          </p>
-        </div>
-      </div>
+      ) : null}
     </div>
   );
 }

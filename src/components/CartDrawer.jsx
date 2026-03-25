@@ -30,6 +30,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from '@/lib/cloudinaryImage';
 import { getPrimaryProductImage } from '@/lib/productImages';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
+import { buildCartWhatsAppMessage, createWhatsAppUrl } from '@/lib/whatsapp';
 
 const formatPrice = (raw) => {
   const clean = String(raw).replace(/[^\d.]/g, '');
@@ -38,7 +39,7 @@ const formatPrice = (raw) => {
 
 const formatPriceLabel = (raw) => `Rs. ${formatPrice(raw).toLocaleString('en-PK')}`;
 
-export default function CartDrawer() {
+export default function CartDrawer({ whatsappNumber = '', storeName = 'China Unique Store' }) {
   const { cart, updateQuantity, removeFromCart, isCartOpen, setIsCartOpen } = useCart();
   const subtotal = cart.reduce((total, item) => {
     const itemPrice = item.discountedPrice != null ? item.discountedPrice : formatPrice(item.Price || item.price);
@@ -47,15 +48,10 @@ export default function CartDrawer() {
 
   function handleWhatsAppDirectCheckout() {
     if (!cart.length) return;
-    let message = `*New Order from China Unique Store*\n\n`;
-    message += `*Items*\n`;
-    cart.forEach((item, index) => {
-      const itemPrice = item.discountedPrice != null ? item.discountedPrice : formatPrice(item.Price || item.price);
-      message += `${index + 1}. ${item.Name || item.name} - ${item.quantity} x Rs. ${formatPrice(itemPrice)}\n`;
-    });
-    message += `\n*Subtotal:* Rs. ${subtotal.toLocaleString('en-PK')}\n`;
-    message += `Please confirm my order.`;
-    window.open(`https://wa.me/923052622043?text=${encodeURIComponent(message)}`, '_blank');
+    const message = buildCartWhatsAppMessage({ items: cart, subtotal, storeName });
+    const whatsappUrl = createWhatsAppUrl(whatsappNumber, message);
+    if (!whatsappUrl) return;
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   }
 
   return (

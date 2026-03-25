@@ -548,16 +548,6 @@ export default function AdminProductsClient({
                           NEW
                         </button>
                         <button
-                          onClick={() => toggleProductFlag(product._id, "isTrending", product.isTrending)}
-                          className={cn(
-                            "flex h-7 px-2 items-center justify-center rounded-md border text-[9px] font-bold transition-all",
-                            product.isTrending ? "bg-accent/12 border-accent/25 text-accent-foreground" : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted",
-                          )}
-                          title="Trending"
-                        >
-                          HOT
-                        </button>
-                        <button
                           onClick={() => toggleProductFlag(product._id, "isBestSelling", product.isBestSelling)}
                           className={cn(
                             "flex h-7 px-2 items-center justify-center rounded-md border text-[9px] font-bold transition-all",

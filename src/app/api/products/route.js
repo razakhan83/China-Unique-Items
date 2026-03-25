@@ -66,7 +66,18 @@ export async function POST(req) {
         const body = await req.json();
         console.log('[API] Body received:', { Name: body.Name, Category: body.Category, Price: body.Price, Images: body.Images?.length });
 
-        let { Name, Description, Price, Images, cloudinary_id, Category: categoryInput, slug, isLive } = body;
+        let {
+            Name,
+            Description,
+            Price,
+            Images,
+            cloudinary_id,
+            Category: categoryInput,
+            slug,
+            isLive,
+            isNewArrival,
+            isBestSelling,
+        } = body;
 
         if (!Name || !Price || !categoryInput) {
             console.log('[API] Validation failed: Missing required fields');
@@ -111,6 +122,8 @@ export async function POST(req) {
             StockStatus: stockStatus,
             slug: uniqueSlug, // Ensure slug is saved
             isLive: isLive === true || isLive === 'true' ? true : false,
+            isNewArrival: isNewArrival === true || isNewArrival === 'true',
+            isBestSelling: isBestSelling === true || isBestSelling === 'true',
         });
 
         await product.populate('Category');
