@@ -6,6 +6,7 @@ import CategoryProductSlider from '@/components/CategoryProductSlider';
 import ProductCard from '@/components/ProductCard';
 import ProductActions from '@/components/ProductActions';
 import ProductGallery from '@/components/ProductGallery';
+import ProductMetaTags from './ProductMetaTags';
 import ProductReviews from '@/components/ProductReviews';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,7 +25,7 @@ import { getCategoryColor } from '@/lib/categoryColors';
 import { getProductCategories } from '@/lib/productCategories';
 
 const formatPrice = (raw) => `Rs. ${Number(raw || 0).toLocaleString('en-PK')}`;
-const siteUrl = process.env.NEXTAUTH_URL || 'https://chinaunique.pk';
+const siteUrl = process.env.NEXTAUTH_URL || 'https://china-unique-items.vercel.app';
 
 function getProductUrl(product) {
   return `${siteUrl}/products/${product.slug || product._id}`;
@@ -32,6 +33,11 @@ function getProductUrl(product) {
 
 function getProductDescription(product) {
   return product.Description || `Buy ${product.Name} from China Unique Store.`;
+}
+
+function getShareDescription(product) {
+  const price = product.discountedPrice ?? product.Price ?? 0;
+  return `Price: ${formatPrice(price)}. ${getProductDescription(product)}`;
 }
 
 function getPrimaryImage(product) {
@@ -112,18 +118,19 @@ export async function generateMetadata({ params }) {
   const productUrl = getProductUrl(product);
   const productImage = getPrimaryImage(product);
   const productDescription = getProductDescription(product);
+  const shareDescription = getShareDescription(product);
   const price = Number(product.discountedPrice ?? product.Price ?? 0);
   const availability = product.StockStatus === 'In Stock' ? 'in stock' : 'out of stock';
 
   return {
     title: product.Name,
-    description: productDescription,
+    description: shareDescription,
     alternates: {
       canonical: productUrl,
     },
     openGraph: {
       title: product.Name,
-      description: productDescription,
+      description: shareDescription,
       type: 'website',
       url: productUrl,
       siteName: 'China Unique Store',
@@ -139,7 +146,7 @@ export async function generateMetadata({ params }) {
     twitter: {
       card: 'summary_large_image',
       title: product.Name,
-      description: productDescription,
+      description: shareDescription,
       images: [productImage],
     },
     other: {
@@ -227,12 +234,23 @@ async function ProductHeroSection({ slugPromise }) {
   const categoryLabel = primaryCategory?.name || '';
   const colors = getCategoryColor(categoryLabel);
   const productJsonLd = getProductJsonLd({ product, reviewSummary });
+  const price = Number(product.discountedPrice ?? product.Price ?? 0);
+  const availability = product.StockStatus === 'In Stock' ? 'in stock' : 'out of stock';
 
   return (
     <>
+      <ProductMetaTags
+        price={price}
+        currency="PKR"
+        availability={availability}
+        ratingValue={reviewSummary.averageRating.toFixed(1)}
+        ratingCount={reviewSummary.reviewCount}
+      />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd).replace(/</g, '\\u003c'),
+        }}
       />
 
       <div className="flex flex-col gap-6 md:flex-row md:gap-10 lg:gap-14">

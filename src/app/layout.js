@@ -11,7 +11,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+const siteUrl = process.env.NEXTAUTH_URL || 'https://china-unique-items.vercel.app';
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
