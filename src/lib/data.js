@@ -651,6 +651,43 @@ export async function getApprovedReviews(productId) {
   }));
 }
 
+export async function getProductReviewSummary(productId) {
+  'use cache';
+  cacheLife('foreverish');
+  cacheTag(`reviews-${productId}`);
+
+  const safeProductId = String(productId || '').trim();
+  if (!safeProductId) {
+    return {
+      averageRating: 0,
+      reviewCount: 0,
+    };
+  }
+
+  await mongooseConnect();
+  const Review = (await import('@/models/Review')).default;
+
+  const queryId = mongoose.Types.ObjectId.isValid(safeProductId)
+    ? new mongoose.Types.ObjectId(safeProductId)
+    : safeProductId;
+
+  const [summary] = await Review.aggregate([
+    { $match: { productId: queryId, isApproved: true } },
+    {
+      $group: {
+        _id: null,
+        averageRating: { $avg: '$rating' },
+        reviewCount: { $sum: 1 },
+      },
+    },
+  ]);
+
+  return {
+    averageRating: Number(summary?.averageRating || 0),
+    reviewCount: Number(summary?.reviewCount || 0),
+  };
+}
+
 export async function getProductBySlug(slug) {
   'use cache';
   cacheLife('foreverish');
