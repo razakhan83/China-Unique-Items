@@ -28,6 +28,14 @@ const SettingsSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
+        facebookPageUrl: {
+            type: String,
+            default: '',
+        },
+        instagramUrl: {
+            type: String,
+            default: '',
+        },
 
         // Marketing / Tracking
         trackingEnabled: {

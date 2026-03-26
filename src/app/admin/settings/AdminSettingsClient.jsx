@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BellRing, Loader2, MessageCircle, RadioTower, Save, ShieldCheck, Store, Trash2, UserPlus } from 'lucide-react';
+import { BellRing, Loader2, RadioTower, Save, ShieldCheck, Store, Trash2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -241,28 +241,42 @@ export default function AdminSettingsClient({ initialSettings, isProAdmin }) {
         </SettingSection>
 
         <SettingSection
-          icon={MessageCircle}
-          title="WhatsApp Integration"
-          description="Used by the floating contact button and checkout handoff."
-        >
-          <div>
-            <Label className="mb-1.5">WhatsApp Number</Label>
-            <Input
-              value={form.whatsappNumber}
-              onChange={(event) => handleChange('whatsappNumber', event.target.value)}
-              placeholder="923001234567"
-            />
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              Format: country code + number without spaces.
-            </p>
-          </div>
-        </SettingSection>
-
-        <SettingSection
           icon={RadioTower}
-          title="Marketing Pixels"
-          description="Manage lightweight browser pixels and optional server-side purchase tracking."
+          title="Social & Tracking"
+          description="Manage customer contact links, social destinations, and tracking credentials in one place."
         >
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <Label className="mb-1.5">WhatsApp Number</Label>
+              <Input
+                value={form.whatsappNumber}
+                onChange={(event) => handleChange('whatsappNumber', event.target.value)}
+                placeholder="923001234567"
+              />
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Used by the floating contact button, footer CTA, and checkout handoff. Format: country code + number without spaces.
+              </p>
+            </div>
+
+            <div>
+              <Label className="mb-1.5">Facebook Page URL</Label>
+              <Input
+                value={form.facebookPageUrl}
+                onChange={(event) => handleChange('facebookPageUrl', event.target.value)}
+                placeholder="https://facebook.com/your-page"
+              />
+            </div>
+
+            <div>
+              <Label className="mb-1.5">Instagram URL</Label>
+              <Input
+                value={form.instagramUrl}
+                onChange={(event) => handleChange('instagramUrl', event.target.value)}
+                placeholder="https://instagram.com/your-handle"
+              />
+            </div>
+          </div>
+
           <div className="flex items-center justify-between rounded-lg border border-border bg-muted/35 px-4 py-3">
             <div>
               <p className="text-sm font-medium text-foreground">Enable tracking</p>
@@ -283,49 +297,51 @@ export default function AdminSettingsClient({ initialSettings, isProAdmin }) {
             </button>
           </div>
 
-          <div>
-            <Label className="mb-1.5">Facebook Pixel ID</Label>
-            <Input
-              value={form.facebookPixelId}
-              onChange={(event) => handleChange('facebookPixelId', event.target.value)}
-              placeholder="123456789012345"
-            />
-          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label className="mb-1.5">Facebook Pixel ID</Label>
+              <Input
+                value={form.facebookPixelId}
+                onChange={(event) => handleChange('facebookPixelId', event.target.value)}
+                placeholder="123456789012345"
+              />
+            </div>
 
-          <div>
-            <Label className="mb-1.5">Facebook Conversions API Token</Label>
-            <Input
-              value={form.facebookConversionsApiToken}
-              onChange={(event) => handleChange('facebookConversionsApiToken', event.target.value)}
-              placeholder="EAAG..."
-            />
-          </div>
+            <div>
+              <Label className="mb-1.5">TikTok Pixel ID</Label>
+              <Input
+                value={form.tiktokPixelId}
+                onChange={(event) => handleChange('tiktokPixelId', event.target.value)}
+                placeholder="C123ABC456DEF"
+              />
+            </div>
 
-          <div>
-            <Label className="mb-1.5">Facebook Test Event Code</Label>
-            <Input
-              value={form.facebookTestEventCode}
-              onChange={(event) => handleChange('facebookTestEventCode', event.target.value)}
-              placeholder="TEST12345"
-            />
-          </div>
+            <div className="md:col-span-2">
+              <Label className="mb-1.5">Facebook Conversions API Token</Label>
+              <Input
+                value={form.facebookConversionsApiToken}
+                onChange={(event) => handleChange('facebookConversionsApiToken', event.target.value)}
+                placeholder="EAAG..."
+              />
+            </div>
 
-          <div>
-            <Label className="mb-1.5">TikTok Pixel ID</Label>
-            <Input
-              value={form.tiktokPixelId}
-              onChange={(event) => handleChange('tiktokPixelId', event.target.value)}
-              placeholder="C123ABC456DEF"
-            />
-          </div>
+            <div>
+              <Label className="mb-1.5">Facebook Test Event Code</Label>
+              <Input
+                value={form.facebookTestEventCode}
+                onChange={(event) => handleChange('facebookTestEventCode', event.target.value)}
+                placeholder="TEST12345"
+              />
+            </div>
 
-          <div>
-            <Label className="mb-1.5">TikTok Access Token</Label>
-            <Input
-              value={form.tiktokAccessToken}
-              onChange={(event) => handleChange('tiktokAccessToken', event.target.value)}
-              placeholder="ttk_..."
-            />
+            <div>
+              <Label className="mb-1.5">TikTok Access Token</Label>
+              <Input
+                value={form.tiktokAccessToken}
+                onChange={(event) => handleChange('tiktokAccessToken', event.target.value)}
+                placeholder="ttk_..."
+              />
+            </div>
           </div>
         </SettingSection>
 

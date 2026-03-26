@@ -188,6 +188,8 @@ export async function saveStoreSettingsAction(nextSettings) {
     'supportEmail',
     'businessAddress',
     'whatsappNumber',
+    'facebookPageUrl',
+    'instagramUrl',
     'trackingEnabled',
     'facebookPixelId',
     'facebookConversionsApiToken',
