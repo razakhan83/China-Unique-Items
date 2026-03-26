@@ -739,9 +739,6 @@ function buildCatalogFeedItem(product, siteUrl, storeName) {
 }
 
 export async function getProductBySlug(slug) {
-  'use cache';
-  cacheLife('foreverish');
-  cacheTag('products', `product-${slug}`);
   const safeSlug = String(slug || '').trim();
   if (!safeSlug) return null;
 

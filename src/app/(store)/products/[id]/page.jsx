@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { getProductBySlug, getProductPrerenderParams, getProductReviewSummary, getRelatedProducts, getStoreSettings } from '@/lib/data';
+import { getProductBySlug, getProductReviewSummary, getRelatedProducts, getStoreSettings } from '@/lib/data';
 import { getCategoryColor } from '@/lib/categoryColors';
 import { getProductCategories } from '@/lib/productCategories';
 
@@ -99,10 +99,6 @@ async function getProductPageData(slug) {
     settings,
     reviewSummary,
   };
-}
-
-export async function generateStaticParams() {
-  return getProductPrerenderParams(1);
 }
 
 export async function generateMetadata({ params }) {
