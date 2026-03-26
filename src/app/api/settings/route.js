@@ -25,7 +25,24 @@ export async function GET() {
         // Clean up internal fields
         settings._id = settings._id.toString();
 
-        return NextResponse.json({ success: true, data: settings });
+        return NextResponse.json({
+            success: true,
+            data: {
+                _id: settings._id,
+                storeName: settings.storeName || 'China Unique Store',
+                supportEmail: settings.supportEmail || '',
+                businessAddress: settings.businessAddress || '',
+                whatsappNumber: settings.whatsappNumber || '',
+                trackingEnabled: settings.trackingEnabled === true,
+                facebookPixelId: settings.facebookPixelId || '',
+                tiktokPixelId: settings.tiktokPixelId || '',
+                karachiDeliveryFee: Number(settings.karachiDeliveryFee || 0),
+                outsideKarachiDeliveryFee: Number(settings.outsideKarachiDeliveryFee || 0),
+                freeShippingThreshold: Number(settings.freeShippingThreshold || 5000),
+                announcementBarEnabled: settings.announcementBarEnabled ?? true,
+                announcementBarText: settings.announcementBarText || '',
+            },
+        });
     } catch (error) {
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
@@ -49,6 +66,12 @@ export async function PUT(req) {
             'supportEmail',
             'businessAddress',
             'whatsappNumber',
+            'trackingEnabled',
+            'facebookPixelId',
+            'facebookConversionsApiToken',
+            'facebookTestEventCode',
+            'tiktokPixelId',
+            'tiktokAccessToken',
             'karachiDeliveryFee',
             'outsideKarachiDeliveryFee',
             'freeShippingThreshold',

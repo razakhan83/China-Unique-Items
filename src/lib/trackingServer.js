@@ -1,0 +1,147 @@
+import 'server-only';
+
+import crypto from 'node:crypto';
+
+import mongooseConnect from '@/lib/mongooseConnect';
+import Settings from '@/models/Settings';
+
+const SETTINGS_KEY = 'site-settings';
+const STORE_URL = 'https://china-unique-items.vercel.app';
+const META_GRAPH_VERSION = 'v20.0';
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(String(value || '').trim().toLowerCase()).digest('hex');
+}
+
+function normalizePhone(value) {
+  return String(value || '').replace(/\D+/g, '');
+}
+
+function buildContents(items) {
+  return items.map((item) => ({
+    id: String(item.productId || item.name || ''),
+    quantity: Number(item.quantity || 1),
+    item_price: Number(item.price || 0),
+  }));
+}
+
+async function getTrackingSettings() {
+  await mongooseConnect();
+
+  const settings = await Settings.findOne({ singletonKey: SETTINGS_KEY }).lean();
+  return {
+    trackingEnabled: settings?.trackingEnabled === true,
+    facebookPixelId: String(settings?.facebookPixelId || '').trim(),
+    facebookConversionsApiToken: String(settings?.facebookConversionsApiToken || '').trim(),
+    facebookTestEventCode: String(settings?.facebookTestEventCode || '').trim(),
+    tiktokPixelId: String(settings?.tiktokPixelId || '').trim(),
+    tiktokAccessToken: String(settings?.tiktokAccessToken || '').trim(),
+  };
+}
+
+async function sendMetaPurchaseEvent({ order, items, settings }) {
+  if (!settings.facebookPixelId || !settings.facebookConversionsApiToken) {
+    return;
+  }
+
+  const payload = {
+    data: [
+      {
+        event_name: 'Purchase',
+        event_time: Math.floor(Date.now() / 1000),
+        event_id: order.orderId,
+        action_source: 'website',
+        event_source_url: `${STORE_URL}/checkout`,
+        user_data: {
+          em: order.customerEmail ? [sha256(order.customerEmail)] : undefined,
+          ph: order.customerPhone ? [sha256(normalizePhone(order.customerPhone))] : undefined,
+          external_id: [sha256(order.orderId)],
+        },
+        custom_data: {
+          currency: 'PKR',
+          value: Number(order.totalAmount || 0),
+          content_type: 'product',
+          contents: buildContents(items),
+        },
+      },
+    ],
+    test_event_code: settings.facebookTestEventCode || undefined,
+  };
+
+  const response = await fetch(
+    `https://graph.facebook.com/${META_GRAPH_VERSION}/${settings.facebookPixelId}/events?access_token=${encodeURIComponent(settings.facebookConversionsApiToken)}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(`Meta tracking failed with ${response.status}`);
+  }
+}
+
+async function sendTikTokPurchaseEvent({ order, items, settings }) {
+  if (!settings.tiktokPixelId || !settings.tiktokAccessToken) {
+    return;
+  }
+
+  const payload = {
+    event_source: 'web',
+    event_source_id: settings.tiktokPixelId,
+    data: [
+      {
+        event: 'CompletePayment',
+        event_time: Math.floor(Date.now() / 1000),
+        event_id: order.orderId,
+        page: {
+          url: `${STORE_URL}/checkout`,
+        },
+        user: {
+          email: order.customerEmail ? sha256(order.customerEmail) : undefined,
+          phone_number: order.customerPhone ? sha256(normalizePhone(order.customerPhone)) : undefined,
+          external_id: sha256(order.orderId),
+        },
+        properties: {
+          currency: 'PKR',
+          value: Number(order.totalAmount || 0),
+          contents: buildContents(items).map((item) => ({
+            content_id: item.id,
+            quantity: item.quantity,
+            price: item.item_price,
+          })),
+        },
+      },
+    ],
+  };
+
+  const response = await fetch('https://business-api.tiktok.com/open_api/v1.3/event/track/', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${settings.tiktokAccessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`TikTok tracking failed with ${response.status}`);
+  }
+}
+
+export async function sendPurchaseTrackingEvents({ order, items }) {
+  try {
+    const settings = await getTrackingSettings();
+    if (!settings.trackingEnabled) return;
+
+    await Promise.allSettled([
+      sendMetaPurchaseEvent({ order, items, settings }),
+      sendTikTokPurchaseEvent({ order, items, settings }),
+    ]);
+  } catch (error) {
+    console.error('Tracking dispatch failed:', error);
+  }
+}

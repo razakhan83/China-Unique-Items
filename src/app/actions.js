@@ -7,6 +7,7 @@ import { after } from 'next/server';
 import { normalizeEmail, normalizePhone, getPhoneRegex } from '@/lib/admin';
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
+import { sendPurchaseTrackingEvents } from '@/lib/trackingServer';
 import Order from '@/models/Order';
 import OrderLog from '@/models/OrderLog';
 import Product from '@/models/Product';
@@ -187,6 +188,12 @@ export async function saveStoreSettingsAction(nextSettings) {
     'supportEmail',
     'businessAddress',
     'whatsappNumber',
+    'trackingEnabled',
+    'facebookPixelId',
+    'facebookConversionsApiToken',
+    'facebookTestEventCode',
+    'tiktokPixelId',
+    'tiktokAccessToken',
     'karachiDeliveryFee',
     'outsideKarachiDeliveryFee',
     'freeShippingThreshold',
@@ -329,7 +336,12 @@ export async function submitOrderAction(input) {
     console.error('Failed to create order notification:', notifyError);
   }
 
-  after(() => sendOrderEmails({ order, customerName, userEmail }));
+  after(async () => {
+    await Promise.allSettled([
+      sendOrderEmails({ order, customerName, userEmail }),
+      sendPurchaseTrackingEvents({ order, items: normalizedItems }),
+    ]);
+  });
 
   const lines = [
     '*New Order from China Unique Store*',

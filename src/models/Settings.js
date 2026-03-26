@@ -29,6 +29,32 @@ const SettingsSchema = new mongoose.Schema(
             default: '',
         },
 
+        // Marketing / Tracking
+        trackingEnabled: {
+            type: Boolean,
+            default: false,
+        },
+        facebookPixelId: {
+            type: String,
+            default: '',
+        },
+        facebookConversionsApiToken: {
+            type: String,
+            default: '',
+        },
+        facebookTestEventCode: {
+            type: String,
+            default: '',
+        },
+        tiktokPixelId: {
+            type: String,
+            default: '',
+        },
+        tiktokAccessToken: {
+            type: String,
+            default: '',
+        },
+
         // Shipping Rates
         karachiDeliveryFee: {
             type: Number,

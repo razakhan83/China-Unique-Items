@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BellRing, Loader2, MessageCircle, Save, ShieldCheck, Store, Trash2, UserPlus } from 'lucide-react';
+import { BellRing, Loader2, MessageCircle, RadioTower, Save, ShieldCheck, Store, Trash2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -255,6 +255,77 @@ export default function AdminSettingsClient({ initialSettings, isProAdmin }) {
             <p className="mt-1.5 text-xs text-muted-foreground">
               Format: country code + number without spaces.
             </p>
+          </div>
+        </SettingSection>
+
+        <SettingSection
+          icon={RadioTower}
+          title="Marketing Pixels"
+          description="Manage lightweight browser pixels and optional server-side purchase tracking."
+        >
+          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/35 px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-foreground">Enable tracking</p>
+              <p className="text-xs text-muted-foreground">
+                Loads browser pixels and sends purchase events when credentials are configured.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleChange('trackingEnabled', !form.trackingEnabled)}
+              className={`inline-flex min-w-24 items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                form.trackingEnabled
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground'
+              }`}
+            >
+              {form.trackingEnabled ? 'Enabled' : 'Disabled'}
+            </button>
+          </div>
+
+          <div>
+            <Label className="mb-1.5">Facebook Pixel ID</Label>
+            <Input
+              value={form.facebookPixelId}
+              onChange={(event) => handleChange('facebookPixelId', event.target.value)}
+              placeholder="123456789012345"
+            />
+          </div>
+
+          <div>
+            <Label className="mb-1.5">Facebook Conversions API Token</Label>
+            <Input
+              value={form.facebookConversionsApiToken}
+              onChange={(event) => handleChange('facebookConversionsApiToken', event.target.value)}
+              placeholder="EAAG..."
+            />
+          </div>
+
+          <div>
+            <Label className="mb-1.5">Facebook Test Event Code</Label>
+            <Input
+              value={form.facebookTestEventCode}
+              onChange={(event) => handleChange('facebookTestEventCode', event.target.value)}
+              placeholder="TEST12345"
+            />
+          </div>
+
+          <div>
+            <Label className="mb-1.5">TikTok Pixel ID</Label>
+            <Input
+              value={form.tiktokPixelId}
+              onChange={(event) => handleChange('tiktokPixelId', event.target.value)}
+              placeholder="C123ABC456DEF"
+            />
+          </div>
+
+          <div>
+            <Label className="mb-1.5">TikTok Access Token</Label>
+            <Input
+              value={form.tiktokAccessToken}
+              onChange={(event) => handleChange('tiktokAccessToken', event.target.value)}
+              placeholder="ttk_..."
+            />
           </div>
         </SettingSection>
 

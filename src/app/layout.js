@@ -1,5 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { getStoreSettings } from "@/lib/data";
+import TrackingScripts from "@/components/TrackingScripts";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,9 +36,9 @@ export const metadata = {
   },
 };
 
-import { Toaster } from "@/components/ui/sonner";
+export default async function RootLayout({ children }) {
+  const settings = await getStoreSettings();
 
-export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <head>
@@ -48,6 +51,11 @@ export default function RootLayout({ children }) {
         suppressHydrationWarning={true}
       >
         {children}
+        <TrackingScripts
+          enabled={settings.trackingEnabled === true}
+          facebookPixelId={settings.facebookPixelId}
+          tiktokPixelId={settings.tiktokPixelId}
+        />
         <Toaster position="bottom-center" richColors />
       </body>
     </html>

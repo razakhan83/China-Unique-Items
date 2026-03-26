@@ -6,6 +6,7 @@ import CategoryProductSlider from '@/components/CategoryProductSlider';
 import ProductCard from '@/components/ProductCard';
 import ProductActions from '@/components/ProductActions';
 import ProductGallery from '@/components/ProductGallery';
+import ProductViewTracking from '@/components/ProductViewTracking';
 import ProductMetaTags from './ProductMetaTags';
 import ProductReviews from '@/components/ProductReviews';
 import { Badge } from '@/components/ui/badge';
@@ -245,6 +246,15 @@ async function ProductHeroSection({ slugPromise }) {
         availability={availability}
         ratingValue={reviewSummary.averageRating.toFixed(1)}
         ratingCount={reviewSummary.reviewCount}
+      />
+      <ProductViewTracking
+        enabled={settings.trackingEnabled === true}
+        facebookPixelId={settings.facebookPixelId}
+        tiktokPixelId={settings.tiktokPixelId}
+        productId={product.slug || product._id}
+        name={product.Name}
+        category={categoryLabel || 'Product'}
+        value={price}
       />
       <script
         type="application/ld+json"
