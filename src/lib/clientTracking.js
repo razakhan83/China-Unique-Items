@@ -71,6 +71,46 @@ export function trackViewContentEvent({
   });
 }
 
+export function trackAddToCartEvent({
+  productId,
+  name,
+  category,
+  value,
+  quantity = 1,
+}) {
+  const safeProductId = String(productId || '').trim();
+  const safeQuantity = Math.max(1, Number(quantity || 1));
+  if (!safeProductId) return;
+
+  const eventId = createEventId(`addtocart-${safeProductId}`);
+  const customData = {
+    content_ids: [safeProductId],
+    content_name: name || 'Product',
+    content_category: category || '',
+    content_type: 'product',
+    contents: [
+      {
+        id: safeProductId,
+        quantity: safeQuantity,
+        item_price: Number(value || 0),
+      },
+    ],
+    value: Number(value || 0) * safeQuantity,
+    currency: 'PKR',
+  };
+
+  if (typeof window.fbq === 'function') {
+    window.fbq('track', 'AddToCart', customData, { eventID: eventId });
+  }
+
+  postMetaEvent({
+    eventName: 'AddToCart',
+    eventId,
+    eventSourceUrl: getEventSourceUrl(),
+    customData,
+  });
+}
+
 export function trackSearchEvent({ searchString }) {
   const term = String(searchString || '').trim();
   if (!term) return;

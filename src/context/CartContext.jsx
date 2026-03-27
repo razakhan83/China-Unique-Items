@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { trackAddToCartEvent } from '@/lib/clientTracking';
 
 const CART_STORAGE_KEY = 'kifayatly_cart_v2';
 const CartContext = createContext(null);
@@ -96,6 +97,14 @@ function CartProviderContent({ children }) {
             ...current,
             cart: [...current.cart, normalized],
           };
+        });
+
+        trackAddToCartEvent({
+          productId: normalized._id || normalized.id || normalized.slug,
+          name: normalized.Name,
+          category: Array.isArray(normalized.Category) ? normalized.Category.join(', ') : '',
+          value: normalized.discountedPrice ?? normalized.Price,
+          quantity: normalized.quantity,
         });
 
         toast.success(`${normalized.Name} added to cart`, {
