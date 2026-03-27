@@ -1,6 +1,7 @@
 import 'server-only';
 
 import crypto from 'node:crypto';
+import { cookies } from 'next/headers';
 
 import mongooseConnect from '@/lib/mongooseConnect';
 import Settings from '@/models/Settings';
@@ -18,11 +19,17 @@ function normalizePhone(value) {
 }
 
 function sanitizeUserData(userData = {}) {
-  return {
+  const sanitized = {
     em: userData.email ? [sha256(userData.email)] : undefined,
     ph: userData.phone ? [sha256(normalizePhone(userData.phone))] : undefined,
     external_id: userData.externalId ? [sha256(userData.externalId)] : undefined,
+    client_ip_address: userData.clientIp || undefined,
+    client_user_agent: userData.clientUserAgent || undefined,
+    fbp: userData.fbp || undefined,
+    fbc: userData.fbc || undefined,
   };
+
+  return Object.fromEntries(Object.entries(sanitized).filter(([, value]) => value !== undefined));
 }
 
 function buildContents(items) {
@@ -86,8 +93,11 @@ async function sendMetaEvent({
   );
 
   if (!response.ok) {
-    throw new Error(`Meta tracking failed with ${response.status}`);
+    const responseText = await response.text();
+    throw new Error(`Meta tracking failed with ${response.status}: ${responseText}`);
   }
+
+  return response.json().catch(() => ({ success: true }));
 }
 
 async function sendMetaPurchaseEvent({ order, items, settings }) {
@@ -184,16 +194,24 @@ export async function sendMetaCustomTrackingEvent({
     const settings = await getTrackingSettings();
     if (!settings.trackingEnabled) return { success: false, skipped: true };
 
-    await sendMetaEvent({
+    const cookieStore = await cookies();
+    const fbp = cookieStore.get('_fbp')?.value;
+    const fbc = cookieStore.get('_fbc')?.value;
+
+    const response = await sendMetaEvent({
       eventName,
       eventId,
       eventSourceUrl,
-      userData,
+      userData: {
+        ...userData,
+        fbp,
+        fbc,
+      },
       customData,
       settings,
     });
 
-    return { success: true };
+    return { success: true, response };
   } catch (error) {
     console.error(`Meta ${eventName} dispatch failed:`, error);
     return { success: false, error: error.message };

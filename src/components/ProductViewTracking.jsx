@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { trackViewContentEvent } from '@/lib/clientTracking';
 
 export default function ProductViewTracking({
   enabled,
@@ -12,7 +13,7 @@ export default function ProductViewTracking({
   value,
 }) {
   useEffect(() => {
-    if (!enabled || !productId) return;
+    if (!enabled || !facebookPixelId || !productId) return;
 
     const payload = {
       content_ids: [productId],
@@ -23,9 +24,7 @@ export default function ProductViewTracking({
       currency: 'PKR',
     };
 
-    if (facebookPixelId && typeof window.fbq === 'function') {
-      window.fbq('track', 'ViewContent', payload);
-    }
+    trackViewContentEvent({ productId, name, category, value });
 
     if (tiktokPixelId && typeof window.ttq?.track === 'function') {
       window.ttq.track('ViewContent', payload);

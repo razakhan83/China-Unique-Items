@@ -5,7 +5,15 @@ function getEventSourceUrl() {
   return window.location.href;
 }
 
-function postMetaEvent(payload) {
+function createEventId(fallbackSeed = 'event') {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `${fallbackSeed}-${Date.now()}`;
+}
+
+export function postMetaEvent(payload) {
   if (typeof window === 'undefined') return;
 
   fetch('/api/tracking/meta', {
@@ -18,11 +26,56 @@ function postMetaEvent(payload) {
   });
 }
 
+export function trackPageViewEvent() {
+  const eventId = createEventId('pageview');
+
+  if (typeof window.fbq === 'function') {
+    window.fbq('track', 'PageView', {}, { eventID: eventId });
+  }
+
+  postMetaEvent({
+    eventName: 'PageView',
+    eventId,
+    eventSourceUrl: getEventSourceUrl(),
+  });
+}
+
+export function trackViewContentEvent({
+  productId,
+  name,
+  category,
+  value,
+}) {
+  const safeProductId = String(productId || '').trim();
+  if (!safeProductId) return;
+
+  const eventId = createEventId(`viewcontent-${safeProductId}`);
+  const customData = {
+    content_ids: [safeProductId],
+    content_name: name || 'Product',
+    content_category: category || '',
+    content_type: 'product',
+    value: Number(value || 0),
+    currency: 'PKR',
+  };
+
+  if (typeof window.fbq === 'function') {
+    window.fbq('track', 'ViewContent', customData, { eventID: eventId });
+  }
+
+  postMetaEvent({
+    eventName: 'ViewContent',
+    eventId,
+    eventSourceUrl: getEventSourceUrl(),
+    customData,
+  });
+}
+
 export function trackSearchEvent({ searchString }) {
   const term = String(searchString || '').trim();
   if (!term) return;
 
-  const eventId = crypto.randomUUID();
+  const eventId = createEventId('search');
   const customData = { search_string: term };
 
   if (typeof window.fbq === 'function') {
@@ -42,7 +95,7 @@ export function trackInitiateCheckoutEvent({ cart = [], total = 0 }) {
     .map((item) => String(item?.id || item?._id || item?.slug || '').trim())
     .filter(Boolean);
 
-  const eventId = crypto.randomUUID();
+  const eventId = createEventId('initiate-checkout');
   const customData = {
     currency: 'PKR',
     value: Number(total || 0),
@@ -66,6 +119,7 @@ export function trackPurchaseEvent({ orderId, cart = [], total = 0 }) {
   const contentIds = cart
     .map((item) => String(item?.id || item?._id || item?.slug || '').trim())
     .filter(Boolean);
+  const eventId = String(orderId || createEventId('purchase')).trim();
 
   const customData = {
     currency: 'PKR',
@@ -75,6 +129,13 @@ export function trackPurchaseEvent({ orderId, cart = [], total = 0 }) {
   };
 
   if (typeof window.fbq === 'function') {
-    window.fbq('track', 'Purchase', customData, { eventID: orderId });
+    window.fbq('track', 'Purchase', customData, { eventID: eventId });
   }
+
+  postMetaEvent({
+    eventName: 'Purchase',
+    eventId,
+    eventSourceUrl: getEventSourceUrl(),
+    customData,
+  });
 }
