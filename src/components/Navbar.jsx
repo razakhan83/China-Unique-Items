@@ -13,6 +13,7 @@ import {
   Sparkles,
   Store,
   Tag,
+  Heart,
   Settings,
   User,
   X,
@@ -24,7 +25,9 @@ import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import MyOrdersButton from '@/components/MyOrdersButton';
+import MyWishlistButton from '@/components/MyWishlistButton';
 import AuthModal from '@/components/AuthModal';
+import { trackSearchEvent } from '@/lib/clientTracking';
 import {
   Avatar,
   AvatarFallback,
@@ -129,6 +132,7 @@ function NavbarContent({ categories }) {
   function handleSearchSubmit(event) {
     event.preventDefault();
     if (!searchTerm.trim()) return;
+    trackSearchEvent({ searchString: searchTerm.trim() });
     setIsSearchOpen(false);
     setIsFocused(false);
     router.push(`/products?search=${encodeURIComponent(searchTerm.trim())}`, { scroll: true });
@@ -274,6 +278,10 @@ function NavbarContent({ categories }) {
                       <ShoppingBag className="mr-2 h-4 w-4" />
                       <span>My Orders</span>
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/wishlist')}>
+                      <Heart className="mr-2 h-4 w-4" />
+                      <span>Wishlist</span>
+                    </DropdownMenuItem>
                     {session.user?.isAdmin ? (
                       <DropdownMenuItem onClick={() => router.push('/admin')}>
                         <LayoutGrid className="mr-2 h-4 w-4" />
@@ -341,7 +349,7 @@ function NavbarContent({ categories }) {
       </div>
 
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <SheetContent side="left" className="w-[min(76vw,22rem)] min-w-[16rem] px-4 pb-4 pt-5">
+        <SheetContent side="left" className="w-screen min-w-0 max-w-none px-4 pb-4 pt-5 sm:max-w-none md:w-[min(76vw,22rem)] md:min-w-[16rem] md:max-w-[22rem]">
           <SheetHeader className="sheet-stagger-item px-1">
             <SheetTitle>Browse the store</SheetTitle>
             <SheetDescription>Navigation and category shortcuts in one place.</SheetDescription>
@@ -431,6 +439,10 @@ function NavbarContent({ categories }) {
               </div>
 
               <MyOrdersButton
+                isMobile
+                className="min-h-10 rounded-xl bg-muted/55 px-3.5 py-2.5 hover:bg-muted"
+              />
+              <MyWishlistButton
                 isMobile
                 className="min-h-10 rounded-xl bg-muted/55 px-3.5 py-2.5 hover:bg-muted"
               />

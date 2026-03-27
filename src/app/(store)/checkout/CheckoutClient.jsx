@@ -45,6 +45,7 @@ import { useCart } from '@/context/CartContext';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
 import { getPrimaryProductImage } from '@/lib/productImages';
 import { PAKISTAN_CITIES } from '@/lib/cities';
+import { trackInitiateCheckoutEvent, trackPurchaseEvent } from '@/lib/clientTracking';
 import { cn } from '@/lib/utils';
 
 const formatPrice = (raw) => Number(raw || 0);
@@ -118,6 +119,7 @@ export default function CheckoutClient({ settings }) {
   const [orderState, setOrderState] = useState({ orderId: '', whatsappUrl: '' });
   const [copied, setCopied] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [hasTrackedCheckoutView, setHasTrackedCheckoutView] = useState(false);
 
   // Copy to clipboard function
   const copyToClipboard = () => {
@@ -160,6 +162,12 @@ export default function CheckoutClient({ settings }) {
   const isFreeShipping = subtotal >= Number(settings.freeShippingThreshold || 0);
   const shipping = isFreeShipping ? 0 : shippingBase;
   const total = subtotal + shipping;
+
+  useEffect(() => {
+    if (hasTrackedCheckoutView || cart.length === 0) return;
+    trackInitiateCheckoutEvent({ cart, total });
+    setHasTrackedCheckoutView(true);
+  }, [cart, hasTrackedCheckoutView, total]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -208,6 +216,7 @@ export default function CheckoutClient({ settings }) {
           })),
         });
 
+        trackPurchaseEvent({ orderId: result.orderId, cart, total });
         setOrderState(result);
         clearCart();
       } catch (error) {
@@ -233,7 +242,7 @@ export default function CheckoutClient({ settings }) {
           </EmptyHeader>
           <EmptyContent>
             <Button onClick={() => router.push('/products')}>
-              Browse Products
+              Continue Shopping
             </Button>
           </EmptyContent>
         </Empty>

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/empty";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { trackSearchEvent } from "@/lib/clientTracking";
 import { getProductCategoryNames, hasProductCategory, normalizeCategoryId } from "@/lib/productCategories";
 
 function ProductGridContent({
@@ -205,6 +206,9 @@ function ProductGridContent({
                 onChange={(event) => setSearchTerm(event.target.value)}
                 onSubmit={(event) => {
                   event.preventDefault();
+                  if (searchTerm.trim()) {
+                    trackSearchEvent({ searchString: searchTerm.trim() });
+                  }
                   setIsFocused(false);
                 }}
                 onClear={() => {

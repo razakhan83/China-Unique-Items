@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import CategoryIconCarousel from "@/components/CategoryIconCarousel";
 import HeroSlider from "@/components/HeroSlider";
 import SearchField from "@/components/SearchField";
+import { trackSearchEvent } from "@/lib/clientTracking";
 
 export default function HomeClientWrapper({ heroSlides, categories = [] }) {
   const router = useRouter();
@@ -83,6 +84,7 @@ export default function HomeClientWrapper({ heroSlides, categories = [] }) {
     event?.preventDefault();
     setIsFocused(false);
     if (!searchTerm.trim()) return;
+    trackSearchEvent({ searchString: searchTerm.trim() });
     router.push(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
   }
 

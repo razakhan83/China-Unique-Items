@@ -81,7 +81,7 @@ export default function ProductCard({ product, className = "" }) {
           )}
         </div>
 
-        <ProductCardWishlistSlot />
+        <ProductCardWishlistSlot product={product} />
 
         <Link
           href={productHref}

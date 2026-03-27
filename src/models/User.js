@@ -34,6 +34,10 @@ const UserSchema = new mongoose.Schema(
     forceLogoutAt: {
       type: Date,
     },
+    wishlist: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true,

@@ -7,6 +7,7 @@ import { ArrowDownWideNarrow } from 'lucide-react';
 import { useProductsNavigationFeedback } from '@/components/ProductsNavigationFeedback';
 import SearchField from '@/components/SearchField';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { trackSearchEvent } from '@/lib/clientTracking';
 
 export default function ProductsToolbar({ initialSearch = '', initialSort = 'newest' }) {
   const router = useRouter();
@@ -78,6 +79,9 @@ export default function ProductsToolbar({ initialSearch = '', initialSort = 'new
             onSubmit={(event) => {
               event.preventDefault();
               setIsFocused(false);
+              if (searchTerm.trim()) {
+                trackSearchEvent({ searchString: searchTerm.trim() });
+              }
               navigate(buildHref({ search: searchTerm }));
             }}
             onClear={() => {

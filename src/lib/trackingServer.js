@@ -17,6 +17,14 @@ function normalizePhone(value) {
   return String(value || '').replace(/\D+/g, '');
 }
 
+function sanitizeUserData(userData = {}) {
+  return {
+    em: userData.email ? [sha256(userData.email)] : undefined,
+    ph: userData.phone ? [sha256(normalizePhone(userData.phone))] : undefined,
+    external_id: userData.externalId ? [sha256(userData.externalId)] : undefined,
+  };
+}
+
 function buildContents(items) {
   return items.map((item) => ({
     id: String(item.productId || item.name || ''),
@@ -39,7 +47,14 @@ async function getTrackingSettings() {
   };
 }
 
-async function sendMetaPurchaseEvent({ order, items, settings }) {
+async function sendMetaEvent({
+  eventName,
+  eventId,
+  eventSourceUrl,
+  userData,
+  customData,
+  settings,
+}) {
   if (!settings.facebookPixelId || !settings.facebookConversionsApiToken) {
     return;
   }
@@ -47,22 +62,13 @@ async function sendMetaPurchaseEvent({ order, items, settings }) {
   const payload = {
     data: [
       {
-        event_name: 'Purchase',
+        event_name: eventName,
         event_time: Math.floor(Date.now() / 1000),
-        event_id: order.orderId,
+        event_id: eventId,
         action_source: 'website',
-        event_source_url: `${STORE_URL}/checkout`,
-        user_data: {
-          em: order.customerEmail ? [sha256(order.customerEmail)] : undefined,
-          ph: order.customerPhone ? [sha256(normalizePhone(order.customerPhone))] : undefined,
-          external_id: [sha256(order.orderId)],
-        },
-        custom_data: {
-          currency: 'PKR',
-          value: Number(order.totalAmount || 0),
-          content_type: 'product',
-          contents: buildContents(items),
-        },
+        event_source_url: eventSourceUrl || STORE_URL,
+        user_data: sanitizeUserData(userData),
+        custom_data: customData,
       },
     ],
     test_event_code: settings.facebookTestEventCode || undefined,
@@ -82,6 +88,27 @@ async function sendMetaPurchaseEvent({ order, items, settings }) {
   if (!response.ok) {
     throw new Error(`Meta tracking failed with ${response.status}`);
   }
+}
+
+async function sendMetaPurchaseEvent({ order, items, settings }) {
+  return sendMetaEvent({
+    eventName: 'Purchase',
+    eventId: order.orderId,
+    eventSourceUrl: `${STORE_URL}/checkout`,
+    userData: {
+      email: order.customerEmail,
+      phone: order.customerPhone,
+      externalId: order.orderId,
+    },
+    customData: {
+      currency: 'PKR',
+      value: Number(order.totalAmount || 0),
+      content_type: 'product',
+      contents: buildContents(items),
+      content_ids: items.map((item) => String(item.productId || item.name || '')).filter(Boolean),
+    },
+    settings,
+  });
 }
 
 async function sendTikTokPurchaseEvent({ order, items, settings }) {
@@ -143,5 +170,32 @@ export async function sendPurchaseTrackingEvents({ order, items }) {
     ]);
   } catch (error) {
     console.error('Tracking dispatch failed:', error);
+  }
+}
+
+export async function sendMetaCustomTrackingEvent({
+  eventName,
+  eventId,
+  eventSourceUrl,
+  userData,
+  customData,
+}) {
+  try {
+    const settings = await getTrackingSettings();
+    if (!settings.trackingEnabled) return { success: false, skipped: true };
+
+    await sendMetaEvent({
+      eventName,
+      eventId,
+      eventSourceUrl,
+      userData,
+      customData,
+      settings,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error(`Meta ${eventName} dispatch failed:`, error);
+    return { success: false, error: error.message };
   }
 }

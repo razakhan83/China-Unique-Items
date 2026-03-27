@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import ProductWishlistButton from '@/components/ProductWishlistButton';
 import { cn } from '@/lib/utils';
 import { ShoppingCart, Share2, Minus, Plus } from 'lucide-react';
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
@@ -138,6 +139,11 @@ export default function ProductActions({ product, whatsappNumber = '', storeName
                 >
                     <Share2 />
                 </Button>
+                <ProductWishlistButton
+                    product={product}
+                    mode="detail"
+                    className="shrink-0 px-3"
+                />
             </div>
 
             <div className="fixed bottom-0 left-0 right-0 z-30 flex gap-2 border-t border-border bg-card/95 p-3 shadow-[0_-10px_40px_rgba(10,61,46,0.1)] md:hidden">
@@ -179,6 +185,11 @@ export default function ProductActions({ product, whatsappNumber = '', storeName
                 >
                     <WhatsAppIcon className="size-5" />
                 </Button>
+                <ProductWishlistButton
+                    product={product}
+                    mode="detail"
+                    className="h-11 shrink-0 px-3"
+                />
             </div>
         </div>
     );

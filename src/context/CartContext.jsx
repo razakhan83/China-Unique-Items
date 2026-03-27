@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, Suspense, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 const CART_STORAGE_KEY = 'kifayatly_cart_v2';
@@ -143,6 +143,11 @@ function CartProviderContent({ children }) {
         }));
       },
       clearCart() {
+        try {
+          localStorage.removeItem(CART_STORAGE_KEY);
+        } catch (error) {
+          console.error('Failed to clear cart from local storage', error);
+        }
         setState((current) => ({ ...current, cart: [] }));
       },
     }),
@@ -171,11 +176,7 @@ function CartProviderContent({ children }) {
 }
 
 export function CartProvider({ children }) {
-  return (
-    <Suspense fallback={null}>
-      <CartProviderContent>{children}</CartProviderContent>
-    </Suspense>
-  );
+  return <CartProviderContent>{children}</CartProviderContent>;
 }
 
 export function useCart() {
