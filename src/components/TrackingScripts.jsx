@@ -18,7 +18,7 @@ export default function TrackingScripts({
             strategy="afterInteractive"
           />
           <Script id="facebook-pixel-init" strategy="afterInteractive">
-            {`window.fbq=window.fbq||function(){(window.fbq.q=window.fbq.q||[]).push(arguments)};window._fbq=window._fbq||window.fbq;window.fbq.push=window.fbq;window.fbq.loaded=true;window.fbq.version='2.0';window.fbq.queue=window.fbq.queue||[];window.fbq('init', '${facebookPixelId}');`}
+            {`window.fbq=window.fbq||function(){(window.fbq.q=window.fbq.q||[]).push(arguments)};window._fbq=window._fbq||window.fbq;window.fbq.push=window.fbq;window.fbq.loaded=true;window.fbq.version='2.0';window.fbq.queue=window.fbq.queue||[];window.fbq('init', '${facebookPixelId}');window.fbq('track', 'PageView');`}
           </Script>
         </>
       ) : null}
