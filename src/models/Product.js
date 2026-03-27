@@ -33,6 +33,29 @@ const ProductSchema = new mongoose.Schema(
             type: String,
             required: false,
         },
+        seoTitle: {
+            type: String,
+            trim: true,
+            maxlength: [70, 'SEO title cannot be more than 70 characters'],
+            default: '',
+        },
+        seoDescription: {
+            type: String,
+            trim: true,
+            maxlength: [320, 'SEO description cannot be more than 320 characters'],
+            default: '',
+        },
+        seoKeywords: {
+            type: String,
+            trim: true,
+            maxlength: [250, 'SEO keywords cannot be more than 250 characters'],
+            default: '',
+        },
+        seoCanonicalUrl: {
+            type: String,
+            trim: true,
+            default: '',
+        },
         Price: {
             type: Number,
             required: [true, 'Please provide a price.'],

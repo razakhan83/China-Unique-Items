@@ -82,6 +82,10 @@ export async function PUT(request, { params }) {
 
         existingProduct.Name = body.Name;
         existingProduct.Description = body.Description;
+        existingProduct.seoTitle = typeof body.seoTitle === 'string' ? body.seoTitle.trim() : '';
+        existingProduct.seoDescription = typeof body.seoDescription === 'string' ? body.seoDescription.trim() : '';
+        existingProduct.seoKeywords = typeof body.seoKeywords === 'string' ? body.seoKeywords.trim() : '';
+        existingProduct.seoCanonicalUrl = typeof body.seoCanonicalUrl === 'string' ? body.seoCanonicalUrl.trim() : '';
         existingProduct.Price = Number(body.Price);
         existingProduct.Images = normalizedImages;
         existingProduct.Category = categoryArray;

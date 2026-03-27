@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import HomeClientWrapper from '@/components/HomeClientWrapper';
 import HomeCategories from '@/components/HomeCategories';
 import HomePageSkeleton from '@/components/HomePageSkeleton';
-import { getHomeSections } from '@/lib/data';
+import { getHomeSections, getStoreCategories } from '@/lib/data';
 
 const heroSlides = [
   { mobileSrc: '/hero1.webp', pcSrc: '/hero1pc.webp', alt: 'Kitchen Promotion 1' },
@@ -21,7 +21,10 @@ export default function Home() {
 }
 
 async function HomeContent() {
-  const { categories, coverPhotos, sections } = await getHomeSections();
+  const [{ coverPhotos, sections }, categories] = await Promise.all([
+    getHomeSections(),
+    getStoreCategories(),
+  ]);
   const activeHeroSlides = coverPhotos.length
     ? coverPhotos.map((item, index) => ({
         desktopImage: item.desktopImage,
@@ -35,7 +38,7 @@ async function HomeContent() {
     <>
       <HomeClientWrapper
         heroSlides={activeHeroSlides}
-        categories={categories.filter((category) => category.id !== 'special-offers')}
+        categories={categories}
       />
       <HomeCategories sections={sections} />
     </>

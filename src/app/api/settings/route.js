@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { revalidateTag } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -43,6 +43,7 @@ export async function GET() {
                 freeShippingThreshold: Number(settings.freeShippingThreshold || 5000),
                 announcementBarEnabled: settings.announcementBarEnabled ?? true,
                 announcementBarText: settings.announcementBarText || '',
+                homepageSectionOrder: Array.isArray(settings.homepageSectionOrder) ? settings.homepageSectionOrder : [],
             },
         });
     } catch (error) {
@@ -81,6 +82,7 @@ export async function PUT(req) {
             'freeShippingThreshold',
             'announcementBarEnabled',
             'announcementBarText',
+            'homepageSectionOrder',
         ];
 
         const updates = {};
@@ -98,6 +100,8 @@ export async function PUT(req) {
 
         settings._id = settings._id.toString();
         revalidateTag('settings', 'max');
+        revalidateTag('home-sections');
+        revalidatePath('/');
 
         return NextResponse.json({ success: true, data: settings });
     } catch (error) {

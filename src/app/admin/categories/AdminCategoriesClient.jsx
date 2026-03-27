@@ -27,7 +27,10 @@ import {
   Pencil,
   Plus,
   Save,
+  Sparkles,
+  Tag,
   Trash2,
+  Trophy,
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -55,6 +58,16 @@ import { uploadImageDataUrl } from "@/lib/cloudinaryUpload";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
 import { cn } from "@/lib/utils";
 
+const MARKETING_SECTION_ITEMS = [
+  { _id: "special-offers", name: "Special Offer", slug: "special-offers", icon: Tag },
+  { _id: "new-arrivals", name: "New Arrivals", slug: "new-arrivals", icon: Sparkles },
+  { _id: "best-selling", name: "Best Selling", slug: "best-selling", icon: Trophy },
+];
+
+function sanitizeSectionOrder(order, fallbackOrder = []) {
+  return Array.from(new Set([...(Array.isArray(order) ? order : []), ...fallbackOrder].filter(Boolean)));
+}
+
 function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabled, onToggleHome }) {
   const {
     attributes,
@@ -63,7 +76,9 @@ function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabl
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: category._id });
+  } = useSortable({ id: category.sectionKey });
+  const Icon = category.icon || ImageIcon;
+  const isVirtualSection = category.sectionType === "marketing";
 
   return (
     <div
@@ -98,7 +113,7 @@ function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabl
             {...getBlurPlaceholderProps(category.blurDataURL)}
           />
         ) : (
-          <ImageIcon className="size-5 text-muted-foreground" />
+          <Icon className="size-5 text-muted-foreground" />
         )}
       </div>
 
@@ -115,7 +130,7 @@ function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabl
       </div>
 
       {/* Home On/Off toggle */}
-      {category.slug !== "special-offers" ? (
+      {!isVirtualSection && category.slug !== "special-offers" ? (
         <div className="flex flex-col items-end gap-1 pr-1">
           <span className={cn(
             "text-[9px] font-black uppercase tracking-widest",
@@ -140,7 +155,16 @@ function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabl
             )} />
           </button>
         </div>
-      ) : <div className="w-16" />}
+      ) : (
+        <div className="flex w-20 flex-col items-end gap-1 pr-1">
+          <span className="text-[9px] font-black uppercase tracking-widest text-primary">
+            Fixed On
+          </span>
+          <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+            Home
+          </span>
+        </div>
+      )}
 
       {/* Three-dot actions dropdown */}
       <DropdownMenu>
@@ -156,11 +180,13 @@ function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabl
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onEdit?.(category)}>
-            <Pencil className="mr-2 size-4" />
-            Edit
-          </DropdownMenuItem>
-          {category.slug !== "special-offers" && (
+          {!isVirtualSection ? (
+            <DropdownMenuItem onClick={() => onEdit?.(category)}>
+              <Pencil className="mr-2 size-4" />
+              Edit
+            </DropdownMenuItem>
+          ) : null}
+          {!isVirtualSection && category.slug !== "special-offers" && (
             <DropdownMenuItem
               className="text-destructive focus:bg-destructive/10 focus:text-destructive"
               onClick={() => onDelete(category)}
@@ -177,6 +203,7 @@ function SortableCategoryCard({ category, index, onEdit, onDelete, onToggleEnabl
 
 export default function AdminCategoriesClient() {
   const [categories, setCategories] = useState([]);
+  const [sectionOrder, setSectionOrder] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -209,7 +236,30 @@ export default function AdminCategoriesClient() {
     }),
   );
 
-  const categoryIds = useMemo(() => categories.map((category) => category._id), [categories]);
+const orderedSections = useMemo(() => {
+    const marketingIds = new Set(MARKETING_SECTION_ITEMS.map((item) => item.slug));
+    const categoryItems = categories
+      .filter((category) => !marketingIds.has(category.slug))
+      .map((category) => ({
+        ...category,
+        sectionType: "category",
+        icon: null,
+        sectionKey: category.slug,
+      }));
+    const sectionMap = new Map([
+      ...MARKETING_SECTION_ITEMS.map((item) => [item.slug, { ...item, sectionType: "marketing", image: "", sectionKey: item.slug }]),
+      ...categoryItems.map((item) => [item.sectionKey, item]),
+    ]);
+    const fallbackOrder = [
+      ...MARKETING_SECTION_ITEMS.map((item) => item.slug),
+      ...categoryItems.map((item) => item.sectionKey),
+    ];
+    const finalOrder = sanitizeSectionOrder(sectionOrder, fallbackOrder);
+
+    return finalOrder.map((id) => sectionMap.get(id)).filter(Boolean);
+  }, [categories, sectionOrder]);
+
+  const categoryIds = useMemo(() => orderedSections.map((category) => category.sectionKey), [orderedSections]);
 
   useEffect(() => {
     fetchCategories();
@@ -218,8 +268,12 @@ export default function AdminCategoriesClient() {
   async function fetchCategories() {
     try {
       setLoading(true);
-      const response = await fetch("/api/categories", { cache: "no-store" });
+      const [response, settingsResponse] = await Promise.all([
+        fetch("/api/categories", { cache: "no-store" }),
+        fetch("/api/settings", { cache: "no-store" }),
+      ]);
       const data = await response.json();
+      const settingsData = await settingsResponse.json();
 
       if (!data.success) {
         throw new Error(data.error || "Failed to fetch categories");
@@ -238,6 +292,11 @@ export default function AdminCategoriesClient() {
           showOnHome: category.showOnHome !== false,
         })),
       );
+      setSectionOrder(
+        settingsData.success
+          ? sanitizeSectionOrder(settingsData.data?.homepageSectionOrder)
+          : []
+      );
     } catch (error) {
       console.error("Failed to fetch categories:", error);
       toast.error("Failed to load categories");
@@ -250,15 +309,13 @@ export default function AdminCategoriesClient() {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    setCategories((current) => {
-      const oldIndex = current.findIndex((item) => item._id === active.id);
-      const newIndex = current.findIndex((item) => item._id === over.id);
-      const reordered = arrayMove(current, oldIndex, newIndex);
-
-      return reordered.map((item, index) => ({
-        ...item,
-        sortOrder: index,
-      }));
+    setSectionOrder((current) => {
+      const baseOrder = sanitizeSectionOrder(
+        current.length > 0 ? current : orderedSections.map((item) => item.sectionKey)
+      );
+      const oldIndex = baseOrder.findIndex((item) => item === active.id);
+      const newIndex = baseOrder.findIndex((item) => item === over.id);
+      return arrayMove(baseOrder, oldIndex, newIndex);
     });
   }
 
@@ -414,19 +471,29 @@ export default function AdminCategoriesClient() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          categories: categories.map((category, index) => ({
+          categories: orderedSections
+            .filter((category) => category.sectionType === "category")
+            .map((category, index) => ({
             _id: category._id,
             sortOrder: index,
           })),
         }),
       });
+      const settingsResponse = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          homepageSectionOrder: sanitizeSectionOrder(orderedSections.map((item) => item.sectionKey)),
+        }),
+      });
 
       const data = await response.json();
-      if (!data.success) {
+      const settingsData = await settingsResponse.json();
+      if (!data.success || !settingsData.success) {
         throw new Error(data.error || "Failed to save category order");
       }
 
-      toast.success("Category order saved. Home sections will follow this sequence.");
+      toast.success("Homepage section order saved.");
       setCategories(
         (data.data || []).map((category, index) => ({
           _id: category._id,
@@ -439,6 +506,13 @@ export default function AdminCategoriesClient() {
           isEnabled: category.isEnabled ?? true,
           showOnHome: category.showOnHome !== false,
         })),
+      );
+      setSectionOrder(
+        sanitizeSectionOrder(
+          Array.isArray(settingsData.data?.homepageSectionOrder)
+            ? settingsData.data.homepageSectionOrder
+            : orderedSections.map((item) => item.sectionKey)
+        )
       );
     } catch (error) {
       toast.error(error.message || "Failed to save category order");
@@ -508,10 +582,17 @@ export default function AdminCategoriesClient() {
       const response = await fetch(`/api/categories/${categoryId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ showOnHome: nextStatus }),
+        body: JSON.stringify({ showOnHome: nextStatus, ...(nextStatus ? { isEnabled: true } : {}) }),
       });
 
       if (!response.ok) throw new Error('Failed to update home visibility');
+      if (nextStatus) {
+        setCategories((prev) =>
+          prev.map((category) => (
+            category._id === categoryId ? { ...category, isEnabled: true, showOnHome: nextStatus } : category
+          ))
+        );
+      }
       toast.success(nextStatus ? 'Category shown on home' : 'Category hidden from home');
     } catch (error) {
       setCategories(originalCategories);
@@ -524,8 +605,8 @@ export default function AdminCategoriesClient() {
       <div className="mb-6">
         <h2 className="text-2xl font-bold tracking-tight text-foreground">Categories</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Add a category image, then drag categories into the order you want the home page sections to appear.
-          Use the Home toggle on each row to decide whether a category shows on the homepage.
+          Add a category image, then drag homepage sections into the order you want them to appear.
+          Special Offer, New Arrivals, Best Selling, and your category sections all use this same sequence.
         </p>
       </div>
 
@@ -584,7 +665,7 @@ export default function AdminCategoriesClient() {
             <div key={index} className="surface-card h-24 animate-pulse rounded-2xl" />
           ))}
         </div>
-      ) : categories.length === 0 ? (
+      ) : orderedSections.length === 0 ? (
         <div className="surface-card rounded-2xl p-12 text-center">
           <p className="font-medium text-muted-foreground">No categories yet. Add your first category above.</p>
         </div>
@@ -593,9 +674,9 @@ export default function AdminCategoriesClient() {
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={categoryIds} strategy={verticalListSortingStrategy}>
               <div className="space-y-3">
-                {categories.map((category, index) => (
+                {orderedSections.map((category, index) => (
                   <SortableCategoryCard
-                    key={category._id}
+                    key={category.sectionKey}
                     category={category}
                     index={index}
                     onEdit={openEditModal}
@@ -616,7 +697,7 @@ export default function AdminCategoriesClient() {
               {saving ? "Saving..." : "Save Category Order"}
             </Button>
             <p className="text-xs text-muted-foreground">
-              This order controls the category product sections on the home page.
+              This order controls all homepage product sections, including Special Offer, New Arrivals, and Best Selling.
             </p>
           </div>
         </>

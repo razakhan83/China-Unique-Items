@@ -31,6 +31,10 @@ export default function EditProduct({ id }) {
 
   const [Name, setName] = useState('');
   const [Description, setDescription] = useState('');
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoDescription, setSeoDescription] = useState('');
+  const [seoKeywords, setSeoKeywords] = useState('');
+  const [seoCanonicalUrl, setSeoCanonicalUrl] = useState('');
   const [Price, setPrice] = useState('');
   const [Categories, setCategories] = useState([]); // array of selected category ids
   const [images, setImages] = useState([]); // Array of { url, blurDataURL, publicId, file, isNew }
@@ -74,6 +78,10 @@ export default function EditProduct({ id }) {
           const p = data.data;
           setName(p.Name || '');
           setDescription(p.Description || '');
+          setSeoTitle(p.seoTitle || '');
+          setSeoDescription(p.seoDescription || '');
+          setSeoKeywords(p.seoKeywords || '');
+          setSeoCanonicalUrl(p.seoCanonicalUrl || '');
           setPrice(p.Price || '');
           setCategories(getProductCategories(p).map((category) => category._id || category.id));
           
@@ -224,6 +232,10 @@ export default function EditProduct({ id }) {
         body: JSON.stringify({
           Name,
           Description,
+          seoTitle,
+          seoDescription,
+          seoKeywords,
+          seoCanonicalUrl,
           Price: Number(Price),
           Images: finalImages,
           Category: Categories,
@@ -256,6 +268,24 @@ export default function EditProduct({ id }) {
       </div>
     );
   }
+
+  const trimmedSeoTitle = seoTitle.trim();
+  const trimmedSeoDescription = seoDescription.trim();
+  const trimmedSeoKeywords = seoKeywords.trim();
+  const trimmedSeoCanonicalUrl = seoCanonicalUrl.trim();
+  const fallbackSlug = Name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const seoPreviewTitle = trimmedSeoTitle || Name || 'Product title preview';
+  const seoPreviewDescription =
+    trimmedSeoDescription || Description || 'Add a focused product summary to improve search snippets.';
+  const seoPreviewUrl =
+    trimmedSeoCanonicalUrl || `https://china-unique-items.vercel.app/products/${fallbackSlug || id}`;
+  const seoChecks = [
+    { label: 'SEO title', complete: trimmedSeoTitle.length >= 10 },
+    { label: 'Meta description', complete: trimmedSeoDescription.length >= 50 },
+    { label: 'Keywords', complete: trimmedSeoKeywords.length > 0 },
+  ];
+  const seoCompleteCount = seoChecks.filter((item) => item.complete).length;
+  const seoReady = seoCompleteCount === seoChecks.length;
 
   return (
     <div className="w-full pb-10">
@@ -472,6 +502,112 @@ export default function EditProduct({ id }) {
               placeholder="Enter product description..."
               rows="4"
             />
+          </div>
+
+          <div className="space-y-4 rounded-xl border border-border bg-muted/35 p-4 md:p-5">
+            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">SEO & Metadata</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  These fields power the product page title, description, canonical URL, and schema markup.
+                </p>
+              </div>
+              <div
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold',
+                  seoReady
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                    : 'border-amber-200 bg-amber-50 text-amber-700',
+                )}
+              >
+                <Check className={cn('size-3.5', seoReady ? 'text-emerald-600' : 'text-amber-600')} />
+                {seoReady ? 'SEO basics complete' : `${seoCompleteCount}/${seoChecks.length} SEO basics complete`}
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div>
+                <Label className="mb-2">SEO Title</Label>
+                <Input
+                  type="text"
+                  value={seoTitle}
+                  onChange={(e) => setSeoTitle(e.target.value)}
+                  className="h-11 px-4"
+                  placeholder="Custom search title for this product"
+                  maxLength={70}
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">{seoTitle.length}/70 characters</p>
+              </div>
+
+              <div>
+                <Label className="mb-2">Meta Description</Label>
+                <Textarea
+                  value={seoDescription}
+                  onChange={(e) => setSeoDescription(e.target.value)}
+                  className="min-h-24 resize-none px-4 py-3"
+                  placeholder="Short product summary for search engines and social previews"
+                  rows="3"
+                  maxLength={320}
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">{seoDescription.length}/320 characters</p>
+              </div>
+
+              <div>
+                <Label className="mb-2">Keywords</Label>
+                <Input
+                  type="text"
+                  value={seoKeywords}
+                  onChange={(e) => setSeoKeywords(e.target.value)}
+                  className="h-11 px-4"
+                  placeholder="e.g., tea set, chinese tea cups, luxury gift"
+                />
+              </div>
+
+              <div>
+                <Label className="mb-2">Canonical URL</Label>
+                <Input
+                  type="url"
+                  value={seoCanonicalUrl}
+                  onChange={(e) => setSeoCanonicalUrl(e.target.value)}
+                  className="h-11 px-4"
+                  placeholder="https://china-unique-items.vercel.app/products/your-product"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="rounded-xl border border-border bg-background p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Search Preview</p>
+                <div className="mt-3 space-y-1.5">
+                  <p className="line-clamp-2 text-base font-semibold text-primary">{seoPreviewTitle}</p>
+                  <p className="truncate text-xs text-emerald-700">{seoPreviewUrl}</p>
+                  <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">{seoPreviewDescription}</p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-background p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Completion Check</p>
+                <div className="mt-3 space-y-2">
+                  {seoChecks.map((item) => (
+                    <div
+                      key={item.label}
+                      className={cn(
+                        'flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium',
+                        item.complete
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          : 'border-border bg-muted/40 text-muted-foreground',
+                      )}
+                    >
+                      <span>{item.label}</span>
+                      <span className="inline-flex items-center gap-1">
+                        <Check className={cn('size-3.5', item.complete ? 'opacity-100' : 'opacity-30')} />
+                        {item.complete ? 'Ready' : 'Missing'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
 

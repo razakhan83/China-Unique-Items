@@ -48,7 +48,6 @@ function CartProviderContent({ children }) {
       console.error('Failed to parse cart from local storage', error);
     }
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setState((current) => ({ ...current, isInitialized: true }));
   }, []);
 
@@ -80,7 +79,7 @@ function CartProviderContent({ children }) {
       openSidebar() {
         setState((current) => ({ ...current, isCartOpen: false, isSidebarOpen: true }));
       },
-      addToCart(product, qtyToAdd = 1) {
+      async addToCart(product, qtyToAdd = 1) {
         const normalized = normalizeCartItem({ ...product, quantity: qtyToAdd });
         setState((current) => {
           const existingIndex = current.cart.findIndex((item) => item.id === normalized.id);
@@ -115,6 +114,8 @@ function CartProviderContent({ children }) {
               setState((current) => ({ ...current, isSidebarOpen: false, isCartOpen: true })),
           },
         });
+
+        return { success: true };
       },
       removeFromCart(product) {
         const itemId = getCartItemId(product);

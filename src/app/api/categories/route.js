@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { revalidateTag } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -96,6 +96,8 @@ export async function POST(req) {
       showOnHome: body.showOnHome !== false,
     });
     revalidateTag('categories', 'max');
+    revalidateTag('home-sections');
+    revalidatePath('/');
     return NextResponse.json(
       {
         success: true,
@@ -159,6 +161,8 @@ export async function PUT(req) {
     // Return the freshly-sorted list so the frontend can use it directly
     const updated = await Category.find({}).sort({ sortOrder: 1, name: 1 }).lean();
     revalidateTag('categories', 'max');
+    revalidateTag('home-sections');
+    revalidatePath('/');
     return NextResponse.json({ success: true, message: "Sort order updated", data: updated });
   } catch (error) {
     return NextResponse.json(
@@ -205,6 +209,8 @@ export async function DELETE(req) {
     const deleted = await Category.findByIdAndDelete(id);
 
     revalidateTag('categories', 'max');
+    revalidateTag('home-sections');
+    revalidatePath('/');
     return NextResponse.json({ success: true, message: "Category deleted" });
   } catch (error) {
     return NextResponse.json(

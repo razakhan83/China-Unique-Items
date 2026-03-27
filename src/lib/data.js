@@ -24,6 +24,15 @@ import { normalizeProductImages } from '@/lib/productImages';
 
 const SETTINGS_KEY = 'site-settings';
 const COVER_PHOTOS_KEY = 'home-cover-photos';
+const HOME_MARKETING_SECTIONS = [
+  { id: 'special-offers', label: 'Special Offer', iconName: 'Tag' },
+  { id: 'new-arrivals', label: 'New Arrivals', iconName: 'Sparkles' },
+  { id: 'best-selling', label: 'Best Selling', iconName: 'Trophy' },
+];
+
+function sanitizeSectionOrder(order, fallbackOrder = []) {
+  return Array.from(new Set([...(Array.isArray(order) ? order : []), ...fallbackOrder].filter(Boolean)));
+}
 
 function escapeRegex(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -92,6 +101,7 @@ function toProductDetailView(product) {
     Category: product.Category,
     Images: product.Images,
     StockStatus: product.StockStatus || 'Out of Stock',
+    isLive: product.isLive !== false,
     stockQuantity: Number(product.stockQuantity || 0),
     createdAt: product.createdAt,
     discountPercentage: Number(product.discountPercentage || 0),
@@ -287,6 +297,7 @@ async function getSettingsRaw() {
     freeShippingThreshold: Number(settings.freeShippingThreshold || 3000),
     announcementBarEnabled: settings.announcementBarEnabled ?? true,
     announcementBarText: settings.announcementBarText || '',
+    homepageSectionOrder: Array.isArray(settings.homepageSectionOrder) ? settings.homepageSectionOrder : [],
   };
 }
 
@@ -438,17 +449,19 @@ export async function getStoreCategories() {
   'use cache';
   cacheLife('foreverish');
   cacheTag('categories');
-  return getCategoriesRaw();
+  const categories = await getCategoriesRaw();
+  return categories.filter((category) => category.isEnabled !== false && category.id !== 'special-offers');
 }
 
 export async function getHomeSections() {
   'use cache';
   cacheLife('foreverish');
   cacheTag('home-sections', 'products', 'categories', 'cover-photos');
-  const [products, categories, coverPhotos] = await Promise.all([
+  const [products, categories, coverPhotos, settings] = await Promise.all([
     getLiveProductsRaw(),
     getCategoriesRaw(),
     getCoverPhotosRaw(),
+    getSettingsRaw(),
   ]);
   const featuredProducts = products.slice(0, 8).map(toProductCardItem);
   const sections = categories
@@ -488,7 +501,7 @@ export async function getHomeSections() {
     .filter((section) => 
       (
         section.category.id === 'special-offers' ||
-        (section.category.isEnabled !== false && section.category.showOnHome !== false)
+        section.category.showOnHome !== false
       ) &&
       (section.category.id === 'special-offers' || section.products.length > 0)
     );
@@ -517,15 +530,28 @@ export async function getHomeSections() {
     };
   }).filter(Boolean);
 
-  // Combine and sort sections: Special Offers first, then Marketing, then Categories
-  const finalSections = [
-    ...sections.filter(s => s.category.id === 'special-offers'),
-    ...marketingSections,
-    ...sections.filter(s => s.category.id !== 'special-offers')
+  const defaultOrder = [
+    ...HOME_MARKETING_SECTIONS.map((section) => section.id),
+    ...categories
+      .filter((category) => !HOME_MARKETING_SECTIONS.some((section) => section.id === category.id))
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((category) => category.id),
   ];
+  const fullOrder = sanitizeSectionOrder(settings.homepageSectionOrder, defaultOrder);
+
+  const sectionMap = new Map(
+    [...sections, ...marketingSections].map((section) => [section.category.id, section])
+  );
+  const orderedSections = fullOrder
+    .map((id) => sectionMap.get(id))
+    .filter(Boolean);
+  const remainingSections = [...sectionMap.values()].filter(
+    (section) => !fullOrder.includes(section.category.id)
+  );
+  const finalSections = [...orderedSections, ...remainingSections];
 
   return {
-    categories: categories.filter(c => c.isEnabled !== false),
+    categories: categories.filter((category) => category.isEnabled !== false && category.id !== 'special-offers'),
     coverPhotos,
     featuredProducts,
     sections: finalSections,
@@ -1334,5 +1360,6 @@ export async function getAdminSettings() {
     freeShippingThreshold: Number(settings.freeShippingThreshold || 3000),
     announcementBarEnabled: settings.announcementBarEnabled ?? true,
     announcementBarText: settings.announcementBarText || '',
+    homepageSectionOrder: Array.isArray(settings.homepageSectionOrder) ? settings.homepageSectionOrder : [],
   };
 }

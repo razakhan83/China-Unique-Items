@@ -92,10 +92,19 @@ const SettingsSchema = new mongoose.Schema(
             type: [String],
             default: [],
         },
+        homepageSectionOrder: {
+            type: [String],
+            default: [],
+        },
     },
     {
         timestamps: true,
     }
 );
+
+const cachedSettings = mongoose.models.Settings;
+if (cachedSettings && !cachedSettings.schema.path('homepageSectionOrder')) {
+    delete mongoose.models.Settings;
+}
 
 export default mongoose.models.Settings || mongoose.model('Settings', SettingsSchema);

@@ -10,9 +10,6 @@ import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from "@/lib/cloudinar
 import { getPrimaryProductImage } from "@/lib/productImages";
 import { getBlurPlaceholderProps } from "@/lib/imagePlaceholder";
 
-const BADGE_OVERLAY_SURFACE =
-  "product-card-overlay-badge border border-border/60 bg-background/90 text-foreground backdrop-blur-md";
-
 const formatPrice = (raw) => {
   let cleanNumbers = String(raw).replace(/[^\d.]/g, "");
   if (!cleanNumbers) return "Rs. 0";
@@ -38,6 +35,7 @@ export default function ProductCard({ product, className = "" }) {
 
   const discountLabel = getDiscountBadge(product);
   const dummyReviewLabel = product.averageRating || product.rating || "4.2";
+  const isUnavailable = product.StockStatus === "Out of Stock" || product.isLive === false;
 
   const hasRealDiscount = Boolean(product.isDiscounted && product.discountPercentage > 0);
   const discountedPrice = hasRealDiscount
@@ -59,9 +57,7 @@ export default function ProductCard({ product, className = "" }) {
         <div className="pointer-events-none absolute left-2.5 top-2.5 z-10 flex flex-col items-start gap-1.5">
           <Badge
             className={cn(
-              "pointer-events-auto rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums",
-              BADGE_OVERLAY_SURFACE,
-              "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+              "pointer-events-auto rounded-full border border-neutral-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700 shadow-sm tabular-nums"
             )}
           >
             <Star className="mr-1 size-3.5 fill-current" />
@@ -71,9 +67,7 @@ export default function ProductCard({ product, className = "" }) {
           {discountLabel && (
             <Badge
               className={cn(
-                "pointer-events-auto rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em]",
-                BADGE_OVERLAY_SURFACE,
-                "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                "pointer-events-auto rounded-full border border-neutral-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm uppercase tracking-[0.08em]"
               )}
             >
               {discountLabel}
@@ -97,7 +91,10 @@ export default function ProductCard({ product, className = "" }) {
               draggable={false}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               loading="lazy"
-              className="object-cover outline outline-1 outline-black/5 transition-transform duration-500 ease-out md:group-hover:scale-105"
+              className={cn(
+                "object-cover outline outline-1 outline-black/5 transition-transform duration-500 ease-out md:group-hover:scale-105",
+                isUnavailable && "scale-[1.01] saturate-[0.85] opacity-75"
+              )}
               {...getBlurPlaceholderProps(primaryImage.blurDataURL)}
             />
           ) : (
@@ -105,6 +102,7 @@ export default function ProductCard({ product, className = "" }) {
               <ShoppingCart className="size-10 text-muted-foreground/30" />
             </div>
           )}
+
         </Link>
       </div>
 
@@ -150,7 +148,7 @@ export default function ProductCard({ product, className = "" }) {
               </p>
             )}
           </div>
-          <ProductCardAddToCartButton product={product} />
+          <ProductCardAddToCartButton product={product} isOutOfStock={isUnavailable} />
         </div>
       </CardContent>
     </Card>

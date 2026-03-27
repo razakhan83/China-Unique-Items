@@ -33,7 +33,33 @@ function getProductUrl(product) {
 }
 
 function getProductDescription(product) {
-  return product.Description || `Buy ${product.Name} from China Unique Store.`;
+  return product.seoDescription || product.Description || `Buy ${product.Name} from China Unique Store.`;
+}
+
+function getProductTitle(product) {
+  return product.seoTitle || product.Name;
+}
+
+function getCanonicalUrl(product) {
+  const canonicalUrl = product.seoCanonicalUrl?.trim();
+  if (canonicalUrl) {
+    return canonicalUrl;
+  }
+
+  return getProductUrl(product);
+}
+
+function getProductKeywords(product, categories) {
+  const keywords = (product.seoKeywords || '')
+    .split(',')
+    .map((keyword) => keyword.trim())
+    .filter(Boolean);
+
+  if (keywords.length > 0) {
+    return keywords;
+  }
+
+  return [product.Name, ...categories.map((category) => category.name).filter(Boolean)];
 }
 
 function getShareDescription(product) {
@@ -48,22 +74,25 @@ function getPrimaryImage(product) {
 function getProductJsonLd({ product, reviewSummary }) {
   const categories = getProductCategories(product);
   const categoryNames = categories.map((category) => category.name).filter(Boolean);
+  const keywords = getProductKeywords(product, categories);
   const price = Number(product.discountedPrice ?? product.Price ?? 0);
+  const productTitle = getProductTitle(product);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: product.Name,
+    name: productTitle,
     description: getProductDescription(product),
     image: product.Images?.map((image) => image.url).filter(Boolean) || [],
     sku: product.slug || product._id,
     category: categoryNames[0] || undefined,
+    keywords: keywords.join(', '),
     brand: {
       '@type': 'Brand',
       name: 'China Unique Store',
     },
     offers: {
       '@type': 'Offer',
-      url: getProductUrl(product),
+      url: getCanonicalUrl(product),
       priceCurrency: 'PKR',
       price,
       availability:
@@ -112,21 +141,24 @@ export async function generateMetadata({ params }) {
   }
 
   const reviewSummary = await getProductReviewSummary(product._id);
-  const productUrl = getProductUrl(product);
+  const categories = getProductCategories(product);
+  const productTitle = getProductTitle(product);
+  const productUrl = getCanonicalUrl(product);
   const productImage = getPrimaryImage(product);
-  const productDescription = getProductDescription(product);
   const shareDescription = getShareDescription(product);
+  const keywords = getProductKeywords(product, categories);
   const price = Number(product.discountedPrice ?? product.Price ?? 0);
   const availability = product.StockStatus === 'In Stock' ? 'in stock' : 'out of stock';
 
   return {
-    title: product.Name,
+    title: productTitle,
     description: shareDescription,
+    keywords,
     alternates: {
       canonical: productUrl,
     },
     openGraph: {
-      title: product.Name,
+      title: productTitle,
       description: shareDescription,
       type: 'website',
       url: productUrl,
@@ -136,13 +168,13 @@ export async function generateMetadata({ params }) {
           url: productImage,
           width: 1200,
           height: 630,
-          alt: product.Name,
+          alt: productTitle,
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title: product.Name,
+      title: productTitle,
       description: shareDescription,
       images: [productImage],
     },
@@ -233,6 +265,7 @@ async function ProductHeroSection({ slugPromise }) {
   const productJsonLd = getProductJsonLd({ product, reviewSummary });
   const price = Number(product.discountedPrice ?? product.Price ?? 0);
   const availability = product.StockStatus === 'In Stock' ? 'in stock' : 'out of stock';
+  const isOutOfStock = product.StockStatus === 'Out of Stock' || product.isLive === false;
 
   return (
     <>
@@ -272,9 +305,16 @@ async function ProductHeroSection({ slugPromise }) {
               </Badge>
             </div>
 
-            <h1 className="text-2xl font-black tracking-tight text-foreground md:text-3xl lg:text-4xl">
-              {product.Name}
-            </h1>
+            <div className="flex flex-wrap items-start gap-3">
+              <h1 className="text-2xl font-black tracking-tight text-foreground md:text-3xl lg:text-4xl">
+                {product.Name}
+              </h1>
+              {isOutOfStock ? (
+                <Badge variant="destructive" className="rounded-full px-3 py-1.5 text-xs uppercase tracking-[0.14em]">
+                  Out of Stock
+                </Badge>
+              ) : null}
+            </div>
 
             <div className="flex flex-wrap items-baseline gap-3">
               {product.isDiscounted && product.discountPercentage > 0 ? (
