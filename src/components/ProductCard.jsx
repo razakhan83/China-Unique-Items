@@ -57,7 +57,7 @@ export default function ProductCard({ product, className = "" }) {
         <div className="pointer-events-none absolute left-2.5 top-2.5 z-10 flex flex-col items-start gap-1.5">
           <Badge
             className={cn(
-              "pointer-events-auto rounded-full border border-neutral-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700 shadow-sm tabular-nums"
+              "pointer-events-auto rounded-full border border-neutral-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700 tabular-nums"
             )}
           >
             <Star className="mr-1 size-3.5 fill-current" />
@@ -67,7 +67,7 @@ export default function ProductCard({ product, className = "" }) {
           {discountLabel && (
             <Badge
               className={cn(
-                "pointer-events-auto rounded-full border border-neutral-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-emerald-700 shadow-sm uppercase tracking-[0.08em]"
+                "pointer-events-auto rounded-full border border-neutral-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-emerald-700 uppercase tracking-[0.08em]"
               )}
             >
               {discountLabel}

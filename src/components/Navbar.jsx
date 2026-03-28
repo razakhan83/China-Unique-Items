@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, Suspense } from 'react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -112,11 +112,20 @@ function NavbarContent({ categories }) {
   const [isFocused, setIsFocused] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const closeCategoriesTimeoutRef = useRef(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm), 250);
     return () => clearTimeout(timer);
   }, [searchTerm]);
+
+  useEffect(() => {
+    return () => {
+      if (closeCategoriesTimeoutRef.current) {
+        window.clearTimeout(closeCategoriesTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const suggestions = useMemo(() => [], []);
 
@@ -139,11 +148,35 @@ function NavbarContent({ categories }) {
 
   function navLinkClass(path) {
     return cn(
-      'rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+      'inline-flex min-h-10 items-center rounded-lg px-3 py-2 text-sm font-medium transition-[background-color,color,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] active:scale-[0.96]',
       pathname === path
         ? 'bg-primary text-primary-foreground'
         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
     );
+  }
+
+  function desktopNavButtonClass(isActive = false) {
+    return cn(
+      'inline-flex min-h-10 items-center rounded-lg px-3 py-2 text-sm font-medium transition-[background-color,color,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] active:scale-[0.96]',
+      isActive
+        ? 'bg-primary text-primary-foreground'
+        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+    );
+  }
+
+  function cancelCategoriesClose() {
+    if (closeCategoriesTimeoutRef.current) {
+      window.clearTimeout(closeCategoriesTimeoutRef.current);
+      closeCategoriesTimeoutRef.current = null;
+    }
+  }
+
+  function scheduleCategoriesClose() {
+    cancelCategoriesClose();
+    closeCategoriesTimeoutRef.current = window.setTimeout(() => {
+      setIsCategoriesOpen(false);
+      closeCategoriesTimeoutRef.current = null;
+    }, 120);
   }
 
   const mobileItems = [
@@ -180,16 +213,33 @@ function NavbarContent({ categories }) {
           <Link href="/" className={navLinkClass('/')}>Home</Link>
           <Link href="/products" scroll={true} className={navLinkClass('/products')}>All Products</Link>
           <DropdownMenu open={isCategoriesOpen} onOpenChange={setIsCategoriesOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                Categories
-                <ChevronDown className={cn('size-4 transition-transform', isCategoriesOpen && 'rotate-180')} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-60 p-1" align="start" sideOffset={8}>
+            <div
+              onPointerEnter={() => {
+                cancelCategoriesClose();
+                setIsCategoriesOpen(true);
+              }}
+              onPointerLeave={scheduleCategoriesClose}
+            >
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    desktopNavButtonClass(isCategoriesOpen || (pathname === '/products' && activeCategory !== 'all')),
+                    'gap-2'
+                  )}
+                >
+                  Categories
+                  <ChevronDown className={cn('size-4 transition-transform', isCategoriesOpen && 'rotate-180')} />
+                </Button>
+              </DropdownMenuTrigger>
+            </div>
+            <DropdownMenuContent
+              className="w-60 p-1"
+              align="start"
+              sideOffset={8}
+              onPointerEnter={cancelCategoriesClose}
+              onPointerLeave={scheduleCategoriesClose}
+            >
               <DropdownMenuItem onClick={() => handleCategoryClick('new-arrivals')}>
                 <Sparkles className="text-accent-foreground" />
                 <span>New Arrivals</span>

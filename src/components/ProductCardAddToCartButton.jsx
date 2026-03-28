@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 
 import { useCartActions } from '@/context/CartContext';
@@ -10,22 +10,50 @@ import { cn } from '@/lib/utils';
 
 export default function ProductCardAddToCartButton({ product, isOutOfStock = false }) {
   const { addToCart } = useCartActions();
-  const [isAdding, setIsAdding] = useState(false);
+  const [animationState, setAnimationState] = useState('idle');
+  const settleTimeoutRef = useRef(null);
+
+  const isLoading = animationState === 'loading';
+  const isBusy = animationState !== 'idle';
+
+  useEffect(() => {
+    return () => {
+      if (settleTimeoutRef.current) {
+        window.clearTimeout(settleTimeoutRef.current);
+      }
+    };
+  }, []);
 
   async function handleAddToCart(event) {
     event.preventDefault();
     event.stopPropagation();
 
-    if (isOutOfStock || isAdding) return;
+    if (isOutOfStock || isBusy) return;
 
-    setIsAdding(true);
+    setAnimationState('loading');
     try {
-      await new Promise((resolve) => {
-        window.requestAnimationFrame(() => resolve());
-      });
-      await addToCart(product);
+      const startedAt = performance.now();
+
+      await Promise.all([
+        addToCart(product),
+        new Promise((resolve) => {
+          window.requestAnimationFrame(() => {
+            const elapsed = performance.now() - startedAt;
+            const remaining = Math.max(220 - elapsed, 0);
+            window.setTimeout(resolve, remaining);
+          });
+        }),
+      ]);
+
+      setAnimationState('settling');
+      settleTimeoutRef.current = window.setTimeout(() => {
+        setAnimationState('idle');
+        settleTimeoutRef.current = null;
+      }, 80);
     } finally {
-      setIsAdding(false);
+      if (settleTimeoutRef.current === null) {
+        setAnimationState('idle');
+      }
     }
   }
 
@@ -42,23 +70,31 @@ export default function ProductCardAddToCartButton({ product, isOutOfStock = fal
       type="button"
       variant="ghost"
       size="icon"
-      disabled={isAdding}
+      disabled={isBusy}
       onClick={handleAddToCart}
-      className="add-to-cart-button relative size-8 cursor-pointer touch-manipulation rounded-md bg-transparent p-0 text-primary shadow-none transition-[transform,background-color,color] duration-200 ease-out hover:bg-primary/10 hover:text-primary active:scale-[0.96] active:bg-primary/10 active:text-primary disabled:pointer-events-none disabled:opacity-50 after:absolute after:-inset-2 after:content-['']"
+      data-state={animationState}
+      aria-busy={isBusy}
+      className="add-to-cart-button product-card-add-to-cart-button relative size-8 cursor-pointer touch-manipulation rounded-md bg-transparent p-0 text-primary shadow-none transition-[transform,background-color,color,box-shadow] duration-200 ease-out hover:bg-primary/10 hover:text-primary active:scale-[0.96] active:bg-primary/10 active:text-primary disabled:pointer-events-none after:absolute after:-inset-2 after:content-['']"
       aria-label="Add to cart"
     >
       <span className="relative inline-flex size-[1.125rem] items-center justify-center">
-        <Spinner
+        <span
           className={cn(
-            "add-to-cart-icon absolute size-[1.125rem]",
-            isAdding ? "is-visible" : ""
+            "add-to-cart-icon absolute inline-flex size-[1.125rem] items-center justify-center text-primary",
+            isLoading ? "is-visible" : ""
           )}
-        />
+          aria-hidden="true"
+          data-cart-icon="loader"
+        >
+          <Spinner className="size-[1.125rem] [animation-duration:520ms]" />
+        </span>
         <ShoppingCart
           className={cn(
             "add-to-cart-icon absolute size-[1.125rem] text-primary",
-            !isAdding ? "is-visible" : ""
+            !isLoading ? "is-visible" : ""
           )}
+          aria-hidden="true"
+          data-cart-icon="cart"
         />
       </span>
     </Button>
