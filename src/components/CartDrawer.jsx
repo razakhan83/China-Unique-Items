@@ -9,15 +9,6 @@ import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 import { useCartActions, useCartItems, useCartUi } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
   Card,
   CardContent,
 } from '@/components/ui/card';
@@ -41,6 +32,7 @@ import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from '@/lib/cloudinar
 import { getPrimaryProductImage } from '@/lib/productImages';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
 import { buildCartWhatsAppMessage, createWhatsAppUrl } from '@/lib/whatsapp';
+import { cn } from '@/lib/utils';
 
 const formatPrice = (raw) => {
   const clean = String(raw).replace(/[^\d.]/g, '');
@@ -54,13 +46,17 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
   const { cart } = useCartItems();
   const { isCartOpen } = useCartUi();
   const { updateQuantity, removeFromCart, clearCart, setIsCartOpen } = useCartActions();
-  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [exitingItems, setExitingItems] = useState({});
+  const [isClearingAll, setIsClearingAll] = useState(false);
   const removeTimersRef = useRef({});
+  const clearTimerRef = useRef(null);
 
   useEffect(() => {
     return () => {
       Object.values(removeTimersRef.current).forEach((timeoutId) => clearTimeout(timeoutId));
+      if (clearTimerRef.current) {
+        clearTimeout(clearTimerRef.current);
+      }
     };
   }, []);
 
@@ -75,7 +71,7 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
 
   function scheduleRemove(item) {
     const itemId = item.id;
-    if (!itemId || exitingItems[itemId]) return;
+    if (!itemId || exitingItems[itemId] || isClearingAll) return;
 
     setExitingItems((current) => ({ ...current, [itemId]: true }));
     removeTimersRef.current[itemId] = setTimeout(() => {
@@ -92,9 +88,13 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
   function handleClearCart() {
     Object.values(removeTimersRef.current).forEach((timeoutId) => clearTimeout(timeoutId));
     removeTimersRef.current = {};
-    setExitingItems({});
+    if (!cart.length || isClearingAll) return;
+
+    setIsClearingAll(true);
     clearCart();
-    setIsClearDialogOpen(false);
+    setExitingItems({});
+    setIsClearingAll(false);
+    clearTimerRef.current = null;
   }
 
   function handleWhatsAppDirectCheckout() {
@@ -116,7 +116,7 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
         </SheetHeader>
 
         <ScrollArea className="min-h-0 flex-1 px-4 py-3 md:px-5 md:py-4">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             {cart.length ? (
               <>
                 <div className="flex items-center justify-between gap-3 px-1 py-0.5">
@@ -126,9 +126,10 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
                     variant="ghost"
                     size="sm"
                     className="h-8 rounded-md px-2 text-xs font-medium text-muted-foreground transition-[transform,color,background-color] duration-150 hover:bg-muted hover:text-destructive active:scale-[0.96]"
-                    onClick={() => setIsClearDialogOpen(true)}
+                    onClick={handleClearCart}
+                    disabled={isClearingAll}
                   >
-                    Clear All
+                    {isClearingAll ? 'Clearing...' : 'Clear All'}
                   </Button>
                 </div>
                 {cart.map((item, index) => {
@@ -141,19 +142,25 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
                   return (
                     <div
                       key={item.id || item.slug || item._id || item.Name || item.name || index}
-                      className={`grid overflow-hidden transition-[grid-template-rows,opacity,margin] duration-200 ease-out ${
-                        isExiting ? 'pointer-events-none opacity-0 [grid-template-rows:0fr] mb-0' : 'opacity-100 [grid-template-rows:1fr] mb-0'
-                      }`}
+                      className={cn(
+                        'grid overflow-hidden transition-[grid-template-rows,opacity,margin] ease-[cubic-bezier(0.2,0,0,1)]',
+                        isExiting
+                          ? 'pointer-events-none opacity-0 [grid-template-rows:0fr] duration-200'
+                          : 'opacity-100 [grid-template-rows:1fr] duration-200'
+                      )}
                     >
                       <div className="min-h-0">
                         <Card
-                          className={`border-[color:color-mix(in_oklab,var(--color-border)_82%,white)] bg-[color:color-mix(in_oklab,var(--color-card)_92%,white)] shadow-[0_1px_0_color-mix(in_oklab,white_72%,transparent),0_20px_32px_-34px_color-mix(in_oklab,black_24%,transparent)] will-change-transform transition-[transform,opacity,background-color,border-color,box-shadow] duration-180 ease-out hover:bg-[color:color-mix(in_oklab,var(--color-card)_96%,white)] ${
+                          className={cn(
+                            'gap-0 py-0 border-[color:color-mix(in_oklab,var(--color-border)_82%,white)] bg-[color:color-mix(in_oklab,var(--color-card)_94%,white)] shadow-[0_1px_0_color-mix(in_oklab,white_72%,transparent),0_14px_24px_-34px_color-mix(in_oklab,black_18%,transparent)] transition-[transform,opacity,filter,background-color,border-color,box-shadow] duration-180 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-[color:color-mix(in_oklab,var(--color-card)_98%,white)]',
+                            isCartOpen && !isExiting && 'animate-fadeInUp',
                             isExiting ? 'translate-x-6 opacity-0' : 'translate-x-0 opacity-100'
-                          }`}
+                          )}
+                          style={isCartOpen && !isExiting ? { animationDelay: `${Math.min(index * 70, 210)}ms` } : undefined}
                         >
-                          <CardContent className="p-2">
-                          <div className="flex gap-2">
-                            <div className="relative size-[3.6rem] overflow-hidden rounded-[0.95rem] bg-muted shadow-[inset_0_0_0_1px_color-mix(in_oklab,black_6%,white),0_14px_24px_-22px_color-mix(in_oklab,black_32%,transparent)] md:size-16">
+                          <CardContent className="px-2.5 py-2">
+                          <div className="flex items-stretch gap-2.5">
+                            <div className="relative size-[4.5rem] shrink-0 overflow-hidden rounded-[var(--radius-lg)] bg-muted outline outline-1 outline-black/5 md:size-[4.75rem]">
                               {primaryImageSrc ? (
                                 <Image
                                   src={primaryImageSrc}
@@ -165,27 +172,13 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
                                 />
                               ) : null}
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-start justify-between gap-2">
+                            <div className="flex min-w-0 flex-1 items-stretch justify-between gap-2">
+                              <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
                                 <div className="min-w-0">
-                                  <p className="line-clamp-2 text-[0.9rem] font-semibold leading-[1.2rem] text-foreground [text-wrap:pretty]">{item.Name || item.name}</p>
-                                  <p className="mt-0.5 text-sm font-medium text-primary tabular-nums">{formatPriceLabel(item.discountedPrice != null ? item.discountedPrice : item.Price || item.price)}</p>
+                                  <p className="line-clamp-2 text-[0.85rem] font-semibold leading-[1.05rem] text-foreground [text-wrap:pretty]">{item.Name || item.name}</p>
+                                  <p className="mt-0.5 text-[0.88rem] font-medium leading-none text-primary tabular-nums">{formatPriceLabel(item.discountedPrice != null ? item.discountedPrice : item.Price || item.price)}</p>
                                 </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  onClick={() => scheduleRemove(item)}
-                                  className="-mr-1 text-muted-foreground transition-[transform,color,background-color] duration-150 hover:text-destructive active:scale-[0.96]"
-                                  aria-label="Remove item"
-                                  disabled={isExiting}
-                                >
-                                  <Trash2 />
-                                </Button>
-                              </div>
-
-                              <div className="mt-2 flex items-center justify-between">
-                                <div className="inline-flex items-center rounded-full border border-border/80 bg-background/90 p-0.5 shadow-[inset_0_1px_0_color-mix(in_oklab,white_70%,transparent)]">
+                                <div className="inline-flex h-7 items-stretch gap-0.5 self-start">
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -193,22 +186,43 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
                                     onClick={() => {
                                       updateQuantity(item, item.quantity - 1);
                                     }}
-                                    className="rounded-full text-muted-foreground hover:text-foreground active:scale-[0.96]"
+                                    className="h-full min-h-0 w-7 rounded-[var(--radius-md)] bg-muted/70 px-0 text-muted-foreground transition-[transform,color,background-color] duration-150 hover:bg-muted hover:text-foreground active:scale-[0.96]"
                                     disabled={isExiting}
                                   >
                                     <Minus />
                                   </Button>
-                                  <span className="inline-flex min-w-8 items-center justify-center px-2 text-sm font-semibold tabular-nums">{item.quantity}</span>
+                                  <span className="inline-flex h-full w-7 items-center justify-center px-0 text-[0.84rem] font-semibold leading-none tabular-nums">{item.quantity}</span>
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon-xs"
                                     onClick={() => updateQuantity(item, item.quantity + 1)}
-                                    className="rounded-full text-muted-foreground hover:text-foreground active:scale-[0.96]"
+                                    className="h-full min-h-0 w-7 rounded-[var(--radius-md)] bg-muted/70 px-0 text-muted-foreground transition-[transform,color,background-color] duration-150 hover:bg-muted hover:text-foreground active:scale-[0.96]"
                                     disabled={isExiting}
                                   >
                                     <Plus />
                                   </Button>
+                                </div>
+                              </div>
+                              <div className="flex min-h-full flex-col items-end justify-between py-0.5 text-right">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  onClick={() => scheduleRemove(item)}
+                                  className="size-7 rounded-[var(--radius-lg)] text-muted-foreground transition-[transform,color] duration-150 hover:text-destructive active:scale-[0.96] [&_svg]:size-3.5"
+                                  aria-label="Remove item"
+                                  disabled={isExiting}
+                                >
+                                  <Trash2 />
+                                </Button>
+                                <div className="flex flex-col items-end gap-1">
+                                  <p className="text-[0.68rem] font-medium uppercase tracking-[0.18em] text-muted-foreground/90">
+                                    Total
+                                  </p>
+                                  <p className="text-[0.92rem] font-semibold leading-none text-foreground tabular-nums">
+                                    Rs. {(formatPrice(item.discountedPrice != null ? item.discountedPrice : item.Price || item.price) * item.quantity).toLocaleString('en-PK')}
+                                  </p>
                                 </div>
                               </div>
                             </div>
@@ -271,22 +285,6 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
           </SheetFooter>
         ) : null}
       </SheetContent>
-      <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Clear your cart?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove every item from your cart immediately. You can keep shopping and add them again anytime.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep Items</AlertDialogCancel>
-            <Button type="button" variant="destructive" onClick={handleClearCart}>
-              Clear Cart
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Sheet>
   );
 }
