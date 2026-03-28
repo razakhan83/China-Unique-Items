@@ -48,23 +48,16 @@ export async function GET() {
 // POST new product - Protected Admin Route
 export async function POST(req) {
     try {
-        console.log('[API] POST /api/products - Received request');
-
         // Validation: Verify if the requester is the authorized Admin
         const session = await getServerSession(authOptions);
-        console.log('[API] Session check:', session?.user?.email || 'No session');
 
         if (!session || !session.user?.isAdmin) {
-            console.log('[API] Unauthorized access attempt');
             return NextResponse.json({ success: false, message: 'Unauthorized Access' }, { status: 401 });
         }
 
-        console.log('[API] Admin verified, connecting to database...');
         await mongooseConnect();
-        console.log('[API] Database connected');
 
         const body = await req.json();
-        console.log('[API] Body received:', { Name: body.Name, Category: body.Category, Price: body.Price, Images: body.Images?.length });
 
         let {
             Name,
@@ -80,7 +73,6 @@ export async function POST(req) {
         } = body;
 
         if (!Name || !Price || !categoryInput) {
-            console.log('[API] Validation failed: Missing required fields');
             return NextResponse.json({ success: false, message: 'Please provide Name, Price, and Category' }, { status: 400 });
         }
 
@@ -104,11 +96,8 @@ export async function POST(req) {
             counter++;
         }
 
-        console.log('[API] 🔗 Generated slug:', uniqueSlug);
-
         // New products default to In Stock
         const stockStatus = 'In Stock';
-        console.log('[API] Stock Status Defaulted To:', stockStatus);
 
         const normalizedImages = await ensureProductImagesBlur(normalizeProductImages(Images));
 
@@ -127,8 +116,6 @@ export async function POST(req) {
         });
 
         await product.populate('Category');
-
-        console.log('[API] Product saved:', product._id);
 
         revalidateTag('products');
         revalidateTag(`product-${uniqueSlug}`);

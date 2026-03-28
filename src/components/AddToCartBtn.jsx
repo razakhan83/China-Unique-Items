@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useCart } from '@/context/CartContext';
+import { useCartActions } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function AddToCartBtn({ product, className }) {
-    const { addToCart } = useCart();
+    const { addToCart } = useCartActions();
     const [isAdding, setIsAdding] = useState(false);
     const [didJustAdd, setDidJustAdd] = useState(false);
     return (

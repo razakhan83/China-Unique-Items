@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { useCart } from '@/context/CartContext';
+import { useCartActions } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { buildProductWhatsAppMessage, createWhatsAppUrl } from '@/lib/whatsapp';
 
 export default function ProductActions({ product, whatsappNumber = '', storeName = 'China Unique Store' }) {
-    const { addToCart } = useCart();
+    const { addToCart } = useCartActions();
     const [isAdding, setIsAdding] = useState(false);
     const [didJustAdd, setDidJustAdd] = useState(false);
     const [quantity, setQuantity] = useState(1);

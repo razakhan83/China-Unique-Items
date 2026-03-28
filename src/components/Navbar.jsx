@@ -21,7 +21,7 @@ import {
 import { useSession, signOut } from 'next-auth/react';
 
 import SearchField from '@/components/SearchField';
-import { useCart } from '@/context/CartContext';
+import { useCartActions, useCartItems, useCartUi } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import MyOrdersButton from '@/components/MyOrdersButton';
@@ -97,15 +97,14 @@ function NavbarContent({ categories }) {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const { cartCount = 0 } = useCartItems() || {};
+  const { activeCategory = 'all', isSidebarOpen = false } = useCartUi() || {};
   const {
-    cartCount = 0,
-    activeCategory = 'all',
     setActiveCategory = () => {},
-    isSidebarOpen = false,
     setIsSidebarOpen = () => {},
     openSidebar = () => {},
     openCart = () => {},
-  } = useCart() || {};
+  } = useCartActions() || {};
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);

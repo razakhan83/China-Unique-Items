@@ -7,6 +7,7 @@ if (!MONGODB_URI) {
 }
 
 let cached = global.mongoose;
+const isDev = process.env.NODE_ENV !== 'production';
 
 if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
@@ -33,7 +34,9 @@ async function mongooseConnect() {
 
     cached.promise = mongoose.connect(MONGODB_URI, opts)
       .then((mongoose) => {
-        console.log('[DB] MongoDB connected successfully');
+        if (isDev) {
+          console.log('[DB] MongoDB connected successfully');
+        }
         return mongoose;
       })
       .catch((err) => {

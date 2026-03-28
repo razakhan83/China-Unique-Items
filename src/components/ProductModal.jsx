@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useCart } from '@/context/CartContext';
+import { useCartActions } from '@/context/CartContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from '@/lib/cloudinaryImage';
@@ -11,7 +11,7 @@ import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
 import { buildProductWhatsAppMessage, createWhatsAppUrl } from '@/lib/whatsapp';
 
 export default function ProductModal({ product, onClose, whatsappNumber = '', storeName = 'China Unique Store' }) {
-    const { addToCart } = useCart();
+    const { addToCart } = useCartActions();
 
     if (!product) return null;
 

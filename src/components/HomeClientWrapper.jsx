@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import CategoryIconCarousel from "@/components/CategoryIconCarousel";
@@ -16,14 +16,16 @@ export default function HomeClientWrapper({ heroSlides, categories = [] }) {
   const [isFocused, setIsFocused] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 250);
+    const timer = setTimeout(() => setDebouncedSearch(deferredSearchTerm), 250);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [deferredSearchTerm]);
 
   useEffect(() => {
     let isActive = true;
+    const controller = new AbortController();
 
     async function loadSuggestions() {
       if (!debouncedSearch.trim()) {
@@ -36,7 +38,9 @@ export default function HomeClientWrapper({ heroSlides, categories = [] }) {
 
       setIsLoadingSuggestions(true);
       try {
-        const response = await fetch(`/api/search-products?q=${encodeURIComponent(debouncedSearch.trim())}&limit=5`);
+        const response = await fetch(`/api/search-products?q=${encodeURIComponent(debouncedSearch.trim())}&limit=5`, {
+          signal: controller.signal,
+        });
         const result = await response.json();
 
         if (!isActive) return;
@@ -52,8 +56,8 @@ export default function HomeClientWrapper({ heroSlides, categories = [] }) {
               }))
             : [],
         );
-      } catch {
-        if (isActive) {
+      } catch (error) {
+        if (error?.name !== 'AbortError' && isActive) {
           setSuggestions([]);
         }
       } finally {
@@ -67,6 +71,7 @@ export default function HomeClientWrapper({ heroSlides, categories = [] }) {
 
     return () => {
       isActive = false;
+      controller.abort();
     };
   }, [debouncedSearch, router]);
 

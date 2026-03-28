@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from '@/lib/cloudinaryImage';
@@ -14,6 +14,13 @@ function resolveViewport() {
   if (window.innerWidth < 768) return 'mobile';
   if (window.innerWidth < 1024) return 'tablet';
   return 'desktop';
+}
+
+function isPreloadCandidate(index, activeIndex, total) {
+  if (total <= 1) return true;
+  const prevIndex = (activeIndex - 1 + total) % total;
+  const nextIndex = (activeIndex + 1) % total;
+  return index === activeIndex || index === prevIndex || index === nextIndex;
 }
 
 function getActiveAsset(slide, viewport) {
@@ -57,19 +64,37 @@ export default function HeroSlider({ slides = [] }) {
   const touchStartYRef = useRef(null);
 
   useEffect(() => {
-    const syncViewport = () => setViewport(resolveViewport());
+    if (typeof window === 'undefined') return undefined;
+
+    const queries = [
+      window.matchMedia('(max-width: 767px)'),
+      window.matchMedia('(min-width: 768px) and (max-width: 1023px)'),
+    ];
+
+    const syncViewport = () => {
+      const nextViewport = queries[0].matches ? 'mobile' : queries[1].matches ? 'tablet' : 'desktop';
+      setViewport((current) => (current === nextViewport ? current : nextViewport));
+    };
+
     syncViewport();
-    window.addEventListener('resize', syncViewport);
-    return () => window.removeEventListener('resize', syncViewport);
+    queries.forEach((query) => query.addEventListener('change', syncViewport));
+
+    return () => {
+      queries.forEach((query) => query.removeEventListener('change', syncViewport));
+    };
   }, []);
 
-  const resolvedSlides = slides
-    .map((slide, index) => ({
-      ...slide,
-      asset: getActiveAsset(slide, viewport),
-      alt: slide?.alt || `Slide ${index + 1}`,
-    }))
-    .filter((slide) => slide.asset?.src);
+  const resolvedSlides = useMemo(
+    () =>
+      slides
+        .map((slide, index) => ({
+          ...slide,
+          asset: getActiveAsset(slide, viewport),
+          alt: slide?.alt || `Slide ${index + 1}`,
+        }))
+        .filter((slide) => slide.asset?.src),
+    [slides, viewport]
+  );
   const safeActiveIndex =
     resolvedSlides.length > 0 ? activeIndex % resolvedSlides.length : 0;
 
@@ -153,6 +178,7 @@ export default function HeroSlider({ slides = [] }) {
               fill
               sizes="100vw"
               priority={index === 0}
+              loading={index === 0 ? undefined : isPreloadCandidate(index, safeActiveIndex, resolvedSlides.length) ? 'eager' : 'lazy'}
               className="object-cover"
               {...getBlurPlaceholderProps(slide.asset.blurDataURL)}
             />

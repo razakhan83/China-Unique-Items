@@ -5,14 +5,14 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Heart } from 'lucide-react';
 
-import { useCart } from '@/context/CartContext';
+import { useCartActions } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import AuthModal from './AuthModal';
 import { cn } from '@/lib/utils';
 
 export default function MyWishlistButton({ className, isMobile = false }) {
   const { data: session } = useSession();
-  const { setIsSidebarOpen } = useCart() || {};
+  const { setIsSidebarOpen } = useCartActions() || {};
   const router = useRouter();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 

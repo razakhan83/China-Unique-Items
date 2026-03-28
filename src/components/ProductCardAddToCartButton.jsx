@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 
-import { useCart } from '@/context/CartContext';
+import { useCartActions } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 
 export default function ProductCardAddToCartButton({ product, isOutOfStock = false }) {
-  const { addToCart } = useCart();
+  const { addToCart } = useCartActions();
   const [isAdding, setIsAdding] = useState(false);
 
   async function handleAddToCart(event) {

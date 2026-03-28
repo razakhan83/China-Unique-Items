@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownWideNarrow, Search, SearchX, Sparkles } from "lucide-react";
 
 import ProductCard from "@/components/ProductCard";
 import SearchField from "@/components/SearchField";
-import { useCart } from "@/context/CartContext";
+import { useCartActions, useCartUi } from "@/context/CartContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,9 +27,9 @@ function ProductGridContent({
   hideCategoryBar,
   activeCategoryOverride,
 }) {
-  const cart = useCart();
-  const activeCategory = activeCategoryOverride ?? cart?.activeCategory ?? "all";
-  const setActiveCategory = cart?.setActiveCategory ?? (() => {});
+  const { activeCategory: cartActiveCategory = "all" } = useCartUi() || {};
+  const { setActiveCategory = () => {} } = useCartActions() || {};
+  const activeCategory = activeCategoryOverride ?? cartActiveCategory;
   const [searchTerm, setSearchTerm] = useState(forceSearchTerm || "");
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,6 +37,7 @@ function ProductGridContent({
   const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
   const itemsPerPage = 12;
   const loadMoreRef = useRef(null);
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchTerm), 250);
@@ -44,14 +45,14 @@ function ProductGridContent({
   }, [searchTerm]);
 
   const searchFilteredProducts = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
+    const term = deferredSearchTerm.trim().toLowerCase();
     if (!term) return [...initialProducts];
     return initialProducts.filter((product) => {
       const name = (product.Name || product.name || "").toLowerCase();
       const categories = getProductCategoryNames(product);
       return name.includes(term) || categories.some((category) => (category || "").toLowerCase().includes(term));
     });
-  }, [initialProducts, searchTerm]);
+  }, [deferredSearchTerm, initialProducts]);
 
   const dynamicCategories = useMemo(() => {
     const categories = new Map();

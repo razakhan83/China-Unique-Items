@@ -2,10 +2,14 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+
 import { trackAddToCartEvent } from '@/lib/clientTracking';
 
 const CART_STORAGE_KEY = 'kifayatly_cart_v2';
-const CartContext = createContext(null);
+
+const CartItemsContext = createContext(null);
+const CartUiContext = createContext(null);
+const CartActionsContext = createContext(null);
 
 function getCartItemId(item) {
   return item?.slug || item?._id || item?.id || item?.productId || item?.Name || item?.name;
@@ -26,76 +30,66 @@ function normalizeCartItem(item) {
 }
 
 function CartProviderContent({ children }) {
-  const [state, setState] = useState({
-    cart: [],
-    isInitialized: false,
-    activeCategory: 'all',
-    isCartOpen: false,
-    isSidebarOpen: false,
-  });
+  const [cart, setCart] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem(CART_STORAGE_KEY);
       if (savedCart) {
         const parsed = JSON.parse(savedCart);
-        const cart = Array.isArray(parsed?.items) ? parsed.items.map(normalizeCartItem) : [];
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setState((current) => ({ ...current, cart, isInitialized: true }));
-        return;
+        const nextCart = Array.isArray(parsed?.items) ? parsed.items.map(normalizeCartItem) : [];
+        setCart(nextCart);
       }
     } catch (error) {
       console.error('Failed to parse cart from local storage', error);
+    } finally {
+      setIsInitialized(true);
     }
-
-    setState((current) => ({ ...current, isInitialized: true }));
   }, []);
 
   useEffect(() => {
-    if (!state.isInitialized) return;
+    if (!isInitialized) return;
     localStorage.setItem(
       CART_STORAGE_KEY,
       JSON.stringify({
         version: 2,
-        items: state.cart,
-      }),
+        items: cart,
+      })
     );
-  }, [state.cart, state.isInitialized]);
+  }, [cart, isInitialized]);
 
   const actions = useMemo(
     () => ({
-      setActiveCategory(value) {
-        setState((current) => ({ ...current, activeCategory: value }));
-      },
-      setIsCartOpen(value) {
-        setState((current) => ({ ...current, isCartOpen: value }));
-      },
-      setIsSidebarOpen(value) {
-        setState((current) => ({ ...current, isSidebarOpen: value }));
-      },
+      setActiveCategory,
+      setIsCartOpen,
+      setIsSidebarOpen,
       openCart() {
-        setState((current) => ({ ...current, isSidebarOpen: false, isCartOpen: true }));
+        setIsSidebarOpen(false);
+        setIsCartOpen(true);
       },
       openSidebar() {
-        setState((current) => ({ ...current, isCartOpen: false, isSidebarOpen: true }));
+        setIsCartOpen(false);
+        setIsSidebarOpen(true);
       },
       async addToCart(product, qtyToAdd = 1) {
         const normalized = normalizeCartItem({ ...product, quantity: qtyToAdd });
-        setState((current) => {
-          const existingIndex = current.cart.findIndex((item) => item.id === normalized.id);
+
+        setCart((current) => {
+          const existingIndex = current.findIndex((item) => item.id === normalized.id);
           if (existingIndex > -1) {
-            const nextCart = [...current.cart];
+            const nextCart = [...current];
             nextCart[existingIndex] = {
               ...nextCart[existingIndex],
               quantity: nextCart[existingIndex].quantity + normalized.quantity,
             };
-            return { ...current, cart: nextCart };
+            return nextCart;
           }
 
-          return {
-            ...current,
-            cart: [...current.cart, normalized],
-          };
+          return [...current, normalized];
         });
 
         trackAddToCartEvent({
@@ -110,8 +104,10 @@ function CartProviderContent({ children }) {
           duration: 3000,
           action: {
             label: 'View Cart',
-            onClick: () =>
-              setState((current) => ({ ...current, isSidebarOpen: false, isCartOpen: true })),
+            onClick: () => {
+              setIsSidebarOpen(false);
+              setIsCartOpen(true);
+            },
           },
         });
 
@@ -119,10 +115,7 @@ function CartProviderContent({ children }) {
       },
       removeFromCart(product) {
         const itemId = getCartItemId(product);
-        setState((current) => ({
-          ...current,
-          cart: current.cart.filter((item) => item.id !== itemId),
-        }));
+        setCart((current) => current.filter((item) => item.id !== itemId));
       },
       updateQuantity(product, newQuantity) {
         const itemId = getCartItemId(product);
@@ -130,27 +123,23 @@ function CartProviderContent({ children }) {
 
         if (safeQuantity < 1) {
           const itemName = product?.Name || product?.name || 'Item';
-          setState((current) => ({
-            ...current,
-            cart: current.cart.filter((item) => item.id !== itemId),
-          }));
+          setCart((current) => current.filter((item) => item.id !== itemId));
           toast.success(`${itemName} removed from cart`, {
             duration: 2200,
             action: {
               label: 'View Cart',
-              onClick: () =>
-                setState((current) => ({ ...current, isSidebarOpen: false, isCartOpen: true })),
+              onClick: () => {
+                setIsSidebarOpen(false);
+                setIsCartOpen(true);
+              },
             },
           });
           return;
         }
 
-        setState((current) => ({
-          ...current,
-          cart: current.cart.map((item) =>
-            item.id === itemId ? { ...item, quantity: safeQuantity } : item,
-          ),
-        }));
+        setCart((current) =>
+          current.map((item) => (item.id === itemId ? { ...item, quantity: safeQuantity } : item))
+        );
       },
       clearCart() {
         try {
@@ -158,37 +147,66 @@ function CartProviderContent({ children }) {
         } catch (error) {
           console.error('Failed to clear cart from local storage', error);
         }
-        setState((current) => ({ ...current, cart: [] }));
+        setCart([]);
       },
     }),
-    [],
+    []
   );
 
-  const value = useMemo(
+  const cartItemsValue = useMemo(
     () => ({
-      state,
-      actions,
-      meta: {
-        cartCount: state.cart.reduce((total, item) => total + item.quantity, 0),
-      },
-      cart: state.cart,
-      cartCount: state.cart.reduce((total, item) => total + item.quantity, 0),
-      isInitialized: state.isInitialized,
-      activeCategory: state.activeCategory,
-      isCartOpen: state.isCartOpen,
-      isSidebarOpen: state.isSidebarOpen,
-      ...actions,
+      cart,
+      cartCount: cart.reduce((total, item) => total + item.quantity, 0),
+      isInitialized,
     }),
-    [actions, state],
+    [cart, isInitialized]
   );
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  const cartUiValue = useMemo(
+    () => ({
+      activeCategory,
+      isCartOpen,
+      isSidebarOpen,
+    }),
+    [activeCategory, isCartOpen, isSidebarOpen]
+  );
+
+  return (
+    <CartActionsContext.Provider value={actions}>
+      <CartUiContext.Provider value={cartUiValue}>
+        <CartItemsContext.Provider value={cartItemsValue}>{children}</CartItemsContext.Provider>
+      </CartUiContext.Provider>
+    </CartActionsContext.Provider>
+  );
 }
 
 export function CartProvider({ children }) {
   return <CartProviderContent>{children}</CartProviderContent>;
 }
 
+export function useCartItems() {
+  return useContext(CartItemsContext);
+}
+
+export function useCartUi() {
+  return useContext(CartUiContext);
+}
+
+export function useCartActions() {
+  return useContext(CartActionsContext);
+}
+
 export function useCart() {
-  return useContext(CartContext);
+  const items = useCartItems();
+  const ui = useCartUi();
+  const actions = useCartActions();
+
+  return useMemo(
+    () => ({
+      ...items,
+      ...ui,
+      ...actions,
+    }),
+    [actions, items, ui]
+  );
 }

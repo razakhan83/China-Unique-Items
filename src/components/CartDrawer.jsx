@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Minus, Plus, ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 
-import { useCart } from '@/context/CartContext';
+import { useCartActions, useCartItems, useCartUi } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -51,7 +51,9 @@ const formatPriceLabel = (raw) => `Rs. ${formatPrice(raw).toLocaleString('en-PK'
 const EXIT_ANIMATION_MS = 180;
 
 export default function CartDrawer({ whatsappNumber = '', storeName = 'China Unique Store' }) {
-  const { cart, updateQuantity, removeFromCart, clearCart, isCartOpen, setIsCartOpen } = useCart();
+  const { cart } = useCartItems();
+  const { isCartOpen } = useCartUi();
+  const { updateQuantity, removeFromCart, clearCart, setIsCartOpen } = useCartActions();
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [exitingItems, setExitingItems] = useState({});
   const removeTimersRef = useRef({});
@@ -105,10 +107,12 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
 
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
-      <SheetContent side="right" className="w-screen min-w-0 max-w-none gap-0 bg-card p-0 sm:max-w-none md:w-[min(70vw,28rem)] md:min-w-[18rem] md:max-w-[28rem]">
+      <SheetContent side="right" className="w-screen min-w-0 max-w-none gap-0 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--color-card)_97%,white),color-mix(in_oklab,var(--color-muted)_38%,white))] p-0 sm:max-w-none md:w-[min(70vw,28rem)] md:min-w-[18rem] md:max-w-[28rem]">
         <SheetHeader className="border-b border-border/70 px-5 pb-3 pt-5">
-          <SheetTitle>Your Cart</SheetTitle>
-          <SheetDescription>{cart.length ? `${cart.length} item${cart.length > 1 ? 's' : ''} ready for checkout.` : 'Add products to start your order.'}</SheetDescription>
+          <SheetTitle className="[text-wrap:balance]">Your Cart</SheetTitle>
+          <SheetDescription className="[text-wrap:pretty]">
+            {cart.length ? `${cart.length} item${cart.length > 1 ? 's' : ''} ready for checkout.` : 'Add products to start your order.'}
+          </SheetDescription>
         </SheetHeader>
 
         <ScrollArea className="min-h-0 flex-1 px-4 py-3 md:px-5 md:py-4">
@@ -121,7 +125,7 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-8 rounded-md px-2 text-xs font-medium text-muted-foreground transition-[color,background-color] duration-150 hover:bg-muted hover:text-destructive"
+                    className="h-8 rounded-md px-2 text-xs font-medium text-muted-foreground transition-[transform,color,background-color] duration-150 hover:bg-muted hover:text-destructive active:scale-[0.96]"
                     onClick={() => setIsClearDialogOpen(true)}
                   >
                     Clear All
@@ -143,13 +147,13 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
                     >
                       <div className="min-h-0">
                         <Card
-                          className={`will-change-transform transition-[transform,opacity,background-color,border-color] duration-180 ease-out hover:bg-[color:color-mix(in_oklab,var(--color-card)_96%,white)] ${
+                          className={`border-[color:color-mix(in_oklab,var(--color-border)_82%,white)] bg-[color:color-mix(in_oklab,var(--color-card)_92%,white)] shadow-[0_1px_0_color-mix(in_oklab,white_72%,transparent),0_20px_32px_-34px_color-mix(in_oklab,black_24%,transparent)] will-change-transform transition-[transform,opacity,background-color,border-color,box-shadow] duration-180 ease-out hover:bg-[color:color-mix(in_oklab,var(--color-card)_96%,white)] ${
                             isExiting ? 'translate-x-6 opacity-0' : 'translate-x-0 opacity-100'
                           }`}
                         >
                           <CardContent className="p-2">
                           <div className="flex gap-2">
-                            <div className="relative size-[3.6rem] overflow-hidden rounded-lg border border-border bg-muted md:size-16">
+                            <div className="relative size-[3.6rem] overflow-hidden rounded-[0.95rem] bg-muted shadow-[inset_0_0_0_1px_color-mix(in_oklab,black_6%,white),0_14px_24px_-22px_color-mix(in_oklab,black_32%,transparent)] md:size-16">
                               {primaryImageSrc ? (
                                 <Image
                                   src={primaryImageSrc}
@@ -164,15 +168,15 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
                             <div className="min-w-0 flex-1">
                               <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0">
-                                  <p className="line-clamp-2 text-[0.9rem] font-semibold leading-[1.2rem] text-foreground">{item.Name || item.name}</p>
-                                  <p className="mt-0.5 text-sm font-medium text-primary">{formatPriceLabel(item.discountedPrice != null ? item.discountedPrice : item.Price || item.price)}</p>
+                                  <p className="line-clamp-2 text-[0.9rem] font-semibold leading-[1.2rem] text-foreground [text-wrap:pretty]">{item.Name || item.name}</p>
+                                  <p className="mt-0.5 text-sm font-medium text-primary tabular-nums">{formatPriceLabel(item.discountedPrice != null ? item.discountedPrice : item.Price || item.price)}</p>
                                 </div>
                                 <Button
                                   type="button"
                                   variant="ghost"
                                   size="icon-sm"
                                   onClick={() => scheduleRemove(item)}
-                                  className="-mr-1 text-muted-foreground hover:text-destructive"
+                                  className="-mr-1 text-muted-foreground transition-[transform,color,background-color] duration-150 hover:text-destructive active:scale-[0.96]"
                                   aria-label="Remove item"
                                   disabled={isExiting}
                                 >
@@ -181,7 +185,7 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
                               </div>
 
                               <div className="mt-2 flex items-center justify-between">
-                                <div className="inline-flex items-center rounded-md border border-border bg-background">
+                                <div className="inline-flex items-center rounded-full border border-border/80 bg-background/90 p-0.5 shadow-[inset_0_1px_0_color-mix(in_oklab,white_70%,transparent)]">
                                   <Button
                                     type="button"
                                     variant="ghost"
@@ -189,18 +193,18 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
                                     onClick={() => {
                                       updateQuantity(item, item.quantity - 1);
                                     }}
-                                    className="rounded-r-none text-muted-foreground hover:text-foreground"
+                                    className="rounded-full text-muted-foreground hover:text-foreground active:scale-[0.96]"
                                     disabled={isExiting}
                                   >
                                     <Minus />
                                   </Button>
-                                  <span className="inline-flex min-w-7 items-center justify-center px-1 text-sm font-semibold tabular-nums">{item.quantity}</span>
+                                  <span className="inline-flex min-w-8 items-center justify-center px-2 text-sm font-semibold tabular-nums">{item.quantity}</span>
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon-xs"
                                     onClick={() => updateQuantity(item, item.quantity + 1)}
-                                    className="rounded-l-none text-muted-foreground hover:text-foreground"
+                                    className="rounded-full text-muted-foreground hover:text-foreground active:scale-[0.96]"
                                     disabled={isExiting}
                                   >
                                     <Plus />
@@ -217,19 +221,19 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
                 })}
               </>
             ) : (
-              <Empty className="surface-card min-h-[16rem] rounded-xl px-6 py-12">
+              <Empty className="surface-card min-h-[16rem] rounded-[1.35rem] px-6 py-12 shadow-[0_24px_44px_-38px_color-mix(in_oklab,var(--color-primary)_26%,transparent)]">
                 <EmptyHeader>
-                  <EmptyMedia variant="icon" className="size-16 rounded-xl bg-primary/10 text-primary">
+                  <EmptyMedia variant="icon" className="size-16 rounded-[1.1rem] bg-primary/10 text-primary shadow-[0_16px_28px_-24px_color-mix(in_oklab,var(--color-primary)_42%,transparent)]">
                     <ShoppingBag className="size-7" />
                   </EmptyMedia>
-                  <EmptyTitle className="text-lg font-semibold text-foreground">Your cart is empty</EmptyTitle>
-                  <EmptyDescription className="max-w-xs">
+                  <EmptyTitle className="text-lg font-semibold text-foreground [text-wrap:balance]">Your cart is empty</EmptyTitle>
+                  <EmptyDescription className="max-w-xs [text-wrap:pretty]">
                     Start adding premium kitchenware and decor to build your order.
                   </EmptyDescription>
                 </EmptyHeader>
                 <div className="mt-6 flex justify-center">
                   <Link href="/products" onClick={continueShopping}>
-                    <Button className="min-h-11 rounded-xl px-5">Continue Shopping</Button>
+                    <Button className="min-h-11 rounded-xl px-5 active:scale-[0.96]">Continue Shopping</Button>
                   </Link>
                 </div>
               </Empty>
@@ -238,11 +242,11 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
         </ScrollArea>
 
         {cart.length ? (
-          <SheetFooter className="gap-3 border-t border-border/70 bg-card px-5 pb-5 pt-4">
-            <div className="flex items-center justify-between rounded-xl bg-muted/30 px-4 py-3">
+          <SheetFooter className="gap-3 border-t border-border/70 bg-card/95 px-5 pb-5 pt-4">
+            <div className="flex items-center justify-between rounded-[1.1rem] border border-border/70 bg-muted/30 px-4 py-3 shadow-[inset_0_1px_0_color-mix(in_oklab,white_72%,transparent)]">
               <div>
                 <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Subtotal</p>
-                <p className="mt-1 text-sm text-muted-foreground">Final charges appear at checkout.</p>
+                <p className="mt-1 text-sm text-muted-foreground [text-wrap:pretty]">Final charges appear at checkout.</p>
               </div>
               <div className="text-right">
                 <p className="text-lg font-semibold text-foreground tabular-nums">
@@ -252,14 +256,14 @@ export default function CartDrawer({ whatsappNumber = '', storeName = 'China Uni
             </div>
             <Button
               variant="outline"
-              className="h-11 w-full rounded-xl border-[color:color-mix(in_oklab,var(--color-primary)_16%,var(--color-border))] bg-[color:color-mix(in_oklab,var(--color-input)_92%,white)] text-foreground shadow-[0_1px_0_color-mix(in_oklab,var(--color-background)_65%,white)] transition-[border-color,background-color,box-shadow,color] duration-200 hover:bg-[color:color-mix(in_oklab,var(--color-muted)_74%,white)] hover:text-foreground"
+              className="h-11 w-full rounded-xl border-[color:color-mix(in_oklab,var(--color-primary)_16%,var(--color-border))] bg-[color:color-mix(in_oklab,var(--color-input)_92%,white)] text-foreground shadow-[0_1px_0_color-mix(in_oklab,var(--color-background)_65%,white)] transition-[transform,border-color,background-color,box-shadow,color] duration-200 hover:bg-[color:color-mix(in_oklab,var(--color-muted)_74%,white)] hover:text-foreground active:scale-[0.96]"
               onClick={handleWhatsAppDirectCheckout}
             >
               <WhatsAppIcon className="size-5" />
               Order on WhatsApp
             </Button>
             <Link href="/checkout" onClick={() => setIsCartOpen(false)} className="w-full">
-              <Button className="h-11 w-full rounded-xl">
+              <Button className="h-11 w-full rounded-xl active:scale-[0.96]">
                 Checkout
                 <ArrowRight data-icon="inline-end" />
               </Button>

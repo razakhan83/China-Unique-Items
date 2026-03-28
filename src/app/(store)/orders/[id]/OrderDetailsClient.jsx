@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Package, Calendar, Clock, Truck, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -70,7 +71,13 @@ export default function OrderDetailsClient({ order }) {
                 <div key={idx} className="flex items-center gap-4 p-3 rounded-lg border border-border/50 bg-muted/10">
                   <div className="relative size-16 overflow-hidden rounded-lg border border-border bg-muted shrink-0">
                     {item.image && (
-                      <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">

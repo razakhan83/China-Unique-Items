@@ -19,9 +19,6 @@ export const authOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // Console log laga raha hun taake terminal mein nazar aaye kya ho raha hai
-        console.log("Login Attempt:", credentials.email);
-
         if (
           isAdminEmail(credentials.email) &&
           credentials.password === process.env.ADMIN_PASSWORD
@@ -42,7 +39,6 @@ export const authOptions = {
           const existingUser = await User.findOne({ email: normalizedEmail });
           
           if (existingUser && existingUser.disabled) {
-            console.log("Blocked Login for Disabled User:", normalizedEmail);
             return false; // Prevent sign in
           }
 
@@ -112,7 +108,6 @@ export const authOptions = {
           if (dbUser) {
             // 1. Check if user is disabled
             if (dbUser.disabled) {
-              console.log("Blocking session for disabled user:", token.email);
               return null; // This invalidates the JWT
             }
 
@@ -122,7 +117,6 @@ export const authOptions = {
               const tokenIssuedAt = token.iat * 1000;
               
               if (tokenIssuedAt < forceLogoutTime) {
-                console.log("Invalidating old session for user:", token.email);
                 return null;
               }
             }
