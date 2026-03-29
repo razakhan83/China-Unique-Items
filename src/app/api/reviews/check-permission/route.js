@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import Order from '@/models/Order';
+import Product from '@/models/Product';
 import User from '@/models/User';
 import { normalizeEmail, getPhoneRegex } from '@/lib/admin';
 
@@ -24,17 +25,30 @@ export async function GET(req) {
 
     await mongooseConnect();
     const email = normalizeEmail(session.user.email);
-    
+
     // 1. Find user in DB to get their phone if any
     const user = await User.findOne({ email }).lean();
     if (!user) {
        return NextResponse.json({ success: true, canReview: false });
     }
 
+    let product = null;
+    if (mongoose.Types.ObjectId.isValid(productId)) {
+      product = await Product.findById(productId).select('_id slug').lean();
+    }
+    if (!product) {
+      product = await Product.findOne({ slug: productId }).select('_id slug').lean();
+    }
+    if (!product) {
+      return NextResponse.json({ success: true, canReview: false });
+    }
+
+    const productIdentifiers = [product._id.toString(), product.slug].filter(Boolean);
+
     // 2. Query for delivered orders containing this product
     const query = {
       status: 'Delivered',
-      items: { $elemMatch: { productId: productId } },
+      items: { $elemMatch: { productId: { $in: productIdentifiers } } },
       $or: [
         { customerEmail: email }
       ]

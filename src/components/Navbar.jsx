@@ -58,21 +58,37 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-const ANNOUNCEMENT_ITEMS = [
-  'Imported homeware with a refined finish',
-  'Free delivery above Rs. 3000',
-];
+function normalizeAnnouncementItems(messages = [], announcementText = '') {
+  const rawMessages = Array.isArray(messages) && messages.length > 0
+    ? messages
+    : String(announcementText || '')
+        .split(/\r?\n|[|•]+/)
+        .map((text, index) => ({ id: `legacy-${index + 1}`, text, isActive: true }));
 
-function AnnouncementMarquee() {
+  return rawMessages
+    .filter((item) => item?.isActive !== false)
+    .map((item) => String(item?.text || '').trim())
+    .filter(Boolean);
+}
+
+function AnnouncementMarquee({ items = [] }) {
+  if (items.length === 0) return null;
+
+  const totalCharacters = items.reduce((count, item) => count + item.length, 0);
+  const durationSeconds = Math.min(120, Math.max(56, totalCharacters * 0.7));
+
   const marqueeItems = Array.from({ length: 6 }, (_, repeatIndex) =>
-    ANNOUNCEMENT_ITEMS.map((text) => ({
+    items.map((text) => ({
       id: `${repeatIndex}-${text}`,
       text,
     }))
   ).flat();
 
   return (
-    <div className="announcement-marquee mask-edge">
+    <div
+      className="announcement-marquee mask-edge"
+      style={{ '--announcement-marquee-duration': `${durationSeconds}s` }}
+    >
       <div className="announcement-marquee__track">
         {[0, 1].map((copyIndex) => (
           <div
@@ -80,10 +96,14 @@ function AnnouncementMarquee() {
             className="announcement-marquee__content"
             aria-hidden={copyIndex === 1 ? 'true' : undefined}
           >
-            {marqueeItems.map(({ id, text }) => (
+            {marqueeItems.map(({ id, text }, index) => (
               <span key={`${copyIndex}-${id}`} className="announcement-marquee__item">
-                <Sparkles className="size-3.5" aria-hidden="true" />
-                <span>{text}</span>
+                <span className="announcement-marquee__label">{text}</span>
+                {index < marqueeItems.length - 1 ? (
+                  <span className="announcement-marquee__separator" aria-hidden="true">
+                    <Sparkles className="size-3.5" />
+                  </span>
+                ) : null}
               </span>
             ))}
           </div>
@@ -93,7 +113,12 @@ function AnnouncementMarquee() {
   );
 }
 
-function NavbarContent({ categories }) {
+function NavbarContent({
+  categories,
+  announcementBarEnabled = true,
+  announcementBarText = '',
+  announcementBarMessages = [],
+}) {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
@@ -187,12 +212,16 @@ function NavbarContent({ categories }) {
     'flex w-full min-h-10 items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-[background-color,transform,color] duration-200 active:scale-[0.96]';
   const navActionButtonClass =
     'nav-icon-button relative rounded-2xl border border-border/60 bg-card/85 p-0 text-foreground transition-[transform,background-color,border-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-primary/18 hover:bg-background hover:text-foreground active:scale-[0.96]';
+  const announcementItems = normalizeAnnouncementItems(announcementBarMessages, announcementBarText);
+  const showAnnouncementBar = announcementBarEnabled && announcementItems.length > 0;
 
   return (
     <div className="navbar-shell sticky top-0 z-40 border-b border-border/60 bg-card/95 backdrop-blur">
-      <div className="relative flex min-h-9 items-center border-b border-border/60 bg-primary py-2 text-primary-foreground">
-        <AnnouncementMarquee />
-      </div>
+      {showAnnouncementBar ? (
+        <div className="relative flex min-h-9 items-center border-b border-border/60 bg-primary py-2 text-primary-foreground">
+          <AnnouncementMarquee items={announcementItems} />
+        </div>
+      ) : null}
 
       <header className="relative z-20 mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
         <Button variant="ghost" size="icon" onClick={openSidebar} aria-label="Open menu" className="md:hidden">
@@ -562,10 +591,20 @@ function NavbarContent({ categories }) {
   );
 }
 
-export default function Navbar({ categories = [] }) {
+export default function Navbar({
+  categories = [],
+  announcementBarEnabled = true,
+  announcementBarText = '',
+  announcementBarMessages = [],
+}) {
   return (
     <Suspense fallback={<div className="h-16 border-b border-border bg-card" />}>
-      <NavbarContent categories={categories} />
+      <NavbarContent
+        categories={categories}
+        announcementBarEnabled={announcementBarEnabled}
+        announcementBarText={announcementBarText}
+        announcementBarMessages={announcementBarMessages}
+      />
     </Suspense>
   );
 }

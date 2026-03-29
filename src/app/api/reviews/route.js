@@ -6,9 +6,10 @@ import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import Review from '@/models/Review';
 import Notification from '@/models/Notification';
+import Order from '@/models/Order';
 import User from '@/models/User';
 import Product from '@/models/Product';
-import { normalizeEmail } from '@/lib/admin';
+import { getPhoneRegex, normalizeEmail } from '@/lib/admin';
 
 // GET reviews for a specific product
 export async function GET(req) {
@@ -69,6 +70,32 @@ export async function POST(req) {
 
     // Always use the real Mongo _id for the review reference
     const resolvedProductId = product._id;
+    const productIdentifiers = [resolvedProductId.toString(), product.slug].filter(Boolean);
+
+    const orderQuery = {
+      status: 'Delivered',
+      items: {
+        $elemMatch: {
+          productId: { $in: productIdentifiers },
+        },
+      },
+      $or: [{ customerEmail: email }],
+    };
+
+    if (user.phone) {
+      const phoneRegex = getPhoneRegex(user.phone);
+      if (phoneRegex) {
+        orderQuery.$or.push({ customerPhone: { $regex: phoneRegex } });
+      }
+    }
+
+    const eligibleOrder = await Order.findOne(orderQuery).select('_id').lean();
+    if (!eligibleOrder) {
+      return NextResponse.json(
+        { success: false, error: 'Only delivered customers can review this product' },
+        { status: 403 }
+      );
+    }
 
     const review = await Review.create({
       productId: resolvedProductId,

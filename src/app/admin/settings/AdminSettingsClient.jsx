@@ -2,13 +2,29 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BellRing, Loader2, RadioTower, Save, ShieldCheck, Store, Trash2, UserPlus } from 'lucide-react';
+import { BellRing, Loader2, Pencil, Plus, RadioTower, Save, ShieldCheck, Store, Trash2, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+
+function normalizeAnnouncementMessages(messages = [], fallbackText = '') {
+  const rawMessages = Array.isArray(messages) && messages.length > 0
+    ? messages
+    : String(fallbackText || '')
+        .split(/\r?\n|[|•]+/)
+        .map((text, index) => ({ id: `announcement-${index + 1}`, text, isActive: true }));
+
+  return rawMessages
+    .map((entry, index) => ({
+      id: String(entry?.id || `announcement-${index + 1}`).trim(),
+      text: String(entry?.text || '').trim(),
+      isActive: entry?.isActive !== false,
+    }))
+    .filter((entry) => entry.text);
+}
 
 function SettingSection({ icon: Icon, title, description, children }) {
   return (
@@ -201,11 +217,71 @@ function AdminAccessSection() {
 export default function AdminSettingsClient({ initialSettings, isConfiguredAdmin }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [form, setForm] = useState(initialSettings);
+  const [form, setForm] = useState({
+    ...initialSettings,
+    announcementBarMessages: normalizeAnnouncementMessages(
+      initialSettings?.announcementBarMessages,
+      initialSettings?.announcementBarText
+    ),
+  });
+  const [newAnnouncementMessage, setNewAnnouncementMessage] = useState('');
+  const [editingAnnouncementId, setEditingAnnouncementId] = useState(null);
+  const [editingAnnouncementText, setEditingAnnouncementText] = useState('');
 
   function handleChange(field, value) {
     setForm((previous) => ({ ...previous, [field]: value }));
     setSaved(false);
+  }
+
+  function handleAddAnnouncementMessage() {
+    const trimmed = newAnnouncementMessage.trim();
+    if (!trimmed) return;
+
+    handleChange('announcementBarMessages', [
+      ...form.announcementBarMessages,
+      {
+        id: typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `announcement-${Date.now()}`,
+        text: trimmed,
+        isActive: true,
+      },
+    ]);
+    setNewAnnouncementMessage('');
+  }
+
+  function handleEditAnnouncementStart(message) {
+    setEditingAnnouncementId(message.id);
+    setEditingAnnouncementText(message.text);
+  }
+
+  function handleEditAnnouncementSave() {
+    const trimmed = editingAnnouncementText.trim();
+    if (!trimmed || !editingAnnouncementId) return;
+
+    handleChange(
+      'announcementBarMessages',
+      form.announcementBarMessages.map((message) =>
+        message.id === editingAnnouncementId ? { ...message, text: trimmed } : message
+      )
+    );
+    setEditingAnnouncementId(null);
+    setEditingAnnouncementText('');
+  }
+
+  function handleEditAnnouncementCancel() {
+    setEditingAnnouncementId(null);
+    setEditingAnnouncementText('');
+  }
+
+  function handleDeleteAnnouncementMessage(id) {
+    handleChange(
+      'announcementBarMessages',
+      form.announcementBarMessages.filter((message) => message.id !== id)
+    );
+    if (editingAnnouncementId === id) {
+      handleEditAnnouncementCancel();
+    }
   }
 
   async function handleSave() {
@@ -402,13 +478,99 @@ export default function AdminSettingsClient({ initialSettings, isConfiguredAdmin
               {form.announcementBarEnabled ? 'Enabled' : 'Disabled'}
             </button>
           </div>
-          <div>
-            <Label className="mb-1.5">Banner Message</Label>
-            <Input
-              value={form.announcementBarText}
-              onChange={(event) => handleChange('announcementBarText', event.target.value)}
-              placeholder="Free delivery on orders above Rs. 3000!"
-            />
+
+          <div className="space-y-3">
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Label className="mb-1.5">Add Announcement Message</Label>
+                <Input
+                  value={newAnnouncementMessage}
+                  onChange={(event) => setNewAnnouncementMessage(event.target.value)}
+                  placeholder="Free delivery on orders above Rs. 3000!"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAddAnnouncementMessage}
+                disabled={!newAnnouncementMessage.trim()}
+                className="shrink-0"
+              >
+                <Plus data-icon="inline-start" />
+                Add
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="mb-1.5">Message List</Label>
+              {form.announcementBarMessages.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
+                  No announcement messages yet. Add one above.
+                </div>
+              ) : (
+                form.announcementBarMessages.map((message, index) => {
+                  const isEditing = editingAnnouncementId === message.id;
+
+                  return (
+                    <div
+                      key={message.id}
+                      className="rounded-lg border border-border bg-muted/20 px-4 py-3"
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          Message {index + 1}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => (isEditing ? handleEditAnnouncementSave() : handleEditAnnouncementStart(message))}
+                          >
+                            <Pencil data-icon="inline-start" />
+                            {isEditing ? 'Save' : 'Edit'}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => handleDeleteAnnouncementMessage(message.id)}
+                          >
+                            <Trash2 data-icon="inline-start" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <Input
+                            value={editingAnnouncementText}
+                            onChange={(event) => setEditingAnnouncementText(event.target.value)}
+                            placeholder="Edit announcement message"
+                          />
+                          <div className="flex items-center gap-2">
+                            <Button type="button" size="sm" onClick={handleEditAnnouncementSave} disabled={!editingAnnouncementText.trim()}>
+                              Save Changes
+                            </Button>
+                            <Button type="button" variant="outline" size="sm" onClick={handleEditAnnouncementCancel}>
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-foreground">{message.text}</p>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Active messages are joined into one slow-moving marquee with large spacing between each item.
+            </p>
           </div>
         </SettingSection>
 

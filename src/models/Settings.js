@@ -1,5 +1,27 @@
 import mongoose from 'mongoose';
 
+const AnnouncementMessageSchema = new mongoose.Schema(
+    {
+        id: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        text: {
+            type: String,
+            default: '',
+            trim: true,
+        },
+        isActive: {
+            type: Boolean,
+            default: true,
+        },
+    },
+    {
+        _id: false,
+    }
+);
+
 const SettingsSchema = new mongoose.Schema(
     {
         // Use a singleton pattern: there's only one settings doc, identified by this key
@@ -86,6 +108,10 @@ const SettingsSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
+        announcementBarMessages: {
+            type: [AnnouncementMessageSchema],
+            default: [],
+        },
 
         // Dynamically managed admin emails (in addition to ADMIN_EMAIL / ADMIN_EMAILS env vars)
         adminEmails: {
@@ -103,7 +129,13 @@ const SettingsSchema = new mongoose.Schema(
 );
 
 const cachedSettings = mongoose.models.Settings;
-if (cachedSettings && !cachedSettings.schema.path('homepageSectionOrder')) {
+if (
+    cachedSettings &&
+    (
+        !cachedSettings.schema.path('homepageSectionOrder') ||
+        !cachedSettings.schema.path('announcementBarMessages')
+    )
+) {
     delete mongoose.models.Settings;
 }
 

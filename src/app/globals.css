@@ -276,8 +276,8 @@
 }
 
 .announcement-marquee {
-  --announcement-marquee-gap: clamp(2.5rem, 5vw, 4rem);
-  --announcement-marquee-duration: 32s;
+  --announcement-marquee-gap: clamp(6.25rem, 10vw, 9.375rem);
+  --announcement-marquee-duration: 56s;
   position: relative;
   min-height: 1rem;
   width: 100%;
@@ -314,7 +314,21 @@
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
+}
+
+.announcement-marquee__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.announcement-marquee__separator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.72;
 }
 
 @media (prefers-reduced-motion: reduce) {

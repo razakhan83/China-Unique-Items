@@ -34,6 +34,23 @@ function sanitizeSectionOrder(order, fallbackOrder = []) {
   return Array.from(new Set([...(Array.isArray(order) ? order : []), ...fallbackOrder].filter(Boolean)));
 }
 
+function normalizeAnnouncementMessages(messages = [], fallbackText = '') {
+  const rawMessages = Array.isArray(messages) && messages.length > 0
+    ? messages
+    : String(fallbackText || '')
+        .split(/\r?\n|[|•]+/)
+        .map((text) => ({ text }))
+        .filter((entry) => String(entry?.text || '').trim());
+
+  return rawMessages
+    .map((entry, index) => ({
+      id: String(entry?.id || `announcement-${index + 1}`).trim(),
+      text: String(entry?.text || '').trim(),
+      isActive: entry?.isActive !== false,
+    }))
+    .filter((entry) => entry.text);
+}
+
 function escapeRegex(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -297,6 +314,7 @@ async function getSettingsRaw() {
     freeShippingThreshold: Number(settings.freeShippingThreshold || 3000),
     announcementBarEnabled: settings.announcementBarEnabled ?? true,
     announcementBarText: settings.announcementBarText || '',
+    announcementBarMessages: normalizeAnnouncementMessages(settings.announcementBarMessages, settings.announcementBarText),
     homepageSectionOrder: Array.isArray(settings.homepageSectionOrder) ? settings.homepageSectionOrder : [],
   };
 }
@@ -1360,6 +1378,7 @@ export async function getAdminSettings() {
     freeShippingThreshold: Number(settings.freeShippingThreshold || 3000),
     announcementBarEnabled: settings.announcementBarEnabled ?? true,
     announcementBarText: settings.announcementBarText || '',
+    announcementBarMessages: normalizeAnnouncementMessages(settings.announcementBarMessages, settings.announcementBarText),
     homepageSectionOrder: Array.isArray(settings.homepageSectionOrder) ? settings.homepageSectionOrder : [],
   };
 }

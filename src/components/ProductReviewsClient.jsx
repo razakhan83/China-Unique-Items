@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, signIn } from 'next-auth/react';
 import { Loader2, MessageSquarePlus, Star } from 'lucide-react';
@@ -15,17 +15,62 @@ import { cn } from '@/lib/utils';
 
 export default function ProductReviewsClient({ productId, productName, reviewCount = 0 }) {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [canReview, setCanReview] = useState(false);
+  const [checkingPermission, setCheckingPermission] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function checkPermission() {
+      if (status !== 'authenticated' || !session?.user || !productId) {
+        setCanReview(false);
+        setCheckingPermission(false);
+        return;
+      }
+
+      setCheckingPermission(true);
+      try {
+        const response = await fetch(`/api/reviews/check-permission?productId=${encodeURIComponent(productId)}`, {
+          cache: 'no-store',
+        });
+        const result = await response.json();
+
+        if (!ignore) {
+          setCanReview(result?.success === true && result?.canReview === true);
+        }
+      } catch {
+        if (!ignore) {
+          setCanReview(false);
+        }
+      } finally {
+        if (!ignore) {
+          setCheckingPermission(false);
+        }
+      }
+    }
+
+    checkPermission();
+
+    return () => {
+      ignore = true;
+    };
+  }, [productId, session, status]);
 
   function handleAddReviewClick() {
     if (!session) {
       toast.info('Please sign in to leave a review.');
       signIn('google');
+      return;
+    }
+
+    if (!canReview) {
+      toast.error('Reviews are available only after your delivered order.');
       return;
     }
 
@@ -69,14 +114,17 @@ export default function ProductReviewsClient({ productId, productName, reviewCou
 
   return (
     <>
-      <Button
-        variant="outline"
-        className="max-w-max border-primary/20 text-primary hover:bg-primary/5"
-        onClick={handleAddReviewClick}
-      >
-        <MessageSquarePlus className="mr-2 size-4" />
-        Write a Review
-      </Button>
+      {canReview ? (
+        <Button
+          variant="outline"
+          className="max-w-max border-primary/20 text-primary hover:bg-primary/5"
+          onClick={handleAddReviewClick}
+          disabled={checkingPermission}
+        >
+          {checkingPermission ? <Loader2 className="mr-2 size-4 animate-spin" /> : <MessageSquarePlus className="mr-2 size-4" />}
+          Write a Review
+        </Button>
+      ) : null}
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-md">

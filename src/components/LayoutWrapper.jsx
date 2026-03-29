@@ -23,7 +23,12 @@ export default function LayoutWrapper({ children, categories, settings }) {
   return (
     <>
       <div className="flex min-h-screen flex-col bg-background">
-        <Navbar categories={categories} />
+        <Navbar
+          categories={categories}
+          announcementBarEnabled={settings.announcementBarEnabled}
+          announcementBarText={settings.announcementBarText}
+          announcementBarMessages={settings.announcementBarMessages}
+        />
 
         <main className="flex-grow">{children}</main>
 

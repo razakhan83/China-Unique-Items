@@ -9,6 +9,23 @@ import Settings from '@/models/Settings';
 
 const SINGLETON_KEY = 'site-settings';
 
+function normalizeAnnouncementMessages(messages = [], fallbackText = '') {
+    const rawMessages = Array.isArray(messages) && messages.length > 0
+        ? messages
+        : String(fallbackText || '')
+            .split(/\r?\n|[|•]+/)
+            .map((text) => ({ text }))
+            .filter((entry) => String(entry?.text || '').trim());
+
+    return rawMessages
+        .map((entry, index) => ({
+            id: String(entry?.id || `announcement-${index + 1}`).trim(),
+            text: String(entry?.text || '').trim(),
+            isActive: entry?.isActive !== false,
+        }))
+        .filter((entry) => entry.text);
+}
+
 // GET settings — Public (used across the site)
 export async function GET() {
     try {
@@ -43,6 +60,10 @@ export async function GET() {
                 freeShippingThreshold: Number(settings.freeShippingThreshold || 5000),
                 announcementBarEnabled: settings.announcementBarEnabled ?? true,
                 announcementBarText: settings.announcementBarText || '',
+                announcementBarMessages: normalizeAnnouncementMessages(
+                    settings.announcementBarMessages,
+                    settings.announcementBarText
+                ),
                 homepageSectionOrder: Array.isArray(settings.homepageSectionOrder) ? settings.homepageSectionOrder : [],
             },
         });
@@ -82,13 +103,17 @@ export async function PUT(req) {
             'freeShippingThreshold',
             'announcementBarEnabled',
             'announcementBarText',
+            'announcementBarMessages',
             'homepageSectionOrder',
         ];
 
         const updates = {};
         for (const key of allowedFields) {
             if (body[key] !== undefined) {
-                updates[key] = body[key];
+                updates[key] =
+                    key === 'announcementBarMessages'
+                        ? normalizeAnnouncementMessages(body[key], body.announcementBarText)
+                        : body[key];
             }
         }
 

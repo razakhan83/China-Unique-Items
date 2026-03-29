@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { revalidateTag } from 'next/cache';
 import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
@@ -94,6 +95,9 @@ export async function POST(req) {
           rating,
         },
       });
+
+      revalidateTag(`reviews-${resolvedProductId.toString()}`);
+      revalidateTag(`reviews-${productId}`);
 
       results.push(newReview);
     }
