@@ -11,16 +11,16 @@ export default async function AdminSettingsPage() {
   await requireAdmin();
 
   const session = await getServerSession(authOptions);
-  let isProAdmin = false;
+  let isConfiguredAdmin = false;
   if (session?.user?.email) {
-    isProAdmin = isAdminEmail(session.user.email);
+    isConfiguredAdmin = isAdminEmail(session.user.email);
   }
 
-  return <SettingsContent isProAdmin={isProAdmin} />;
+  return <SettingsContent isConfiguredAdmin={isConfiguredAdmin} />;
 }
 
-async function SettingsContent({ isProAdmin }) {
+async function SettingsContent({ isConfiguredAdmin }) {
   const settings = await getAdminSettings();
-  return <AdminSettingsClient initialSettings={settings} isProAdmin={isProAdmin} />;
+  return <AdminSettingsClient initialSettings={settings} isConfiguredAdmin={isConfiguredAdmin} />;
 }
 

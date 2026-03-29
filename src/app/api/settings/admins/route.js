@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import Settings from '@/models/Settings';
-import { isAdminEmail, normalizeEmail } from '@/lib/admin';
+import { getAllAdminEmails, getConfiguredAdminEmails, isAdminEmail, normalizeEmail } from '@/lib/admin';
 
 const SETTINGS_KEY = 'site-settings';
 
@@ -15,19 +15,35 @@ async function requireAdminSession() {
   return session;
 }
 
+async function requireAnyAdminSession() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    return null;
+  }
+  return session;
+}
+
 // GET — list current dynamic admin emails
 export async function GET() {
   try {
-    const session = await requireAdminSession();
+    const session = await requireAnyAdminSession();
     if (!session) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     await mongooseConnect();
     const settings = await Settings.findOne({ singletonKey: SETTINGS_KEY }).lean();
-    const adminEmails = settings?.adminEmails || [];
+    const configuredAdmins = getConfiguredAdminEmails();
+    const dynamicAdmins = (settings?.adminEmails || []).map(normalizeEmail).filter(Boolean);
 
-    return NextResponse.json({ success: true, data: adminEmails });
+    return NextResponse.json({
+      success: true,
+      data: {
+        configuredAdmins,
+        dynamicAdmins,
+        allAdmins: getAllAdminEmails(dynamicAdmins),
+      },
+    });
   } catch (error) {
     console.error('GET /api/settings/admins error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

@@ -13,6 +13,17 @@ function getConfiguredAdminEmails() {
   return Array.from(new Set(emails));
 }
 
+function getAllAdminEmails(additionalEmails = []) {
+  const emails = [
+    ...getConfiguredAdminEmails(),
+    ...(Array.isArray(additionalEmails) ? additionalEmails : []),
+  ]
+    .map(normalizeEmail)
+    .filter(Boolean);
+
+  return Array.from(new Set(emails));
+}
+
 function isAdminEmail(email) {
   const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) return false;
@@ -30,4 +41,4 @@ function getPhoneRegex(phone) {
   return new RegExp(`^\\D*${pattern}\\D*$`);
 }
 
-export { getConfiguredAdminEmails, isAdminEmail, normalizeEmail, normalizePhone, getPhoneRegex };
+export { getAllAdminEmails, getConfiguredAdminEmails, isAdminEmail, normalizeEmail, normalizePhone, getPhoneRegex };

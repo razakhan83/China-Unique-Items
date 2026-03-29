@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { updateTag } from 'next/cache';
 import { after } from 'next/server';
 
-import { normalizeEmail, normalizePhone, getPhoneRegex } from '@/lib/admin';
+import { getConfiguredAdminEmails, normalizeEmail, normalizePhone, getPhoneRegex } from '@/lib/admin';
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import { sendPurchaseTrackingEvents } from '@/lib/trackingServer';
@@ -82,9 +82,10 @@ async function assertAdmin() {
 
 async function sendOrderEmails({ order, customerName, userEmail }) {
   try {
+    const adminRecipients = getConfiguredAdminEmails();
     const adminEmailResult = await resend.emails.send({
       from: 'China Unique <onboarding@resend.dev>',
-      to: process.env.ADMIN_EMAIL || '123raza83@gmail.com',
+      to: adminRecipients.length > 0 ? adminRecipients : ['123raza83@gmail.com'],
       subject: `New Order Received - ${customerName}`,
       html: generateOrderEmailHtml(order),
       headers: {
