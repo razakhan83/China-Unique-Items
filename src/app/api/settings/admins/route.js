@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import Settings from '@/models/Settings';
-import { normalizeEmail } from '@/lib/admin';
+import { isAdminEmail, normalizeEmail } from '@/lib/admin';
 
 const SETTINGS_KEY = 'site-settings';
 
