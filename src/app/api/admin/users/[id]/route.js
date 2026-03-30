@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 
 import mongooseConnect from '@/lib/mongooseConnect';
 import User from '@/models/User';
+import { getStoreKey } from '@/lib/store-scope';
 
 export async function PATCH(request, { params }) {
   try {
@@ -31,7 +32,10 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ success: false, message: 'Invalid action' }, { status: 400 });
     }
 
-    const user = await User.findByIdAndUpdate(id, update, { new: true }).lean();
+    const query = session.user?.isSuperAdmin
+      ? { _id: id }
+      : { _id: id, storeKey: getStoreKey() };
+    const user = await User.findOneAndUpdate(query, update, { returnDocument: 'after' }).lean();
 
     if (!user) {
       return NextResponse.json({ success: false, message: 'User not found' }, { status: 404 });

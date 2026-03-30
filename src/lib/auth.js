@@ -6,8 +6,18 @@ import mongooseConnect from "@/lib/mongooseConnect";
 import { getStoreKey } from "@/lib/store-scope";
 import User from "@/models/User";
 
+function isSuperAdminEmail(email) {
+  return normalizeEmail(email) === normalizeEmail(process.env.ADMIN_EMAIL);
+}
+
 function isStoreAllowed(storeKey) {
   return String(storeKey || "").trim() === getStoreKey();
+}
+
+function canAccessCurrentStore(user) {
+  if (!user?.email) return false;
+  if (isSuperAdminEmail(user.email)) return true;
+  return isStoreAllowed(user.storeKey);
 }
 
 /** @type {import("next-auth").NextAuthOptions} */
@@ -24,15 +34,18 @@ export const authOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        const normalizedEmail = normalizeEmail(credentials?.email);
         if (
-          isAdminEmail(credentials.email) &&
-          credentials.password === process.env.ADMIN_PASSWORD
+          isAdminEmail(normalizedEmail) &&
+          credentials?.password === process.env.ADMIN_PASSWORD
         ) {
+          const isSuperAdmin = isSuperAdminEmail(normalizedEmail);
           return {
             id: "1",
             name: "Raza Admin",
-            email: normalizeEmail(credentials.email),
-            storeKey: getStoreKey(),
+            email: normalizedEmail,
+            storeKey: isSuperAdmin ? "*" : getStoreKey(),
+            isSuperAdmin,
           };
         }
         return null;
@@ -46,25 +59,29 @@ export const authOptions = {
           await mongooseConnect();
           const expectedStoreKey = getStoreKey();
           const normalizedEmail = normalizeEmail(user.email);
+          const isSuperAdmin = isSuperAdminEmail(normalizedEmail);
           
           const existingUser = await User.findOne({ email: normalizedEmail });
           
-          if (existingUser && (!isStoreAllowed(existingUser.storeKey) || existingUser.disabled)) {
+          if (existingUser && (!canAccessCurrentStore(existingUser) || existingUser.disabled)) {
             return false; // Prevent sign in
           }
 
-          const dbUser = await User.findOneAndUpdate(
-            { email: normalizedEmail },
-            { 
-              name: user.name, 
-              image: user.image,
-              email: normalizedEmail,
-              storeKey: expectedStoreKey,
-            },
-            { upsert: true, new: true }
-          ).lean();
+          let dbUser = existingUser;
+          if (!isSuperAdmin) {
+            dbUser = await User.findOneAndUpdate(
+              { email: normalizedEmail },
+              { 
+                name: user.name, 
+                image: user.image,
+                email: normalizedEmail,
+                storeKey: expectedStoreKey,
+              },
+              { upsert: true, new: true, setDefaultsOnInsert: true }
+            ).lean();
+          }
 
-          if (!isStoreAllowed(dbUser?.storeKey)) {
+          if (!isSuperAdmin && !canAccessCurrentStore(dbUser)) {
             return false;
           }
 
@@ -96,6 +113,7 @@ export const authOptions = {
       if (email) {
         const expectedStoreKey = getStoreKey();
         token.email = normalizeEmail(email);
+        token.isSuperAdmin = isSuperAdminEmail(token.email);
         if (user?.storeKey) {
           token.storeKey = user.storeKey;
         }
@@ -126,7 +144,7 @@ export const authOptions = {
           const dbUser = await User.findOne({ email: token.email }).select('disabled forceLogoutAt storeKey').lean();
           
           if (dbUser) {
-            if (!isStoreAllowed(dbUser.storeKey)) {
+            if (!canAccessCurrentStore(dbUser)) {
               return null;
             }
             token.storeKey = dbUser.storeKey;
@@ -144,7 +162,7 @@ export const authOptions = {
                 return null;
               }
             }
-          } else if (!isStoreAllowed(token.storeKey || expectedStoreKey)) {
+          } else if (!token.isSuperAdmin && !isStoreAllowed(token.storeKey || expectedStoreKey)) {
             return null;
           }
         } catch (error) {
@@ -156,12 +174,14 @@ export const authOptions = {
     },
     async session({ session, token }) {
       if (session?.user) {
-        if (!isStoreAllowed(token?.storeKey)) {
+        if (!token?.isSuperAdmin && !isStoreAllowed(token?.storeKey)) {
           throw new Error("Invalid store session");
         }
         session.user.email = normalizeEmail(session.user.email || token?.email);
         // @ts-ignore - isAdmin is custom
         session.user.isAdmin = Boolean(token?.isAdmin);
+        // @ts-ignore - isSuperAdmin is custom
+        session.user.isSuperAdmin = Boolean(token?.isSuperAdmin);
         // @ts-ignore - storeKey is custom
         session.user.storeKey = token?.storeKey;
       }

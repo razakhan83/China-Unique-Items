@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { revalidateTag } from 'next/cache';
 import { cacheLife } from 'next/cache';
 import { cacheTag } from 'next/cache';
+import { getServerSession } from 'next-auth';
 
 import Category from '@/models/Category';
 import CoverPhoto from '@/models/CoverPhoto';
@@ -14,6 +15,7 @@ import User from '@/models/User';
 import mongooseConnect from '@/lib/mongooseConnect';
 import { optimizeCloudinaryUrl } from '@/lib/cloudinaryImage';
 import { normalizeEmail, getPhoneRegex } from '@/lib/admin';
+import { authOptions } from '@/lib/auth';
 import { getStoreConfig } from '@/lib/store-config';
 import { getStoreKey, withStoreScope, withStoreScopedId, withStoreScopedSlug } from '@/lib/store-scope';
 import {
@@ -1144,6 +1146,8 @@ export async function getAdminUsersPage({
     };
   }
 
+  const session = await getServerSession(authOptions);
+  const userScope = session?.user?.isSuperAdmin ? {} : withStoreScope({});
   const query = {};
 
   if (safeStatus === 'active') query.disabled = { $ne: true };
@@ -1155,10 +1159,10 @@ export async function getAdminUsersPage({
   }
 
   const [items, total, totalUsers, disabledUsers] = await Promise.all([
-    User.find(query).sort({ createdAt: -1 }).skip(skip).limit(safeLimit).lean(),
-    User.countDocuments(query),
-    User.countDocuments(),
-    User.countDocuments({ disabled: true }),
+    User.find({ ...userScope, ...query }).sort({ createdAt: -1 }).skip(skip).limit(safeLimit).lean(),
+    User.countDocuments({ ...userScope, ...query }),
+    User.countDocuments(userScope),
+    User.countDocuments({ ...userScope, disabled: true }),
   ]);
 
   return {

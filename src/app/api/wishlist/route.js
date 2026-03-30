@@ -6,7 +6,7 @@ import mongooseConnect from '@/lib/mongooseConnect';
 import Product from '@/models/Product';
 import User from '@/models/User';
 import { normalizeEmail } from '@/lib/admin';
-import { withStoreScope } from '@/lib/store-scope';
+import { getStoreKey, withStoreScope, withStoreScopeForCreate } from '@/lib/store-scope';
 
 function serializeWishlistProduct(product) {
   return {
@@ -51,6 +51,26 @@ async function getWishlistPayload(email) {
   };
 }
 
+async function upsertWishlistUser(email, update) {
+  const normalizedEmail = normalizeEmail(email);
+  return User.findOneAndUpdate(
+    { email: normalizedEmail },
+    {
+      ...update,
+      $set: {
+        ...(update?.$set || {}),
+        storeKey: getStoreKey(),
+      },
+      $setOnInsert: withStoreScopeForCreate({
+        email: normalizedEmail,
+        name: normalizedEmail.split('@')[0] || 'Customer',
+        ...(update?.$setOnInsert || {}),
+      }),
+    },
+    { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true },
+  );
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
@@ -74,11 +94,7 @@ export async function POST(request) {
   }
 
   await mongooseConnect();
-  await User.findOneAndUpdate(
-    { email: normalizeEmail(session.user.email) },
-    { $addToSet: { wishlist: safeProductId } },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
-  );
+  await upsertWishlistUser(session.user.email, { $addToSet: { wishlist: safeProductId } });
 
   const data = await getWishlistPayload(session.user.email);
   return NextResponse.json({ success: true, data });
@@ -97,11 +113,7 @@ export async function PUT(request) {
 
   await mongooseConnect();
   if (safeIds.length > 0) {
-    await User.findOneAndUpdate(
-      { email: normalizeEmail(session.user.email) },
-      { $addToSet: { wishlist: { $each: safeIds } } },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
-    );
+    await upsertWishlistUser(session.user.email, { $addToSet: { wishlist: { $each: safeIds } } });
   }
 
   const data = await getWishlistPayload(session.user.email);
@@ -121,11 +133,7 @@ export async function DELETE(request) {
   }
 
   await mongooseConnect();
-  await User.findOneAndUpdate(
-    { email: normalizeEmail(session.user.email) },
-    { $pull: { wishlist: safeProductId } },
-    { new: true },
-  );
+  await upsertWishlistUser(session.user.email, { $pull: { wishlist: safeProductId } });
 
   const data = await getWishlistPayload(session.user.email);
   return NextResponse.json({ success: true, data });

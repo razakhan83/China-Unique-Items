@@ -320,6 +320,7 @@ export async function submitOrderAction(input) {
             city: customerCity,
             address: customerAddress,
             landmark,
+            storeKey: getStoreKey(),
           },
         },
         { new: true, upsert: true, setDefaultsOnInsert: true }
@@ -430,8 +431,8 @@ export async function linkOrdersAction(phone) {
   // 1. Update User profile with this phone
   await User.findOneAndUpdate(
     { email: userEmail },
-    { phone: normalizedPhone },
-    { upsert: true }
+    { phone: normalizedPhone, storeKey: getStoreKey() },
+    { upsert: true, setDefaultsOnInsert: true }
   );
 
   // 2. Link orders using fuzzy phone matching

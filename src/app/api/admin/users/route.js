@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 
 import mongooseConnect from '@/lib/mongooseConnect';
 import User from '@/models/User';
+import { getStoreKey } from '@/lib/store-scope';
 
 export async function GET() {
   try {
@@ -14,7 +15,8 @@ export async function GET() {
     }
 
     await mongooseConnect();
-    const users = await User.find({}).sort({ createdAt: -1 }).lean();
+    const query = session.user?.isSuperAdmin ? {} : { storeKey: getStoreKey() };
+    const users = await User.find(query).sort({ createdAt: -1 }).lean();
 
     return NextResponse.json({
       success: true,
