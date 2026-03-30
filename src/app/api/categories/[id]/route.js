@@ -10,6 +10,7 @@ import {
   generateBlurDataURLFromRemoteUrl,
 } from '@/lib/imagePlaceholders';
 import { revalidateTag } from 'next/cache';
+import { withStoreScope } from '@/lib/store-scope';
 
 function slugifyCategory(name = "") {
   return String(name)
@@ -36,7 +37,7 @@ export async function PATCH(req, { params }) {
 
     const body = await req.json();
 
-    const existingCategory = await Category.findById(id);
+    const existingCategory = await Category.findOne(withStoreScope({ _id: id }));
     if (!existingCategory) {
       return NextResponse.json(
         { success: false, error: "Category not found" },

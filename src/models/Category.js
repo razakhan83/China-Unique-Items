@@ -5,12 +5,16 @@ const CategorySchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, "Please provide a category name"],
-      unique: true,
       trim: true,
     },
     slug: {
       type: String,
-      unique: true,
+      trim: true,
+    },
+    storeKey: {
+      type: String,
+      required: true,
+      index: true,
       trim: true,
     },
     image: {
@@ -45,6 +49,15 @@ const CategorySchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+// Compound unique: same name/slug allowed across different stores
+CategorySchema.index({ name: 1, storeKey: 1 }, { unique: true });
+CategorySchema.index({ slug: 1, storeKey: 1 }, { unique: true });
+
+const cachedCategory = mongoose.models.Category;
+if (cachedCategory && !cachedCategory.schema.path('storeKey')) {
+  delete mongoose.models.Category;
+}
 
 export default mongoose.models.Category ||
   mongoose.model("Category", CategorySchema);

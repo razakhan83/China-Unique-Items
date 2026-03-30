@@ -12,6 +12,7 @@ import {
 } from "@/lib/imagePlaceholders";
 import Category from "@/models/Category";
 import mongoose from "mongoose";
+import { withStoreScope, withStoreScopeForCreate, getStoreKey } from "@/lib/store-scope";
 
 function slugifyCategory(name = "") {
   return String(name)
@@ -27,14 +28,14 @@ export async function GET() {
   try {
     await mongooseConnect();
     
-    // Ensure 'special-offers' category exists
+    // Ensure 'special-offers' category exists for this store
     await Category.findOneAndUpdate(
-      { slug: 'special-offers' },
-      { $setOnInsert: { name: 'Special Offers', slug: 'special-offers', sortOrder: 0 } },
+      withStoreScope({ slug: 'special-offers' }),
+      { $setOnInsert: withStoreScopeForCreate({ name: 'Special Offers', slug: 'special-offers', sortOrder: 0 }) },
       { upsert: true }
     );
 
-    const categories = await Category.find({}).sort({ sortOrder: 1, name: 1 }).lean();
+    const categories = await Category.find(withStoreScope({})).sort({ sortOrder: 1, name: 1 }).lean();
     return NextResponse.json({
       success: true,
       count: categories.length,
@@ -72,7 +73,7 @@ export async function POST(req) {
     }
 
     // Auto-assign sortOrder to end of list
-    const count = await Category.countDocuments();
+    const count = await Category.countDocuments(withStoreScope({}));
     const image = String(body.image || "").trim();
     const imagePublicId = String(body.imagePublicId || "").trim();
     let blurDataURL = String(body.blurDataURL || "").trim();
@@ -85,7 +86,7 @@ export async function POST(req) {
       blurDataURL = await generateBlurDataURLFromRemoteUrl(image);
     }
 
-    const category = await Category.create({
+    const category = await Category.create(withStoreScopeForCreate({
       name: body.name.trim(),
       slug: slugifyCategory(body.name),
       image,
@@ -94,7 +95,7 @@ export async function POST(req) {
       sortOrder: body.sortOrder ?? count,
       isEnabled: body.isEnabled !== false,
       showOnHome: body.showOnHome !== false,
-    });
+    }));
     revalidateTag('categories', 'max');
     revalidateTag('home-sections');
     revalidatePath('/');
@@ -146,7 +147,7 @@ export async function PUT(req) {
 
     const operations = body.categories.map((cat) => ({
       updateOne: {
-        filter: { _id: new mongoose.Types.ObjectId(cat._id) },
+        filter: withStoreScope({ _id: new mongoose.Types.ObjectId(cat._id) }),
         update: { $set: { 
           sortOrder: Number(cat.sortOrder) || 0,
           ...(cat.isEnabled !== undefined && { isEnabled: cat.isEnabled === true || cat.isEnabled === 'true' }),
@@ -159,7 +160,7 @@ export async function PUT(req) {
     console.log('[API] Categories bulkWrite result:', result.modifiedCount, 'modified');
 
     // Return the freshly-sorted list so the frontend can use it directly
-    const updated = await Category.find({}).sort({ sortOrder: 1, name: 1 }).lean();
+    const updated = await Category.find(withStoreScope({})).sort({ sortOrder: 1, name: 1 }).lean();
     revalidateTag('categories', 'max');
     revalidateTag('home-sections');
     revalidatePath('/');
@@ -191,7 +192,7 @@ export async function DELETE(req) {
       );
     }
 
-    const categoryToDelete = await Category.findById(id);
+    const categoryToDelete = await Category.findOne(withStoreScope({ _id: id }));
     if (!categoryToDelete) {
       return NextResponse.json(
         { success: false, error: "Category not found" },
@@ -206,7 +207,7 @@ export async function DELETE(req) {
       );
     }
 
-    const deleted = await Category.findByIdAndDelete(id);
+    const deleted = await Category.findOneAndDelete(withStoreScope({ _id: id }));
 
     revalidateTag('categories', 'max');
     revalidateTag('home-sections');

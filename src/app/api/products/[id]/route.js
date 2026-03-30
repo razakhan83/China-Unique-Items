@@ -9,7 +9,7 @@ import Product from '@/models/Product';
 import { getProductCategories } from '@/lib/productCategories';
 import { normalizeProductImages } from '@/lib/productImages';
 import { ensureProductImagesBlur } from '@/lib/serverImageBlur';
-import { withStoreScopedId } from '@/lib/store-scope';
+import { withStoreScopedId, withStoreScope } from '@/lib/store-scope';
 
 export async function GET(_request, { params }) {
     try {
@@ -78,7 +78,7 @@ export async function PUT(request, { params }) {
         const categoryInput = Array.isArray(body.Category)
             ? body.Category
             : [body.Category].filter(Boolean);
-        const categories = await Category.find({ _id: { $in: categoryInput } }, '_id').lean();
+        const categories = await Category.find(withStoreScope({ _id: { $in: categoryInput } }), '_id').lean();
         const validCategoryIdSet = new Set(categories.map((category) => category._id.toString()));
         const categoryArray = categoryInput.filter((id) => validCategoryIdSet.has(String(id)));
 

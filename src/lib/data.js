@@ -388,7 +388,7 @@ async function getCategoriesRaw() {
   await mongooseConnect();
 
   // Sort by sortOrder first (admin-defined order), then by name as fallback
-  const dbCategories = await Category.find({}).sort({ sortOrder: 1, name: 1 }).lean();
+  const dbCategories = await Category.find(withStoreScope({})).sort({ sortOrder: 1, name: 1 }).lean();
   let mappedCategories = [];
   if (dbCategories.length > 0) {
     mappedCategories = dbCategories.map((category) => ({
@@ -644,12 +644,12 @@ export async function getProductsList({ category = 'all', search = '', sort = 'n
   if (safeSearch) {
     const searchRegex = new RegExp(escapeRegex(safeSearch), 'i');
     const matchingCategories = await Category.find(
-      {
+      withStoreScope({
         $or: [
           { name: searchRegex },
           { slug: searchRegex },
         ],
-      },
+      }),
       '_id',
     ).lean();
 
@@ -940,9 +940,9 @@ export async function getAdminProductsPage({
   if (safeSearch) {
     const searchRegex = new RegExp(escapeRegex(safeSearch), 'i');
     const matchingCategories = await Category.find(
-      {
+      withStoreScope({
         $or: [{ name: searchRegex }, { slug: searchRegex }],
-      },
+      }),
       '_id',
     ).lean();
 

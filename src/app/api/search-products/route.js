@@ -20,12 +20,12 @@ export async function GET(req) {
 
         const searchRegex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
         const matchingCategories = await Category.find(
-            {
+            withStoreScope({
                 $or: [
                     { name: searchRegex },
                     { slug: searchRegex },
                 ],
-            },
+            }),
             '_id'
         ).lean();
 

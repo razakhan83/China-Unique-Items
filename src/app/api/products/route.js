@@ -86,7 +86,7 @@ export async function POST(req) {
 
         // Normalize Category to always be an array
         const categoryIds = Array.isArray(categoryInput) ? categoryInput : [categoryInput].filter(Boolean);
-        const categories = await Category.find({ _id: { $in: categoryIds } }, '_id').lean();
+        const categories = await Category.find(withStoreScope({ _id: { $in: categoryIds } }), '_id').lean();
         const validCategoryIdSet = new Set(categories.map((category) => category._id.toString()));
         const categoryArray = categoryIds.filter((id) => validCategoryIdSet.has(String(id)));
 
