@@ -9,13 +9,16 @@ import mongooseConnect from '@/lib/mongooseConnect';
 import Order from '@/models/Order';
 import { Resend } from 'resend';
 import { generateOrderEmailHtml } from '@/lib/emailTemplates';
+import { getStoreConfig } from '@/lib/store-config';
+import { withStoreScope, withStoreScopeForCreate } from '@/lib/store-scope';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function sendOrderNotificationEmail({ order, customerName }) {
     try {
+        const store = getStoreConfig();
         const data = await resend.emails.send({
-            from: 'China Unique <onboarding@resend.dev>',
+            from: `${store.emailFromName} <onboarding@resend.dev>`,
             to: '123raza83@gmail.com',
             subject: `New Order Received - ${customerName}`,
             html: generateOrderEmailHtml(order),
@@ -35,7 +38,7 @@ export async function GET() {
         }
 
         await mongooseConnect();
-        const orders = await Order.find({}).sort({ createdAt: -1 }).lean();
+        const orders = await Order.find(withStoreScope({})).sort({ createdAt: -1 }).lean();
 
         const safeOrders = orders.map(o => ({
             ...o,
@@ -66,7 +69,7 @@ export async function POST(req) {
         // Generate unique order ID: ORD-XXXXXX
         const orderId = `ORD-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
 
-        const order = await Order.create({
+        const order = await Order.create(withStoreScopeForCreate({
             orderId,
             customerName,
             customerPhone,
@@ -75,7 +78,7 @@ export async function POST(req) {
             totalAmount,
             notes,
             status: 'Pending',
-        });
+        }));
 
         updateTag('orders');
         revalidateTag('admin-dashboard');

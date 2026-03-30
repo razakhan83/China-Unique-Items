@@ -2,12 +2,15 @@ import { Suspense } from 'react';
 
 import CheckoutPageSkeleton from '@/components/CheckoutPageSkeleton';
 import { getStoreSettings } from '@/lib/data';
+import { getStoreConfig } from '@/lib/store-config';
 
 import CheckoutClient from './CheckoutClient';
 
+const store = getStoreConfig();
+
 export const metadata = {
   title: 'Checkout',
-  description: 'Complete your order at China Unique Store.',
+  description: `Complete your order at ${store.name}.`,
 };
 
 export default function CheckoutPage() {

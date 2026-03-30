@@ -16,10 +16,16 @@ import User from '@/models/User';
 import { getServerSession } from 'next-auth';
 import { Resend } from 'resend';
 import { generateOrderEmailHtml, generateCustomerOrderConfirmationHtml } from '@/lib/emailTemplates';
+import { getStoreConfig } from '@/lib/store-config';
+import { getStoreKey, withStoreScope, withStoreScopeForCreate, withStoreScopedId } from '@/lib/store-scope';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const SETTINGS_KEY = 'site-settings';
+
+function getScopedSettingsKey() {
+  return `${getStoreKey()}:${SETTINGS_KEY}`;
+}
 
 function normalizeCoverImages(input) {
   if (!Array.isArray(input)) return [];
@@ -82,9 +88,10 @@ async function assertAdmin() {
 
 async function sendOrderEmails({ order, customerName, userEmail }) {
   try {
+    const store = getStoreConfig();
     const adminRecipients = getConfiguredAdminEmails();
     const adminEmailResult = await resend.emails.send({
-      from: 'China Unique <onboarding@resend.dev>',
+      from: `${store.emailFromName} <onboarding@resend.dev>`,
       to: adminRecipients.length > 0 ? adminRecipients : ['123raza83@gmail.com'],
       subject: `New Order Received - ${customerName}`,
       html: generateOrderEmailHtml(order),
@@ -96,7 +103,7 @@ async function sendOrderEmails({ order, customerName, userEmail }) {
 
     if (userEmail) {
       const customerEmailResult = await resend.emails.send({
-        from: 'China Unique <onboarding@resend.dev>',
+        from: `${store.emailFromName} <onboarding@resend.dev>`,
         to: userEmail,
         subject: `Thank You for Your Order! - ${order.orderId}`,
         html: generateCustomerOrderConfirmationHtml(order),
@@ -115,7 +122,11 @@ export async function toggleProductLiveAction(productId, nextValue) {
   await assertAdmin();
   await mongooseConnect();
 
-  const product = await Product.findById(productId);
+  const scopedProductId = withStoreScopedId(productId);
+  if (!scopedProductId) {
+    throw new Error('Product not found');
+  }
+  const product = await Product.findOne(scopedProductId);
   if (!product) {
     throw new Error('Product not found');
   }
@@ -137,7 +148,11 @@ export async function deleteProductAction(productId) {
   await assertAdmin();
   await mongooseConnect();
 
-  const product = await Product.findByIdAndDelete(productId);
+  const scopedProductId = withStoreScopedId(productId);
+  if (!scopedProductId) {
+    throw new Error('Product not found');
+  }
+  const product = await Product.findOneAndDelete(scopedProductId);
   if (!product) {
     throw new Error('Product not found');
   }
@@ -156,7 +171,11 @@ export async function setProductDiscountAction(productId, discountPercentage) {
   await assertAdmin();
   await mongooseConnect();
 
-  const product = await Product.findById(productId);
+  const scopedProductId = withStoreScopedId(productId);
+  if (!scopedProductId) {
+    throw new Error('Product not found');
+  }
+  const product = await Product.findOne(scopedProductId);
   if (!product) {
     throw new Error('Product not found');
   }
@@ -213,7 +232,7 @@ export async function saveStoreSettingsAction(nextSettings) {
   }
 
   const settings = await Settings.findOneAndUpdate(
-    { singletonKey: SETTINGS_KEY },
+    { singletonKey: getScopedSettingsKey() },
     { $set: updates },
     { new: true, upsert: true, runValidators: true },
   ).lean();
@@ -270,7 +289,7 @@ export async function submitOrderAction(input) {
   }
 
   // Create Order record
-  const order = await Order.create({
+  const order = await Order.create(withStoreScopeForCreate({
     orderId: makeOrderId(),
     secureToken: crypto.randomUUID(),
     customerEmail: userEmail || null,
@@ -283,7 +302,7 @@ export async function submitOrderAction(input) {
     totalAmount,
     status: 'Confirmed',
     notes,
-  });
+  }));
 
   revalidateTag('orders');
   revalidateTag('admin-dashboard');
@@ -310,7 +329,7 @@ export async function submitOrderAction(input) {
       const phoneRegex = getPhoneRegex(customerPhone);
       if (phoneRegex) {
         const linkResult = await Order.updateMany(
-          { customerPhone: { $regex: phoneRegex }, customerEmail: null },
+          withStoreScope({ customerPhone: { $regex: phoneRegex }, customerEmail: null }),
           { customerEmail: userEmail }
         );
         
@@ -347,7 +366,7 @@ export async function submitOrderAction(input) {
   });
 
   const lines = [
-    '*New Order from China Unique Store*',
+    `*New Order from ${getStoreConfig().name}*`,
     '',
     '*Customer Details*',
     `Name: ${customerName}`,
@@ -378,7 +397,7 @@ export async function getLastOrderDetailsAction() {
   if (!session?.user?.email) return null;
 
   await mongooseConnect();
-  const lastOrder = await Order.findOne({ customerEmail: normalizeEmail(session.user.email) })
+  const lastOrder = await Order.findOne(withStoreScope({ customerEmail: normalizeEmail(session.user.email) }))
     .sort({ createdAt: -1 })
     .lean();
 
@@ -421,7 +440,7 @@ export async function linkOrdersAction(phone) {
 
   if (phoneRegex) {
     const result = await Order.updateMany(
-      { customerPhone: { $regex: phoneRegex }, customerEmail: null },
+      withStoreScope({ customerPhone: { $regex: phoneRegex }, customerEmail: null }),
       { customerEmail: userEmail }
     );
     modifiedCount = result.modifiedCount;
@@ -446,7 +465,11 @@ export async function updateOrderAction(id, updates) {
   await mongooseConnect();
 
   try {
-    const order = await Order.findById(id);
+    const scopedOrderId = withStoreScopedId(id);
+    if (!scopedOrderId) {
+      throw new Error('Order not found');
+    }
+    const order = await Order.findOne(scopedOrderId);
     if (!order) {
       throw new Error('Order not found');
     }

@@ -1,4 +1,7 @@
+import { getStoreConfig } from '@/lib/store-config';
+
 export const generateInvoice = async (order) => {
+  const store = getStoreConfig();
   // Dynamically import jsPDF and autoTable only when needed on the client
   const { jsPDF } = await import('jspdf');
   const autoTableImport = await import('jspdf-autotable');
@@ -24,12 +27,12 @@ export const generateInvoice = async (order) => {
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text('KIFAYATLY', margin, 25);
+  doc.text(String(store.shortName || store.name).toUpperCase(), margin, 25);
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-  doc.text('Smart Shopping, Better Living', margin, 32);
+  doc.text(store.tagline, margin, 32);
 
   // Invoice Label
   doc.setFontSize(20);
@@ -114,8 +117,8 @@ export const generateInvoice = async (order) => {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'italic');
   doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-  doc.text('Thank you for shopping with Kifayatly!', pageWidth / 2, 280, { align: 'center' });
-  doc.text('For support, contact us at support@kifayatly.com', pageWidth / 2, 285, { align: 'center' });
+  doc.text(`Thank you for shopping with ${store.name}!`, pageWidth / 2, 280, { align: 'center' });
+  doc.text(`For support, contact us at ${order.customerEmail || 'our support channels'}`, pageWidth / 2, 285, { align: 'center' });
 
   // Save PDF
   doc.save(`Invoice_${order.orderId}.pdf`);

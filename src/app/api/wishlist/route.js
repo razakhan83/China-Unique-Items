@@ -6,6 +6,7 @@ import mongooseConnect from '@/lib/mongooseConnect';
 import Product from '@/models/Product';
 import User from '@/models/User';
 import { normalizeEmail } from '@/lib/admin';
+import { withStoreScope } from '@/lib/store-scope';
 
 function serializeWishlistProduct(product) {
   return {
@@ -36,6 +37,7 @@ async function getWishlistPayload(email) {
   }
 
   const products = await Product.find({
+    ...withStoreScope({}),
     _id: { $in: wishlistIds },
     isLive: true,
   }).lean();

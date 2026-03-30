@@ -34,7 +34,7 @@ const SettingsSchema = new mongoose.Schema(
         // General Info
         storeName: {
             type: String,
-            default: 'China Unique Store',
+            default: 'Storefront',
         },
         supportEmail: {
             type: String,

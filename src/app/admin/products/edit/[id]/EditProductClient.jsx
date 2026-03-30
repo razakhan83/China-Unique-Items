@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Check, CloudUpload, Loader2, Plus, PlusCircle, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { getStoreConfig } from '@/lib/store-config';
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -278,7 +279,7 @@ export default function EditProduct({ id }) {
   const seoPreviewDescription =
     trimmedSeoDescription || Description || 'Add a focused product summary to improve search snippets.';
   const seoPreviewUrl =
-    trimmedSeoCanonicalUrl || `https://china-unique-items.vercel.app/products/${fallbackSlug || id}`;
+    trimmedSeoCanonicalUrl || `${siteUrl}/products/${fallbackSlug || id}`;
   const seoChecks = [
     { label: 'SEO title', complete: trimmedSeoTitle.length >= 10 },
     { label: 'Meta description', complete: trimmedSeoDescription.length >= 50 },
@@ -570,7 +571,7 @@ export default function EditProduct({ id }) {
                   value={seoCanonicalUrl}
                   onChange={(e) => setSeoCanonicalUrl(e.target.value)}
                   className="h-11 px-4"
-                  placeholder="https://china-unique-items.vercel.app/products/your-product"
+                  placeholder={`${siteUrl}/products/your-product`}
                 />
               </div>
             </div>
@@ -639,3 +640,5 @@ export default function EditProduct({ id }) {
     </div>
   );
 }
+const store = getStoreConfig();
+const siteUrl = store.siteUrl.replace(/\/$/, '');

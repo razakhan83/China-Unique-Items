@@ -2,6 +2,12 @@ import mongoose from 'mongoose';
 
 const OrderSchema = new mongoose.Schema(
     {
+        storeKey: {
+            type: String,
+            required: true,
+            index: true,
+            trim: true,
+        },
         orderId: {
             type: String,
             required: true,
@@ -104,8 +110,9 @@ if (cachedOrder) {
     const hasWeight = !!cachedOrder.schema.paths.weight;
     const hasItemType = !!cachedOrder.schema.paths.itemType;
     const hasSecureToken = !!cachedOrder.schema.paths.secureToken;
+    const hasStoreKey = !!cachedOrder.schema.paths.storeKey;
     
-    if (!hasStatusInProcess || !hasTracking || !hasIsReviewed || !hasWeight || !hasItemType || !hasSecureToken) {
+    if (!hasStatusInProcess || !hasTracking || !hasIsReviewed || !hasWeight || !hasItemType || !hasSecureToken || !hasStoreKey) {
         delete mongoose.models.Order;
     }
 }

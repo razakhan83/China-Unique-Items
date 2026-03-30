@@ -5,6 +5,9 @@ import { LockKeyhole, Store } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { getStoreConfig } from '@/lib/store-config';
+
+const store = getStoreConfig();
 
 export default function SignInPage() {
   return (
@@ -15,7 +18,7 @@ export default function SignInPage() {
           <Store className="size-8" />
         </div>
         <h2 className="text-3xl font-bold tracking-tight text-foreground">Admin Access</h2>
-        <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">Secure login for China Unique Store management.</p>
+        <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">Secure login for {store.name} management.</p>
 
         <Button className="mt-8 w-full" size="lg" onClick={() => signIn('google', { callbackUrl: '/' })}>
           Continue with Google

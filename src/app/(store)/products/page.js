@@ -15,8 +15,10 @@ import {
 } from '@/components/ui/empty';
 import { ProductsGridSkeleton } from '@/components/ProductsPageSkeleton';
 import { getProductsList, getStoreCategories } from '@/lib/data';
+import { getStoreConfig } from '@/lib/store-config';
 
 const PRODUCTS_PAGE_SIZE = 12;
+const store = getStoreConfig();
 
 function buildSuspenseKey(searchParams) {
   return JSON.stringify({
@@ -35,20 +37,20 @@ export async function generateMetadata({ searchParams }) {
   if (search) {
     return {
       title: `Search results for "${search}"`,
-      description: `Browse matching China Unique Store products for "${search}".`,
+      description: `Browse matching ${store.name} products for "${search}".`,
     };
   }
 
   if (category && category !== 'all') {
     return {
       title: category === 'new-arrivals' ? 'New Arrivals' : 'Products',
-      description: 'Browse products by category at China Unique Store.',
+      description: `Browse products by category at ${store.name}.`,
     };
   }
 
   return {
     title: 'All Products',
-    description: 'Browse the complete China Unique Store catalog.',
+    description: `Browse the complete ${store.name} catalog.`,
   };
 }
 

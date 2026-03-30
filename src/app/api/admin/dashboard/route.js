@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import Order from '@/models/Order';
 import Product from '@/models/Product';
+import { withStoreScope } from '@/lib/store-scope';
 
 export async function GET(request) {
     try {
@@ -21,15 +22,17 @@ export async function GET(request) {
         await mongooseConnect();
 
         // --- Summary Stats ---
-        const totalOrders = await Order.countDocuments();
-        const pendingOrders = await Order.countDocuments({ status: 'Pending' });
+        const totalOrders = await Order.countDocuments(withStoreScope({}));
+        const pendingOrders = await Order.countDocuments(withStoreScope({ status: 'Pending' }));
 
         const revenueAgg = await Order.aggregate([
+            { $match: withStoreScope({}) },
             { $group: { _id: null, total: { $sum: '$totalAmount' } } },
         ]);
         const totalRevenue = revenueAgg[0]?.total || 0;
 
         const customersAgg = await Order.aggregate([
+            { $match: withStoreScope({}) },
             { $group: { _id: '$customerName' } },
             { $count: 'count' },
         ]);
@@ -42,7 +45,7 @@ export async function GET(request) {
         sixMonthsAgo.setHours(0, 0, 0, 0);
 
         const monthlyOrdersAgg = await Order.aggregate([
-            { $match: { createdAt: { $gte: sixMonthsAgo } } },
+            { $match: withStoreScope({ createdAt: { $gte: sixMonthsAgo } }) },
             {
                 $group: {
                     _id: {
@@ -78,6 +81,7 @@ export async function GET(request) {
 
         // --- Top 5 Selling Products ---
         const topSellersAgg = await Order.aggregate([
+            { $match: withStoreScope({}) },
             { $unwind: '$items' },
             {
                 $group: {
@@ -101,7 +105,7 @@ export async function GET(request) {
         ]);
 
         // --- Recent 5 Orders ---
-        const recentOrders = await Order.find({})
+        const recentOrders = await Order.find(withStoreScope({}))
             .sort({ createdAt: -1 })
             .limit(5)
             .lean();

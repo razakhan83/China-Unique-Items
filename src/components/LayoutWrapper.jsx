@@ -1,16 +1,19 @@
 import Link from 'next/link';
-import { ChevronRight, CreditCard, MapPin, Store, Truck } from 'lucide-react';
+import { ChevronRight, CreditCard, MapPin, Truck } from 'lucide-react';
 
 import CartDrawer from '@/components/CartDrawer';
 import FacebookIcon from '@/components/icons/FacebookIcon';
 import FloatingWhatsApp from '@/components/FloatingWhatsApp';
 import InstagramIcon from '@/components/icons/InstagramIcon';
 import Navbar from '@/components/Navbar';
+import StoreBrand from '@/components/StoreBrand';
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 import { normalizeSocialUrl } from '@/lib/social';
+import { getStoreConfig } from '@/lib/store-config';
 import { createWhatsAppUrl } from '@/lib/whatsapp';
 
 export default function LayoutWrapper({ children, categories, settings }) {
+  const store = getStoreConfig();
   const whatsappLink = createWhatsAppUrl(settings.whatsappNumber);
   const facebookUrl = normalizeSocialUrl(settings.facebookPageUrl);
   const instagramUrl = normalizeSocialUrl(settings.instagramUrl);
@@ -36,17 +39,16 @@ export default function LayoutWrapper({ children, categories, settings }) {
           <div className="container mx-auto max-w-7xl px-4">
             <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
               <div>
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex size-11 items-center justify-center rounded-xl bg-white/10">
-                    <Store className="size-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">{settings.storeName}</h3>
-                    <p className="text-sm text-primary-foreground/70">Curated kitchenware and home details</p>
-                  </div>
+                <div className="mb-4">
+                  <StoreBrand
+                    iconClassName="size-11 rounded-xl bg-white/10 text-primary-foreground"
+                    textClassName="text-lg font-semibold normal-case tracking-normal text-primary-foreground"
+                    subtitle={store.tagline}
+                    subtitleClassName="text-sm text-primary-foreground/70"
+                  />
                 </div>
                 <p className="max-w-sm leading-relaxed text-primary-foreground/76">
-                  A premium destination for kitchenware, home decor, and lifestyle pieces chosen for everyday elegance.
+                  {store.footerDescription}
                 </p>
                 <div className="mt-5 flex gap-3">
                   {socialLinks.map(({ href, label, icon: Icon }) => (
@@ -100,7 +102,7 @@ export default function LayoutWrapper({ children, categories, settings }) {
                     <MapPin className="mt-0.5 size-4" />
                     <div>
                       <span className="block font-semibold text-primary-foreground">Location</span>
-                      <span>Karachi, Pakistan</span>
+                      <span>{store.contactLocation}</span>
                     </div>
                   </li>
                   <li className="flex items-start gap-3">
@@ -114,7 +116,7 @@ export default function LayoutWrapper({ children, categories, settings }) {
               </div>
             </div>
             <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs text-primary-foreground/60 md:flex-row">
-              <p>&copy; China Unique Store. All rights reserved.</p>
+              <p>&copy; {store.name}. All rights reserved.</p>
               <div className="flex items-center gap-3">
                 <span className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2">
                   <CreditCard className="size-4" />

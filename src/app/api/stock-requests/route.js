@@ -4,6 +4,7 @@ import mongooseConnect from '@/lib/mongooseConnect';
 import { normalizeEmail, normalizePhone } from '@/lib/admin';
 import Product from '@/models/Product';
 import StockRequest from '@/models/StockRequest';
+import { withStoreScopedId } from '@/lib/store-scope';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -38,9 +39,12 @@ export async function POST(request) {
       );
     }
 
-    const product = await Product.findById(productId)
+    const scopedProductId = withStoreScopedId(productId);
+    const product = scopedProductId
+      ? await Product.findOne(scopedProductId)
       .select('_id Name slug StockStatus isLive')
-      .lean();
+      .lean()
+      : null;
 
     if (!product) {
       return NextResponse.json({ success: false, message: 'Product not found.' }, { status: 404 });

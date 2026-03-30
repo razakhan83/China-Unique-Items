@@ -7,6 +7,8 @@ import Order from '@/models/Order';
 import Product from '@/models/Product';
 import User from '@/models/User';
 import { normalizeEmail, getPhoneRegex } from '@/lib/admin';
+import mongoose from 'mongoose';
+import { withStoreScope, withStoreScopedId, withStoreScopedSlug } from '@/lib/store-scope';
 
 export async function GET(req) {
   await connection();
@@ -34,10 +36,10 @@ export async function GET(req) {
 
     let product = null;
     if (mongoose.Types.ObjectId.isValid(productId)) {
-      product = await Product.findById(productId).select('_id slug').lean();
+      product = await Product.findOne(withStoreScopedId(productId)).select('_id slug').lean();
     }
     if (!product) {
-      product = await Product.findOne({ slug: productId }).select('_id slug').lean();
+      product = await Product.findOne(withStoreScopedSlug(productId)).select('_id slug').lean();
     }
     if (!product) {
       return NextResponse.json({ success: true, canReview: false });
@@ -46,13 +48,13 @@ export async function GET(req) {
     const productIdentifiers = [product._id.toString(), product.slug].filter(Boolean);
 
     // 2. Query for delivered orders containing this product
-    const query = {
+    const query = withStoreScope({
       status: 'Delivered',
       items: { $elemMatch: { productId: { $in: productIdentifiers } } },
       $or: [
         { customerEmail: email }
       ]
-    };
+    });
 
     if (user.phone) {
       const phoneRegex = getPhoneRegex(user.phone);

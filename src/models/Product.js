@@ -24,6 +24,12 @@ const ProductImageSchema = new mongoose.Schema(
 
 const ProductSchema = new mongoose.Schema(
     {
+        storeKey: {
+            type: String,
+            required: true,
+            index: true,
+            trim: true,
+        },
         Name: {
             type: String,
             required: [true, 'Please provide a name for this product.'],
@@ -85,7 +91,7 @@ const ProductSchema = new mongoose.Schema(
         slug: {
             type: String,
             required: false,
-            unique: true,
+            trim: true,
         },
         isLive: {
             type: Boolean,
@@ -118,5 +124,18 @@ const ProductSchema = new mongoose.Schema(
         timestamps: true,
     }
 );
+
+ProductSchema.index({ storeKey: 1, slug: 1 }, { unique: true, sparse: true });
+
+const cachedProduct = mongoose.models.Product;
+if (
+    cachedProduct &&
+    (
+        !cachedProduct.schema.path('storeKey') ||
+        !cachedProduct.schema.indexes().some(([index]) => index?.storeKey === 1 && index?.slug === 1)
+    )
+) {
+    delete mongoose.models.Product;
+}
 
 export default mongoose.models.Product || mongoose.model('Product', ProductSchema);

@@ -17,9 +17,12 @@ import {
 } from '@/components/ui/empty';
 import LinkOrdersForm from '@/components/LinkOrdersForm';
 import OrdersClient from './OrdersClient';
+import { getStoreConfig } from '@/lib/store-config';
+
+const store = getStoreConfig();
 
 export const metadata = {
-  title: 'My Orders | Kifayatly',
+  title: `My Orders | ${store.shortName}`,
 };
 
 export default async function OrdersPage() {

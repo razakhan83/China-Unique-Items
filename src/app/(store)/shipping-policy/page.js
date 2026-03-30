@@ -1,8 +1,11 @@
 import { Truck, Clock, CreditCard, Info, MapPin } from 'lucide-react';
+import { getStoreConfig } from '@/lib/store-config';
+
+const store = getStoreConfig();
 
 export const metadata = {
   title: 'Shipping Policy',
-  description: 'Learn about our shipping rates, delivery times, and tracking information at China Unique Store.',
+  description: `Learn about our shipping rates, delivery times, and tracking information at ${store.name}.`,
 };
 
 export default function ShippingPolicyPage() {

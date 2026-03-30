@@ -3,9 +3,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import SettingsClient from './SettingsClient';
 import { connection } from 'next/server';
+import { getStoreConfig } from '@/lib/store-config';
+
+const store = getStoreConfig();
 
 export const metadata = {
-  title: 'User Settings | China Unique',
+  title: `User Settings | ${store.shortName}`,
   description: 'Manage your profile and delivery preferences.',
 };
 

@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { getStoreConfig } from "@/lib/store-config";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -259,7 +260,7 @@ export default function AddProduct() {
     "Add a focused product summary so search snippets look polished from day one.";
   const seoPreviewUrl =
     trimmedSeoCanonicalUrl ||
-    `https://china-unique-items.vercel.app/products/${fallbackSlug || "your-product"}`;
+    `${siteUrl}/products/${fallbackSlug || "your-product"}`;
   const seoChecks = [
     { label: "SEO title", complete: trimmedSeoTitle.length >= 10 },
     { label: "Meta description", complete: trimmedSeoDescription.length >= 50 },
@@ -700,7 +701,7 @@ export default function AddProduct() {
                   value={seoCanonicalUrl}
                   onChange={(e) => setSeoCanonicalUrl(e.target.value)}
                   className="h-11 px-4"
-                  placeholder="https://china-unique-items.vercel.app/products/your-product"
+                  placeholder={`${siteUrl}/products/your-product`}
                 />
               </div>
             </div>
@@ -787,3 +788,5 @@ export default function AddProduct() {
     </div>
   );
 }
+const store = getStoreConfig();
+const siteUrl = store.siteUrl.replace(/\/$/, "");

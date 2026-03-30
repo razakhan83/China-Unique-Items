@@ -24,16 +24,18 @@ import { Separator } from '@/components/ui/separator';
 import { getProductBySlug, getProductReviewSummary, getRelatedProducts, getStoreSettings } from '@/lib/data';
 import { getCategoryColor } from '@/lib/categoryColors';
 import { getProductCategories } from '@/lib/productCategories';
+import { getStoreConfig } from '@/lib/store-config';
 
 const formatPrice = (raw) => `Rs. ${Number(raw || 0).toLocaleString('en-PK')}`;
-const siteUrl = process.env.NEXTAUTH_URL || 'https://china-unique-items.vercel.app';
+const store = getStoreConfig();
+const siteUrl = store.siteUrl;
 
 function getProductUrl(product) {
   return `${siteUrl}/products/${product.slug || product._id}`;
 }
 
 function getProductDescription(product) {
-  return product.seoDescription || product.Description || `Buy ${product.Name} from China Unique Store.`;
+  return product.seoDescription || product.Description || `Buy ${product.Name} from ${store.name}.`;
 }
 
 function getProductTitle(product) {
@@ -88,7 +90,7 @@ function getProductJsonLd({ product, reviewSummary }) {
     keywords: keywords.join(', '),
     brand: {
       '@type': 'Brand',
-      name: 'China Unique Store',
+      name: store.name,
     },
     offers: {
       '@type': 'Offer',
@@ -162,7 +164,7 @@ export async function generateMetadata({ params }) {
       description: shareDescription,
       type: 'website',
       url: productUrl,
-      siteName: 'China Unique Store',
+      siteName: store.name,
       images: [
         {
           url: productImage,
@@ -341,7 +343,7 @@ async function ProductHeroSection({ slugPromise }) {
             <div className="text-[15px] leading-relaxed text-muted-foreground">
               <p>
                 {product.Description ||
-                  'Discover the perfect addition to your collection. This premium item from China Unique Store is crafted with quality and elegance in mind.'}
+                  `Discover the perfect addition to your collection. This premium item from ${store.name} is crafted with quality and elegance in mind.`}
               </p>
             </div>
 

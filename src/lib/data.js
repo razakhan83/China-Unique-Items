@@ -14,6 +14,8 @@ import User from '@/models/User';
 import mongooseConnect from '@/lib/mongooseConnect';
 import { optimizeCloudinaryUrl } from '@/lib/cloudinaryImage';
 import { normalizeEmail, getPhoneRegex } from '@/lib/admin';
+import { getStoreConfig } from '@/lib/store-config';
+import { getStoreKey, withStoreScope, withStoreScopedId, withStoreScopedSlug } from '@/lib/store-scope';
 import {
   getProductCategories,
   getProductCategoryNames,
@@ -53,6 +55,10 @@ function normalizeAnnouncementMessages(messages = [], fallbackText = '') {
 
 function escapeRegex(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function getScopedSingletonKey(baseKey) {
+  return `${getStoreKey()}:${baseKey}`;
 }
 
 function normalizeMediaItem(item, sortOrder = 0, fallbackItem = null) {
@@ -272,7 +278,7 @@ function toOrderSummaryRow(order) {
 async function getLiveProductsRaw() {
   await mongooseConnect();
 
-  const products = await Product.find({ isLive: true })
+  const products = await Product.find(withStoreScope({ isLive: true }))
     .populate('Category')
     .sort({ createdAt: -1 })
     .lean();
@@ -282,7 +288,7 @@ async function getLiveProductsRaw() {
 async function getAllProductsRaw() {
   await mongooseConnect();
 
-  const products = await Product.find({})
+  const products = await Product.find(withStoreScope({}))
     .populate('Category')
     .sort({ createdAt: -1 })
     .lean();
@@ -291,16 +297,17 @@ async function getAllProductsRaw() {
 
 async function getSettingsRaw() {
   await mongooseConnect();
+  const store = getStoreConfig();
 
-  let settings = await Settings.findOne({ singletonKey: SETTINGS_KEY }).lean();
+  let settings = await Settings.findOne({ singletonKey: getScopedSingletonKey(SETTINGS_KEY) }).lean();
   if (!settings) {
-    settings = await Settings.create({ singletonKey: SETTINGS_KEY });
+    settings = await Settings.create({ singletonKey: getScopedSingletonKey(SETTINGS_KEY) });
     settings = settings.toObject();
   }
 
   return {
     _id: settings._id.toString(),
-    storeName: settings.storeName || 'China Unique Store',
+    storeName: store.name,
     supportEmail: settings.supportEmail || '',
     businessAddress: settings.businessAddress || '',
     whatsappNumber: settings.whatsappNumber || '',
@@ -322,9 +329,9 @@ async function getSettingsRaw() {
 async function getCoverPhotosRaw() {
   await mongooseConnect();
 
-  let coverPhoto = await CoverPhoto.findOne({ singletonKey: COVER_PHOTOS_KEY }).lean();
+  let coverPhoto = await CoverPhoto.findOne({ singletonKey: getScopedSingletonKey(COVER_PHOTOS_KEY) }).lean();
   if (!coverPhoto) {
-    coverPhoto = await CoverPhoto.create({ singletonKey: COVER_PHOTOS_KEY });
+    coverPhoto = await CoverPhoto.create({ singletonKey: getScopedSingletonKey(COVER_PHOTOS_KEY) });
     coverPhoto = coverPhoto.toObject();
   }
 
@@ -647,14 +654,14 @@ export async function getProductsList({ category = 'all', search = '', sort = 'n
   const skip = (safePage - 1) * safeLimit;
 
   const [items, total] = await Promise.all([
-    Product.find(query)
+    Product.find(withStoreScope(query))
       .populate('Category')
       .sort(sortQuery)
       .skip(skip)
       .limit(safeLimit)
       .lean()
       .then((products) => products.map(serializeProduct).map(toProductCardItem)),
-    Product.countDocuments(query),
+    Product.countDocuments(withStoreScope(query)),
   ]);
 
   return {
@@ -750,12 +757,7 @@ function formatFeedPrice(value) {
 }
 
 function getCatalogSiteUrl() {
-  const configuredUrl = String(process.env.NEXTAUTH_URL || '').trim();
-  if (configuredUrl && !/localhost/i.test(configuredUrl)) {
-    return configuredUrl.replace(/\/$/, '');
-  }
-
-  return 'https://china-unique-items.vercel.app';
+  return getStoreConfig().siteUrl.replace(/\/$/, '');
 }
 
 function buildCatalogFeedItem(product, siteUrl, storeName) {
@@ -793,11 +795,11 @@ export async function getProductBySlug(slug) {
       await mongooseConnect();
       
       // 1. Try finding by slug first (vanity URL)
-      let product = await Product.findOne({ slug: productSlug, isLive: true }).populate('Category').lean();
+      let product = await Product.findOne(withStoreScopedSlug(productSlug, { isLive: true })).populate('Category').lean();
       
       // 2. If not found, and it looks like a Mongo ID, try finding by ID
       if (!product && mongoose.Types.ObjectId.isValid(productSlug)) {
-        product = await Product.findOne({ _id: productSlug, isLive: true }).populate('Category').lean();
+        product = await Product.findOne(withStoreScopedId(productSlug, { isLive: true })).populate('Category').lean();
       }
       
       return product ? serializeProduct(product) : null;
@@ -825,7 +827,7 @@ export async function getProductPrerenderParams(limit = 1) {
 
   try {
     await mongooseConnect();
-    const products = await Product.find({ isLive: true })
+    const products = await Product.find(withStoreScope({ isLive: true }))
       .sort({ createdAt: -1 })
       .select('slug')
       .limit(safeLimit)
@@ -882,14 +884,14 @@ export async function getCatalogFeed() {
 
 export async function getAdminProducts() {
   await mongooseConnect();
-  const products = await Product.find({}).populate('Category').sort({ createdAt: -1 }).lean();
+  const products = await Product.find(withStoreScope({})).populate('Category').sort({ createdAt: -1 }).lean();
   const serializedProducts = products.map(serializeProduct);
   return serializedProducts.map(toAdminProductRow);
 }
 
 export async function getOrdersList() {
   await mongooseConnect();
-  const orders = await Order.find({}).sort({ createdAt: -1 }).lean();
+  const orders = await Order.find(withStoreScope({})).sort({ createdAt: -1 }).lean();
   return orders.map(toOrderSummaryRow);
 }
 
@@ -951,16 +953,16 @@ export async function getAdminProductsPage({
   const skip = (safePage - 1) * safeLimit;
 
   const [items, total, totalProducts, liveProducts] = await Promise.all([
-    Product.find(query)
+    Product.find(withStoreScope(query))
       .populate('Category')
       .sort(sortQuery)
       .skip(skip)
       .limit(safeLimit)
       .lean()
       .then((products) => products.map(serializeProduct).map(toAdminProductRow)),
-    Product.countDocuments(query),
-    Product.countDocuments(),
-    Product.countDocuments({ isLive: true }),
+    Product.countDocuments(withStoreScope(query)),
+    Product.countDocuments(withStoreScope({})),
+    Product.countDocuments(withStoreScope({ isLive: true })),
   ]);
 
   return {
@@ -1035,12 +1037,12 @@ export async function getAdminOrdersPage({
   const skip = (safePage - 1) * safeLimit;
 
   const [items, total, confirmedCount, inProcessCount, deliveredCount, returnedCount] = await Promise.all([
-    Order.find(query).sort({ createdAt: -1 }).skip(skip).limit(safeLimit).lean().then((orders) => orders.map(toOrderSummaryRow)),
-    Order.countDocuments(query),
-    Order.countDocuments({ status: { $in: ['Confirmed', 'Pending'] } }),
-    Order.countDocuments({ status: 'In Process' }),
-    Order.countDocuments({ status: 'Delivered' }),
-    Order.countDocuments({ status: 'Returned' }),
+    Order.find(withStoreScope(query)).sort({ createdAt: -1 }).skip(skip).limit(safeLimit).lean().then((orders) => orders.map(toOrderSummaryRow)),
+    Order.countDocuments(withStoreScope(query)),
+    Order.countDocuments(withStoreScope({ status: { $in: ['Confirmed', 'Pending'] } })),
+    Order.countDocuments(withStoreScope({ status: 'In Process' })),
+    Order.countDocuments(withStoreScope({ status: 'Delivered' })),
+    Order.countDocuments(withStoreScope({ status: 'Returned' })),
   ]);
 
   return {
@@ -1081,13 +1083,14 @@ export async function getAdminUsersPage({
   const skip = (safePage - 1) * safeLimit;
 
   if (safeType === 'customers') {
-    const [result] = await Order.aggregate(
-      buildCustomerAggregationPipeline({
+    const [result] = await Order.aggregate([
+      { $match: withStoreScope({}) },
+      ...buildCustomerAggregationPipeline({
         search: safeSearch,
         skip,
         limit: safeLimit,
       }),
-    );
+    ]);
 
     const items = Array.isArray(result?.items) ? result.items : [];
     const total = Number(result?.totalCount?.[0]?.count || 0);
@@ -1183,9 +1186,9 @@ export async function getAdminReviewsPage({
   if (safeSearch) {
     const searchRegex = new RegExp(escapeRegex(safeSearch), 'i');
     const matchedProducts = await Product.find(
-      {
+      withStoreScope({
         $or: [{ Name: searchRegex }, { slug: searchRegex }],
-      },
+      }),
       '_id',
     ).lean();
 
@@ -1249,11 +1252,11 @@ export async function getUserOrders(email) {
   const user = await User.findOne({ email: normalizedEmail }).lean();
   
   // 2. Build query: match by customerEmail OR by customerPhone if phone exists (fuzzy)
-  const query = {
+  const query = withStoreScope({
     $or: [
       { customerEmail: normalizedEmail }
-    ]
-  };
+    ],
+  });
 
   if (user?.phone) {
     const phoneRegex = getPhoneRegex(user.phone);
@@ -1268,7 +1271,9 @@ export async function getUserOrders(email) {
 
 export async function getOrderById(id) {
   await mongooseConnect();
-  const order = await Order.findById(String(id || '')).lean();
+  const scopedId = withStoreScopedId(String(id || ''));
+  if (!scopedId) return null;
+  const order = await Order.findOne(scopedId).lean();
   return order ? toOrderSummaryRow(order) : null;
 }
 
@@ -1304,12 +1309,13 @@ export async function getAdminDashboardData() {
     recentOrders,
     dailyConfirmedOrders,
   ] = await Promise.all([
-    Order.countDocuments(),
-    Order.countDocuments({ status: 'Pending' }),
-    Product.countDocuments(),
-    Product.countDocuments({ isLive: true }),
-    Order.aggregate([{ $group: { _id: null, total: { $sum: '$totalAmount' } } }]),
+    Order.countDocuments(withStoreScope({})),
+    Order.countDocuments(withStoreScope({ status: 'Pending' })),
+    Product.countDocuments(withStoreScope({})),
+    Product.countDocuments(withStoreScope({ isLive: true })),
+    Order.aggregate([{ $match: withStoreScope({}) }, { $group: { _id: null, total: { $sum: '$totalAmount' } } }]),
     Order.aggregate([
+      { $match: withStoreScope({}) },
       {
         $group: {
           _id: {
@@ -1329,11 +1335,11 @@ export async function getAdminDashboardData() {
       },
       { $count: 'count' },
     ]),
-    Order.find({}).sort({ createdAt: -1 }).limit(5).lean(),
-    Order.countDocuments({
+    Order.find(withStoreScope({})).sort({ createdAt: -1 }).limit(5).lean(),
+    Order.countDocuments(withStoreScope({
       status: { $in: ['Confirmed', 'Pending'] },
       createdAt: { $gte: startOfToday, $lt: startOfTomorrow },
-    }),
+    })),
   ]);
 
   return {
@@ -1352,16 +1358,17 @@ export async function getAdminDashboardData() {
 
 export async function getAdminSettings() {
   await mongooseConnect();
+  const store = getStoreConfig();
 
-  let settings = await Settings.findOne({ singletonKey: SETTINGS_KEY }).lean();
+  let settings = await Settings.findOne({ singletonKey: getScopedSingletonKey(SETTINGS_KEY) }).lean();
   if (!settings) {
-    settings = await Settings.create({ singletonKey: SETTINGS_KEY });
+    settings = await Settings.create({ singletonKey: getScopedSingletonKey(SETTINGS_KEY) });
     settings = settings.toObject();
   }
 
   return {
     _id: settings._id.toString(),
-    storeName: settings.storeName || 'China Unique Store',
+    storeName: store.name,
     supportEmail: settings.supportEmail || '',
     businessAddress: settings.businessAddress || '',
     whatsappNumber: settings.whatsappNumber || '',

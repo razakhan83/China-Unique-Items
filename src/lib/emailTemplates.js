@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { getStoreConfig } from '@/lib/store-config';
+
 const EMAIL_THEME = {
   background: 'oklch(0.975 0.008 95)',
   foreground: 'oklch(0.24 0.02 160)',
@@ -27,6 +29,7 @@ const EMAIL_THEME = {
  * @returns {string} HTML string
  */
 export function generateOrderEmailHtml(order) {
+  const store = getStoreConfig();
   const {
     orderId,
     customerName,
@@ -56,7 +59,7 @@ export function generateOrderEmailHtml(order) {
     </tr>
   `).join('');
 
-  const adminUrl = `${process.env.NEXTAUTH_URL || 'https://chinaunique.pk'}/admin/orders`;
+  const adminUrl = `${store.siteUrl}/admin/orders`;
 
   return `
     <!DOCTYPE html>
@@ -163,7 +166,7 @@ export function generateOrderEmailHtml(order) {
         </div>
 
         <div class="footer">
-          <strong>China Unique - Home and Lifestyle Store</strong><br>
+          <strong>${store.name}</strong><br>
           Automated System Notification
         </div>
       </div>
@@ -179,6 +182,7 @@ export function generateOrderEmailHtml(order) {
  * @returns {string} HTML string
  */
 export function generateCustomerOrderConfirmationHtml(order) {
+  const store = getStoreConfig();
   const {
     orderId,
     customerName,
@@ -204,7 +208,7 @@ export function generateCustomerOrderConfirmationHtml(order) {
     </tr>
   `).join('');
 
-  const myOrderUrl = `${process.env.NEXTAUTH_URL || 'https://chinaunique.pk'}/orders/${order._id}?token=${order.secureToken}`;
+  const myOrderUrl = `${store.siteUrl}/orders/${order._id}?token=${order.secureToken}`;
 
   return `
     <!DOCTYPE html>
@@ -292,10 +296,10 @@ export function generateCustomerOrderConfirmationHtml(order) {
           </div>
 
           <div class="footer">
-            <p style="margin: 0; font-weight: 700; color: var(--email-foreground);">China Unique - Home & Lifestyle</p>
-            <p style="margin: 4px 0 0;">Building beautiful homes together.</p>
+            <p style="margin: 0; font-weight: 700; color: var(--email-foreground);">${store.name}</p>
+            <p style="margin: 4px 0 0;">${store.tagline}</p>
             <div style="margin-top: 20px; font-size: 12px; color: var(--email-muted-foreground);">
-              You received this email because you placed an order on chinaunique.pk
+              You received this email because you placed an order on ${store.siteUrl.replace(/^https?:\/\//, '')}
             </div>
           </div>
         </div>

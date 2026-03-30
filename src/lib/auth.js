@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { isAdminEmail, normalizeEmail } from "@/lib/admin";
 import mongooseConnect from "@/lib/mongooseConnect";
+import { getStoreKey } from "@/lib/store-scope";
 import User from "@/models/User";
 
 /** @type {import("next-auth").NextAuthOptions} */
@@ -86,7 +87,7 @@ export const authOptions = {
         if (!isAdmin) {
           try {
             const Settings = (await import('@/models/Settings')).default;
-            const settings = await Settings.findOne({ singletonKey: 'site-settings' }).select('adminEmails').lean();
+            const settings = await Settings.findOne({ singletonKey: `${getStoreKey()}:site-settings` }).select('adminEmails').lean();
             if (settings?.adminEmails?.includes(normalizeEmail(email))) {
               isAdmin = true;
             }

@@ -6,8 +6,14 @@ import { authOptions } from '@/lib/auth';
 
 import mongooseConnect from '@/lib/mongooseConnect';
 import Settings from '@/models/Settings';
+import { getStoreConfig } from '@/lib/store-config';
+import { getStoreKey } from '@/lib/store-scope';
 
 const SINGLETON_KEY = 'site-settings';
+
+function getScopedSettingsKey() {
+    return `${getStoreKey()}:${SINGLETON_KEY}`;
+}
 
 function normalizeAnnouncementMessages(messages = [], fallbackText = '') {
     const rawMessages = Array.isArray(messages) && messages.length > 0
@@ -30,12 +36,13 @@ function normalizeAnnouncementMessages(messages = [], fallbackText = '') {
 export async function GET() {
     try {
         await mongooseConnect();
+        const store = getStoreConfig();
 
         // Find or create the singleton settings document
-        let settings = await Settings.findOne({ singletonKey: SINGLETON_KEY }).lean();
+        let settings = await Settings.findOne({ singletonKey: getScopedSettingsKey() }).lean();
 
         if (!settings) {
-            settings = await Settings.create({ singletonKey: SINGLETON_KEY });
+            settings = await Settings.create({ singletonKey: getScopedSettingsKey() });
             settings = settings.toObject();
         }
 
@@ -46,7 +53,7 @@ export async function GET() {
             success: true,
             data: {
                 _id: settings._id,
-                storeName: settings.storeName || 'China Unique Store',
+                storeName: store.name,
                 supportEmail: settings.supportEmail || '',
                 businessAddress: settings.businessAddress || '',
                 whatsappNumber: settings.whatsappNumber || '',
@@ -86,7 +93,6 @@ export async function PUT(req) {
 
         // Only allow whitelisted fields
         const allowedFields = [
-            'storeName',
             'supportEmail',
             'businessAddress',
             'whatsappNumber',
@@ -118,7 +124,7 @@ export async function PUT(req) {
         }
 
         const settings = await Settings.findOneAndUpdate(
-            { singletonKey: SINGLETON_KEY },
+            { singletonKey: getScopedSettingsKey() },
             { $set: updates },
             { new: true, upsert: true, runValidators: true }
         ).lean();

@@ -10,6 +10,7 @@ import Order from '@/models/Order';
 import User from '@/models/User';
 import Product from '@/models/Product';
 import { getPhoneRegex, normalizeEmail } from '@/lib/admin';
+import { withStoreScope, withStoreScopedId, withStoreScopedSlug } from '@/lib/store-scope';
 
 // GET reviews for a specific product
 export async function GET(req) {
@@ -58,11 +59,11 @@ export async function POST(req) {
     // Resolve product — productId may be a real ObjectId string or a slug
     let product = null;
     if (mongoose.Types.ObjectId.isValid(productId)) {
-      product = await Product.findById(productId);
+      product = await Product.findOne(withStoreScopedId(productId));
     }
     // If it wasn't a valid ObjectId, or the findById returned nothing, try slug fallback
     if (!product) {
-      product = await Product.findOne({ slug: productId });
+      product = await Product.findOne(withStoreScopedSlug(productId));
     }
     if (!product) {
       return NextResponse.json({ success: false, error: 'Product not found' }, { status: 404 });
@@ -72,7 +73,7 @@ export async function POST(req) {
     const resolvedProductId = product._id;
     const productIdentifiers = [resolvedProductId.toString(), product.slug].filter(Boolean);
 
-    const orderQuery = {
+    const orderQuery = withStoreScope({
       status: 'Delivered',
       items: {
         $elemMatch: {
@@ -80,7 +81,7 @@ export async function POST(req) {
         },
       },
       $or: [{ customerEmail: email }],
-    };
+    });
 
     if (user.phone) {
       const phoneRegex = getPhoneRegex(user.phone);

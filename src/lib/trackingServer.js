@@ -4,10 +4,11 @@ import crypto from 'node:crypto';
 import { cookies } from 'next/headers';
 
 import mongooseConnect from '@/lib/mongooseConnect';
+import { getStoreConfig } from '@/lib/store-config';
+import { getStoreKey } from '@/lib/store-scope';
 import Settings from '@/models/Settings';
 
 const SETTINGS_KEY = 'site-settings';
-const STORE_URL = 'https://china-unique-items.vercel.app';
 const META_GRAPH_VERSION = 'v20.0';
 
 function sha256(value) {
@@ -43,7 +44,7 @@ function buildContents(items) {
 async function getTrackingSettings() {
   await mongooseConnect();
 
-  const settings = await Settings.findOne({ singletonKey: SETTINGS_KEY }).lean();
+  const settings = await Settings.findOne({ singletonKey: `${getStoreKey()}:${SETTINGS_KEY}` }).lean();
   return {
     trackingEnabled: settings?.trackingEnabled === true,
     facebookPixelId: String(settings?.facebookPixelId || '').trim(),
@@ -62,6 +63,7 @@ async function sendMetaEvent({
   customData,
   settings,
 }) {
+  const storeUrl = getStoreConfig().siteUrl;
   if (!settings.facebookPixelId || !settings.facebookConversionsApiToken) {
     return;
   }
@@ -73,7 +75,7 @@ async function sendMetaEvent({
         event_time: Math.floor(Date.now() / 1000),
         event_id: eventId,
         action_source: 'website',
-        event_source_url: eventSourceUrl || STORE_URL,
+        event_source_url: eventSourceUrl || storeUrl,
         user_data: sanitizeUserData(userData),
         custom_data: customData,
       },
@@ -101,10 +103,11 @@ async function sendMetaEvent({
 }
 
 async function sendMetaPurchaseEvent({ order, items, settings }) {
+  const storeUrl = getStoreConfig().siteUrl;
   return sendMetaEvent({
     eventName: 'Purchase',
     eventId: order.orderId,
-    eventSourceUrl: `${STORE_URL}/checkout`,
+    eventSourceUrl: `${storeUrl}/checkout`,
     userData: {
       email: order.customerEmail,
       phone: order.customerPhone,
@@ -122,6 +125,7 @@ async function sendMetaPurchaseEvent({ order, items, settings }) {
 }
 
 async function sendTikTokPurchaseEvent({ order, items, settings }) {
+  const storeUrl = getStoreConfig().siteUrl;
   if (!settings.tiktokPixelId || !settings.tiktokAccessToken) {
     return;
   }
@@ -135,7 +139,7 @@ async function sendTikTokPurchaseEvent({ order, items, settings }) {
         event_time: Math.floor(Date.now() / 1000),
         event_id: order.orderId,
         page: {
-          url: `${STORE_URL}/checkout`,
+          url: `${storeUrl}/checkout`,
         },
         user: {
           email: order.customerEmail ? sha256(order.customerEmail) : undefined,

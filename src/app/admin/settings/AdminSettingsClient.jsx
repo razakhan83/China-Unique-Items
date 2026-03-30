@@ -329,9 +329,12 @@ export default function AdminSettingsClient({ initialSettings, isConfiguredAdmin
             <Label className="mb-1.5">Store Name</Label>
             <Input
               value={form.storeName}
-              onChange={(event) => handleChange('storeName', event.target.value)}
-              placeholder="China Unique Store"
+              readOnly
+              disabled
             />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Branding now comes from environment variables so each store branch can stay merge-friendly.
+            </p>
           </div>
           <div>
             <Label className="mb-1.5">Support Email</Label>
@@ -339,7 +342,7 @@ export default function AdminSettingsClient({ initialSettings, isConfiguredAdmin
               type="email"
               value={form.supportEmail}
               onChange={(event) => handleChange('supportEmail', event.target.value)}
-              placeholder="support@chinauniquestore.com"
+              placeholder="support@example.com"
             />
           </div>
           <div>

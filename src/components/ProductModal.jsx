@@ -8,9 +8,12 @@ import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from '@/lib/cloudinar
 import { getProductCategoryNames } from '@/lib/productCategories';
 import { getPrimaryProductImage } from '@/lib/productImages';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
+import { getStoreConfig } from '@/lib/store-config';
 import { buildProductWhatsAppMessage, createWhatsAppUrl } from '@/lib/whatsapp';
 
-export default function ProductModal({ product, onClose, whatsappNumber = '', storeName = 'China Unique Store' }) {
+const store = getStoreConfig();
+
+export default function ProductModal({ product, onClose, whatsappNumber = '', storeName = store.name }) {
     const { addToCart } = useCartActions();
 
     if (!product) return null;
@@ -93,7 +96,7 @@ export default function ProductModal({ product, onClose, whatsappNumber = '', st
                                 {formatPrice(product.Price || product.price)}
                             </div>
                             <p className="mb-6 text-sm leading-relaxed text-muted-foreground md:text-base">
-                                {product.Description || product.description || "Discover the perfect addition to your collection. This premium item from China Unique Store is crafted with quality and elegance in mind."}
+                                {product.Description || product.description || `Discover the perfect addition to your collection. This premium item from ${store.name} is crafted with quality and elegance in mind.`}
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-3 mt-auto pt-4">

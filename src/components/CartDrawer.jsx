@@ -31,6 +31,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { CLOUDINARY_IMAGE_PRESETS, optimizeCloudinaryUrl } from '@/lib/cloudinaryImage';
 import { getPrimaryProductImage } from '@/lib/productImages';
 import { getBlurPlaceholderProps } from '@/lib/imagePlaceholder';
+import { getStoreConfig } from '@/lib/store-config';
 import { buildCartWhatsAppMessage, createWhatsAppUrl } from '@/lib/whatsapp';
 import { cn } from '@/lib/utils';
 
@@ -41,8 +42,9 @@ const formatPrice = (raw) => {
 
 const formatPriceLabel = (raw) => `Rs. ${formatPrice(raw).toLocaleString('en-PK')}`;
 const EXIT_ANIMATION_MS = 180;
+const store = getStoreConfig();
 
-export default function CartDrawer({ whatsappNumber = '', storeName = 'China Unique Store' }) {
+export default function CartDrawer({ whatsappNumber = '', storeName = store.name }) {
   const { cart } = useCartItems();
   const { isCartOpen } = useCartUi();
   const { updateQuantity, removeFromCart, clearCart, setIsCartOpen } = useCartActions();

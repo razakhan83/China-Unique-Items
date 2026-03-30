@@ -5,6 +5,7 @@ import Order from '@/models/Order';
 import OrderLog from '@/models/OrderLog';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { withStoreScopedId } from '@/lib/store-scope';
 
 export async function PATCH(req, { params }) {
   try {
@@ -15,7 +16,7 @@ export async function PATCH(req, { params }) {
     const { status, courierName, trackingNumber, weight, manualCodAmount } = body;
 
     await mongooseConnect();
-    const order = await Order.findById(id);
+    const order = await Order.findOne(withStoreScopedId(id));
 
     if (!order) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });

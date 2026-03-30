@@ -9,6 +9,7 @@ import Product from '@/models/Product';
 import { getProductCategories } from '@/lib/productCategories';
 import { normalizeProductImages } from '@/lib/productImages';
 import { ensureProductImagesBlur } from '@/lib/serverImageBlur';
+import { withStoreScope, withStoreScopeForCreate } from '@/lib/store-scope';
 
 // Utility for formatting a string to a unique URL-friendly slug
 const slugify = (text) => {
@@ -24,7 +25,7 @@ const slugify = (text) => {
 export async function GET() {
     try {
         await mongooseConnect();
-        const products = await Product.find({}).populate('Category').sort({ createdAt: -1 }).lean();
+        const products = await Product.find(withStoreScope({})).populate('Category').sort({ createdAt: -1 }).lean();
 
         // Format objectId to string securely
         const safeProducts = products.map((p) => {
@@ -98,7 +99,7 @@ export async function POST(req) {
         const baseSlug = slugify(Name);
         let counter = 1;
 
-        while (await Product.exists({ slug: uniqueSlug })) {
+        while (await Product.exists(withStoreScope({ slug: uniqueSlug }))) {
             uniqueSlug = `${baseSlug}-${counter}`;
             counter++;
         }
@@ -119,7 +120,7 @@ export async function POST(req) {
 
         const normalizedImages = await ensureProductImagesBlur(normalizeProductImages(Images));
 
-        const product = await Product.create({
+        const product = await Product.create(withStoreScopeForCreate({
             Name,
             Description,
             seoTitle: typeof seoTitle === 'string' ? seoTitle.trim() : '',
@@ -139,7 +140,7 @@ export async function POST(req) {
             discountedPrice,
             isNewArrival: isNewArrival === true || isNewArrival === 'true',
             isBestSelling: isBestSelling === true || isBestSelling === 'true',
-        });
+        }));
 
         await product.populate('Category');
 

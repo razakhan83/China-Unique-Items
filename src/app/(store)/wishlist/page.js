@@ -1,8 +1,11 @@
 import { connection } from 'next/server';
 import WishlistClient from './WishlistClient';
+import { getStoreConfig } from '@/lib/store-config';
+
+const store = getStoreConfig();
 
 export const metadata = {
-  title: 'My Wishlist | China Unique',
+  title: `My Wishlist | ${store.shortName}`,
   description: 'Review your saved products and add them to cart anytime.',
 };
 

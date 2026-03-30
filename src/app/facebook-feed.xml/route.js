@@ -1,4 +1,5 @@
 import { getCatalogFeed } from '@/lib/data';
+import { getStoreConfig } from '@/lib/store-config';
 
 function escapeXml(value) {
   return String(value || '')
@@ -30,12 +31,13 @@ function renderFeedItem(item) {
 
 export async function GET() {
   const feed = await getCatalogFeed();
+  const store = getStoreConfig();
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
     <title>${escapeXml(feed.storeName)}</title>
-    <link>https://china-unique-items.vercel.app</link>
+    <link>${escapeXml(store.siteUrl)}</link>
     <description>${escapeXml(`${feed.storeName} product catalog feed`)}</description>
 ${feed.items.map(renderFeedItem).join('\n')}
   </channel>

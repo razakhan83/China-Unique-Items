@@ -1,4 +1,5 @@
 import { normalizePhone } from '@/lib/admin';
+import { getStoreConfig } from '@/lib/store-config';
 
 export function normalizeWhatsappNumber(value) {
   return normalizePhone(value || '');
@@ -14,7 +15,7 @@ export function createWhatsAppUrl(number, message = '') {
     : `https://wa.me/${normalizedNumber}`;
 }
 
-export function buildProductWhatsAppMessage({ productName, productUrl, storeName = 'China Unique Store' }) {
+export function buildProductWhatsAppMessage({ productName, productUrl, storeName = getStoreConfig().name }) {
   const lines = [
     `Hi ${storeName}, I'm interested in ${productName || 'this product'}.`,
   ];
@@ -26,7 +27,7 @@ export function buildProductWhatsAppMessage({ productName, productUrl, storeName
   return lines.join('\n');
 }
 
-export function buildCartWhatsAppMessage({ items = [], subtotal = 0, storeName = 'China Unique Store' }) {
+export function buildCartWhatsAppMessage({ items = [], subtotal = 0, storeName = getStoreConfig().name }) {
   const lines = [`*New Order Inquiry from ${storeName}*`, '', '*Items*'];
 
   items.forEach((item, index) => {

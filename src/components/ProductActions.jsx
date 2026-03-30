@@ -11,9 +11,12 @@ import { cn } from '@/lib/utils';
 import { BellRing, ShoppingCart, Share2, Minus, Plus } from 'lucide-react';
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 import { toast } from 'sonner';
+import { getStoreConfig } from '@/lib/store-config';
 import { buildProductWhatsAppMessage, createWhatsAppUrl } from '@/lib/whatsapp';
 
-export default function ProductActions({ product, whatsappNumber = '', storeName = 'China Unique Store' }) {
+const store = getStoreConfig();
+
+export default function ProductActions({ product, whatsappNumber = '', storeName = store.name }) {
     const { addToCart } = useCartActions();
     const [isAdding, setIsAdding] = useState(false);
     const [didJustAdd, setDidJustAdd] = useState(false);

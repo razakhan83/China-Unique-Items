@@ -10,6 +10,7 @@ import Product from '@/models/Product';
 import Notification from '@/models/Notification';
 import User from '@/models/User';
 import { normalizeEmail } from '@/lib/admin';
+import { withStoreScope, withStoreScopedId, withStoreScopedSlug } from '@/lib/store-scope';
 
 export async function POST(req) {
   try {
@@ -35,7 +36,7 @@ export async function POST(req) {
     }
 
     // Check if order exists and belongs to user
-    const order = await Order.findById(orderId);
+    const order = await Order.findOne(withStoreScopedId(orderId));
     if (!order) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
     }
@@ -54,11 +55,11 @@ export async function POST(req) {
       // 1. Resolve product — productId in Order.items is stored as a string (may be slug or ObjectId)
       let product = null;
       if (mongoose.Types.ObjectId.isValid(productId)) {
-        product = await Product.findById(productId);
+        product = await Product.findOne(withStoreScopedId(productId));
       }
       // Fall back to slug lookup if not a valid ObjectId or findById returned nothing
       if (!product) {
-        product = await Product.findOne({ slug: productId });
+        product = await Product.findOne(withStoreScopedSlug(productId));
       }
 
       if (!product) {
@@ -80,7 +81,7 @@ export async function POST(req) {
 
       // 3. Update Order Item Status (Order.items.productId is a String, match by original value)
       await Order.updateOne(
-        { _id: orderId, 'items.productId': productId },
+        withStoreScope({ _id: orderId, 'items.productId': productId }),
         { $set: { 'items.$.isReviewed': true } },
       );
 

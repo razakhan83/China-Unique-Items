@@ -4,8 +4,13 @@ import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import Settings from '@/models/Settings';
 import { getAllAdminEmails, getConfiguredAdminEmails, isAdminEmail, normalizeEmail } from '@/lib/admin';
+import { getStoreKey } from '@/lib/store-scope';
 
 const SETTINGS_KEY = 'site-settings';
+
+function getScopedSettingsKey() {
+  return `${getStoreKey()}:${SETTINGS_KEY}`;
+}
 
 async function requireAdminSession() {
   const session = await getServerSession(authOptions);
@@ -32,7 +37,7 @@ export async function GET() {
     }
 
     await mongooseConnect();
-    const settings = await Settings.findOne({ singletonKey: SETTINGS_KEY }).lean();
+    const settings = await Settings.findOne({ singletonKey: getScopedSettingsKey() }).lean();
     const configuredAdmins = getConfiguredAdminEmails();
     const dynamicAdmins = (settings?.adminEmails || []).map(normalizeEmail).filter(Boolean);
 
@@ -66,7 +71,7 @@ export async function POST(req) {
 
     await mongooseConnect();
     const settings = await Settings.findOneAndUpdate(
-      { singletonKey: SETTINGS_KEY },
+      { singletonKey: getScopedSettingsKey() },
       { $addToSet: { adminEmails: email } }, // addToSet avoids duplicates
       { upsert: true, new: true },
     ).lean();
@@ -94,7 +99,7 @@ export async function DELETE(req) {
 
     await mongooseConnect();
     const settings = await Settings.findOneAndUpdate(
-      { singletonKey: SETTINGS_KEY },
+      { singletonKey: getScopedSettingsKey() },
       { $pull: { adminEmails: email } },
       { new: true },
     ).lean();

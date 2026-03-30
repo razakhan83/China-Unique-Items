@@ -1,8 +1,11 @@
 import { ShieldCheck, Lock, Cookie, CreditCard, Mail } from 'lucide-react';
+import { getStoreConfig } from '@/lib/store-config';
+
+const store = getStoreConfig();
 
 export const metadata = {
   title: 'Privacy Policy',
-  description: 'How we protect your data and ensure a secure shopping experience at China Unique Store.',
+  description: `How we protect your data and ensure a secure shopping experience at ${store.name}.`,
 };
 
 export default function PrivacyPolicyPage() {
@@ -10,7 +13,7 @@ export default function PrivacyPolicyPage() {
     {
       icon: ShieldCheck,
       title: "Data Protection",
-      content: "At China Unique Store, we are committed to protecting your personal information and your right to privacy. We only collect data that is necessary for processing your orders, including your name, shipping address, and contact details. We do not sell or share your data with third parties for marketing purposes."
+      content: `At ${store.name}, we are committed to protecting your personal information and your right to privacy. We only collect data that is necessary for processing your orders, including your name, shipping address, and contact details. We do not sell or share your data with third parties for marketing purposes.`
     },
     {
       icon: Cookie,

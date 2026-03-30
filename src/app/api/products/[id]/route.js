@@ -9,13 +9,18 @@ import Product from '@/models/Product';
 import { getProductCategories } from '@/lib/productCategories';
 import { normalizeProductImages } from '@/lib/productImages';
 import { ensureProductImagesBlur } from '@/lib/serverImageBlur';
+import { withStoreScopedId } from '@/lib/store-scope';
 
 export async function GET(_request, { params }) {
     try {
         await mongooseConnect();
 
         const { id } = await params;
-        const product = await Product.findById(id).populate('Category').lean();
+        const scopedId = withStoreScopedId(id);
+        if (!scopedId) {
+            return NextResponse.json({ success: false, message: 'Product not found' }, { status: 404 });
+        }
+        const product = await Product.findOne(scopedId).populate('Category').lean();
 
         if (!product) {
             return NextResponse.json({ success: false, message: 'Product not found' }, { status: 404 });
@@ -49,7 +54,11 @@ export async function PUT(request, { params }) {
 
         const { id } = await params;
         const body = await request.json();
-        const existingProduct = await Product.findById(id);
+        const scopedId = withStoreScopedId(id);
+        if (!scopedId) {
+            return NextResponse.json({ success: false, message: 'Product not found' }, { status: 404 });
+        }
+        const existingProduct = await Product.findOne(scopedId);
 
         if (!existingProduct) {
             return NextResponse.json({ success: false, message: 'Product not found' }, { status: 404 });
@@ -144,11 +153,15 @@ export async function PATCH(request, { params }) {
 
         const { id } = await params;
         const body = await request.json();
+        const scopedId = withStoreScopedId(id);
+        if (!scopedId) {
+            return NextResponse.json({ success: false, message: 'Product not found' }, { status: 404 });
+        }
 
         // Handle StockStatus toggle
         if (body.StockStatus !== undefined) {
-            const updatedProduct = await Product.findByIdAndUpdate(
-                id,
+            const updatedProduct = await Product.findOneAndUpdate(
+                scopedId,
                 { $set: { StockStatus: body.StockStatus } },
                 { new: true, runValidators: false, strict: false }
             ).lean();
@@ -179,8 +192,8 @@ export async function PATCH(request, { params }) {
             if (body.isNewArrival !== undefined) updateFields.isNewArrival = body.isNewArrival === true || body.isNewArrival === 'true';
             if (body.isBestSelling !== undefined) updateFields.isBestSelling = body.isBestSelling === true || body.isBestSelling === 'true';
 
-            const updatedProduct = await Product.findByIdAndUpdate(
-                id,
+            const updatedProduct = await Product.findOneAndUpdate(
+                scopedId,
                 { $set: updateFields },
                 { new: true, runValidators: false, strict: false }
             ).lean();
@@ -209,7 +222,7 @@ export async function PATCH(request, { params }) {
         const pct = Math.min(100, Math.max(0, Number(body.discountPercentage) || 0));
 
         // We need the current price to compute discountedPrice
-        const existing = await Product.findById(id).select('Price slug Name').lean();
+        const existing = await Product.findOne(scopedId).select('Price slug Name').lean();
         if (!existing) {
             return NextResponse.json({ success: false, message: 'Product not found' }, { status: 404 });
         }
@@ -221,8 +234,8 @@ export async function PATCH(request, { params }) {
         // Atomic write directly to MongoDB — avoids any Mongoose validation issues
         // 'strict: false' is CRUCIAL here because Mongoose caches schemas during Next.js HMR.
         // If the dev server is using an old cached schema model, it will silently drop new fields!
-        const updatedProduct = await Product.findByIdAndUpdate(
-            id,
+        const updatedProduct = await Product.findOneAndUpdate(
+            scopedId,
             { $set: { discountPercentage: pct, isDiscounted: pct > 0, discountedPrice } },
             { new: true, runValidators: false, strict: false }
         ).lean();
@@ -274,7 +287,11 @@ export async function DELETE(_request, { params }) {
         await mongooseConnect();
 
         const { id } = await params;
-        const deletedProduct = await Product.findByIdAndDelete(id);
+        const scopedId = withStoreScopedId(id);
+        if (!scopedId) {
+            return NextResponse.json({ success: false, message: 'Product not found' }, { status: 404 });
+        }
+        const deletedProduct = await Product.findOneAndDelete(scopedId);
 
         if (!deletedProduct) {
             return NextResponse.json({ success: false, message: 'Product not found' }, { status: 404 });

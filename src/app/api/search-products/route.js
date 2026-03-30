@@ -4,6 +4,7 @@ import Category from '@/models/Category';
 import Product from '@/models/Product';
 import { getProductCategories } from '@/lib/productCategories';
 import { normalizeProductImages } from '@/lib/productImages';
+import { withStoreScope } from '@/lib/store-scope';
 
 export async function GET(req) {
     try {
@@ -31,13 +32,13 @@ export async function GET(req) {
         const categoryIds = matchingCategories.map((category) => category._id);
 
         const products = await Product.find(
-            {
+            withStoreScope({
                 isLive: { $ne: false },
                 $or: [
                     { Name: searchRegex },
                     ...(categoryIds.length ? [{ Category: { $in: categoryIds } }] : []),
                 ],
-            },
+            }),
             'Name Category Images slug _id'
         )
         .populate('Category')

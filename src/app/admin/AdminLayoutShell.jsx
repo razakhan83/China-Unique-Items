@@ -14,7 +14,6 @@ import {
   Menu,
   Settings,
   ShoppingCart,
-  Store,
   Truck,
   Users,
   MessageSquare,
@@ -22,6 +21,7 @@ import {
 } from 'lucide-react';
 
 import AdminNotificationCenter from '@/components/AdminNotificationCenter';
+import StoreBrand from '@/components/StoreBrand';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
@@ -38,6 +38,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { getStoreConfig } from '@/lib/store-config';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -53,6 +54,7 @@ const navItems = [
 ];
 
 export default function AdminLayoutShell({ children, sessionUser }) {
+  const store = getStoreConfig();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -60,14 +62,13 @@ export default function AdminLayoutShell({ children, sessionUser }) {
 
   const sidebar = (
     <div className="flex h-full flex-col gap-6 bg-primary px-4 py-5 text-primary-foreground">
-      <div className="flex items-center gap-3 border-b border-white/10 pb-4">
-        <div className="flex size-11 items-center justify-center rounded-xl bg-white/10">
-          <Store className="size-5" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.16em]">China Unique</p>
-          <p className="text-xs text-primary-foreground/70">Admin workspace</p>
-        </div>
+      <div className="border-b border-white/10 pb-4">
+        <StoreBrand
+          iconClassName="size-11 rounded-xl bg-white/10 text-primary-foreground"
+          textClassName="text-sm font-semibold uppercase tracking-[0.16em] text-primary-foreground"
+          subtitle={`${store.shortName} admin workspace`}
+          subtitleClassName="text-xs text-primary-foreground/70"
+        />
       </div>
 
       <nav className="flex flex-col gap-2">

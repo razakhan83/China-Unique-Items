@@ -3,6 +3,7 @@ import "./globals.css";
 import { getStoreSettings } from "@/lib/data";
 import TrackingScripts from "@/components/TrackingScripts";
 import { Toaster } from "@/components/ui/sonner";
+import { getStoreConfig, getStoreThemeStyle } from "@/lib/store-config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,21 +15,21 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXTAUTH_URL || 'https://china-unique-items.vercel.app';
+const store = getStoreConfig();
 
 export const metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(store.siteUrl),
   title: {
-    default: 'China Unique Store',
-    template: '%s | China Unique Store',
+    default: store.name,
+    template: `%s | ${store.name}`,
   },
-  description: 'Premium kitchenware, home decor, and lifestyle products for modern Pakistani homes.',
+  description: store.description,
   openGraph: {
-    title: 'China Unique Store',
-    description: 'Premium kitchenware, home decor, and lifestyle products for modern Pakistani homes.',
+    title: store.name,
+    description: store.description,
     type: 'website',
-    url: siteUrl,
-    siteName: 'China Unique Store',
+    url: store.siteUrl,
+    siteName: store.name,
   },
   robots: {
     index: true,
@@ -40,7 +41,7 @@ export default async function RootLayout({ children }) {
   const settings = await getStoreSettings();
 
   return (
-    <html lang="en" suppressHydrationWarning={true}>
+    <html lang="en" suppressHydrationWarning={true} style={getStoreThemeStyle()}>
       <head>
         <meta name="google" content="notranslate" />
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />

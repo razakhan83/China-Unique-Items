@@ -9,9 +9,13 @@ import mongooseConnect from '@/lib/mongooseConnect';
 import Order from '@/models/Order';
 import OrderDetailsClient from './OrderDetailsClient';
 import { Button } from '@/components/ui/button';
+import { getStoreConfig } from '@/lib/store-config';
+import { withStoreScopedId } from '@/lib/store-scope';
+
+const store = getStoreConfig();
 
 export const metadata = {
-  title: 'Order Details | China Unique',
+  title: `Order Details | ${store.shortName}`,
   description: 'View your order status and invoice.',
 };
 
@@ -26,7 +30,8 @@ export default async function SingleOrderPage({ params, searchParams }) {
   await mongooseConnect();
   
   // 1. Fetch Order
-  const orderDoc = await Order.findById(id).lean();
+  const scopedId = withStoreScopedId(id);
+  const orderDoc = scopedId ? await Order.findOne(scopedId).lean() : null;
   
   if (!orderDoc) {
     redirect('/orders');
