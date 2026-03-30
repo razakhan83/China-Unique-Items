@@ -38,13 +38,12 @@ export async function GET() {
         await mongooseConnect();
         const store = getStoreConfig();
 
-        // Find or create the singleton settings document
-        let settings = await Settings.findOne({ singletonKey: getScopedSettingsKey() }).lean();
-
-        if (!settings) {
-            settings = await Settings.create({ singletonKey: getScopedSettingsKey() });
-            settings = settings.toObject();
-        }
+        // Find or create the singleton settings document atomically
+        const settings = await Settings.findOneAndUpdate(
+            { singletonKey: getScopedSettingsKey() },
+            { $setOnInsert: { singletonKey: getScopedSettingsKey() } },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        ).lean();
 
         // Clean up internal fields
         settings._id = settings._id.toString();

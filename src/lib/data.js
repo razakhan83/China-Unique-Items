@@ -61,6 +61,14 @@ function getScopedSingletonKey(baseKey) {
   return `${getStoreKey()}:${baseKey}`;
 }
 
+async function ensureSingletonDocument(Model, singletonKey) {
+  return Model.findOneAndUpdate(
+    { singletonKey },
+    { $setOnInsert: { singletonKey } },
+    { new: true, upsert: true, setDefaultsOnInsert: true },
+  ).lean();
+}
+
 function normalizeMediaItem(item, sortOrder = 0, fallbackItem = null) {
   if ((!item || typeof item !== 'object') && (!fallbackItem || typeof fallbackItem !== 'object')) return null;
 
@@ -299,11 +307,7 @@ async function getSettingsRaw() {
   await mongooseConnect();
   const store = getStoreConfig();
 
-  let settings = await Settings.findOne({ singletonKey: getScopedSingletonKey(SETTINGS_KEY) }).lean();
-  if (!settings) {
-    settings = await Settings.create({ singletonKey: getScopedSingletonKey(SETTINGS_KEY) });
-    settings = settings.toObject();
-  }
+  const settings = await ensureSingletonDocument(Settings, getScopedSingletonKey(SETTINGS_KEY));
 
   return {
     _id: settings._id.toString(),
@@ -329,11 +333,7 @@ async function getSettingsRaw() {
 async function getCoverPhotosRaw() {
   await mongooseConnect();
 
-  let coverPhoto = await CoverPhoto.findOne({ singletonKey: getScopedSingletonKey(COVER_PHOTOS_KEY) }).lean();
-  if (!coverPhoto) {
-    coverPhoto = await CoverPhoto.create({ singletonKey: getScopedSingletonKey(COVER_PHOTOS_KEY) });
-    coverPhoto = coverPhoto.toObject();
-  }
+  const coverPhoto = await ensureSingletonDocument(CoverPhoto, getScopedSingletonKey(COVER_PHOTOS_KEY));
 
   return Array.isArray(coverPhoto.slides)
     ? coverPhoto.slides
@@ -436,11 +436,7 @@ export async function getStoreSettings() {
 export async function getAdminCoverPhotos() {
   await mongooseConnect();
 
-  let coverPhoto = await CoverPhoto.findOne({ singletonKey: COVER_PHOTOS_KEY }).lean();
-  if (!coverPhoto) {
-    coverPhoto = await CoverPhoto.create({ singletonKey: COVER_PHOTOS_KEY });
-    coverPhoto = coverPhoto.toObject();
-  }
+  const coverPhoto = await ensureSingletonDocument(CoverPhoto, getScopedSingletonKey(COVER_PHOTOS_KEY));
 
   return Array.isArray(coverPhoto.slides)
     ? coverPhoto.slides
@@ -1360,11 +1356,7 @@ export async function getAdminSettings() {
   await mongooseConnect();
   const store = getStoreConfig();
 
-  let settings = await Settings.findOne({ singletonKey: getScopedSingletonKey(SETTINGS_KEY) }).lean();
-  if (!settings) {
-    settings = await Settings.create({ singletonKey: getScopedSingletonKey(SETTINGS_KEY) });
-    settings = settings.toObject();
-  }
+  const settings = await ensureSingletonDocument(Settings, getScopedSingletonKey(SETTINGS_KEY));
 
   return {
     _id: settings._id.toString(),

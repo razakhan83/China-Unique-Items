@@ -11,6 +11,7 @@ import {
   Search,
   ShoppingBag,
   Sparkles,
+  Store,
   Tag,
   Heart,
   Settings,
