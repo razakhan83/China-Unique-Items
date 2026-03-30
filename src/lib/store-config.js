@@ -90,11 +90,10 @@ export function getStoreThemeStyle() {
   const config = getStoreConfig();
 
   return {
-    '--color-primary': config.primaryColor,
-    '--color-primary-foreground': config.primaryForegroundColor,
-    '--color-accent': config.accentColor,
-    '--color-accent-foreground': config.accentForegroundColor,
-    '--color-ring': config.primaryColor,
+    '--store-primary': config.primaryColor,
+    '--store-primary-foreground': config.primaryForegroundColor,
+    '--store-accent': config.accentColor,
+    '--store-accent-foreground': config.accentForegroundColor,
   };
 }
 
