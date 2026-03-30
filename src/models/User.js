@@ -15,6 +15,12 @@ const UserSchema = new mongoose.Schema(
     image: {
       type: String,
     },
+    storeKey: {
+      type: String,
+      required: true,
+      index: true,
+      trim: true,
+    },
     phone: {
       type: String,
     },
@@ -43,5 +49,10 @@ const UserSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+const cachedUser = mongoose.models.User;
+if (cachedUser && !cachedUser.schema.path('storeKey')) {
+  delete mongoose.models.User;
+}
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);

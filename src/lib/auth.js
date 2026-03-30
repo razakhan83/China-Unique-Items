@@ -6,6 +6,10 @@ import mongooseConnect from "@/lib/mongooseConnect";
 import { getStoreKey } from "@/lib/store-scope";
 import User from "@/models/User";
 
+function isStoreAllowed(storeKey) {
+  return String(storeKey || "").trim() === getStoreKey();
+}
+
 /** @type {import("next-auth").NextAuthOptions} */
 export const authOptions = {
   providers: [
@@ -24,7 +28,12 @@ export const authOptions = {
           isAdminEmail(credentials.email) &&
           credentials.password === process.env.ADMIN_PASSWORD
         ) {
-          return { id: "1", name: "Raza Admin", email: normalizeEmail(credentials.email) };
+          return {
+            id: "1",
+            name: "Raza Admin",
+            email: normalizeEmail(credentials.email),
+            storeKey: getStoreKey(),
+          };
         }
         return null;
       }
@@ -35,11 +44,12 @@ export const authOptions = {
       if (account.provider === "google") {
         try {
           await mongooseConnect();
+          const expectedStoreKey = getStoreKey();
           const normalizedEmail = normalizeEmail(user.email);
           
           const existingUser = await User.findOne({ email: normalizedEmail });
           
-          if (existingUser && existingUser.disabled) {
+          if (existingUser && (!isStoreAllowed(existingUser.storeKey) || existingUser.disabled)) {
             return false; // Prevent sign in
           }
 
@@ -48,10 +58,15 @@ export const authOptions = {
             { 
               name: user.name, 
               image: user.image,
-              email: normalizedEmail
+              email: normalizedEmail,
+              storeKey: expectedStoreKey,
             },
             { upsert: true, new: true }
           ).lean();
+
+          if (!isStoreAllowed(dbUser?.storeKey)) {
+            return false;
+          }
 
           if (!existingUser) {
             // New User Signup - Create Notification
@@ -79,7 +94,11 @@ export const authOptions = {
       const email = user?.email || token?.email;
       
       if (email) {
+        const expectedStoreKey = getStoreKey();
         token.email = normalizeEmail(email);
+        if (user?.storeKey) {
+          token.storeKey = user.storeKey;
+        }
         // Check env-configured admins first
         let isAdmin = isAdminEmail(email);
         
@@ -104,9 +123,13 @@ export const authOptions = {
           // We only need to check DB if it's not the initial sign in (where user is provided)
           // or if we want to enforce "immediate" logout on every request/refresh
           await mongooseConnect();
-          const dbUser = await User.findOne({ email: token.email }).select('disabled forceLogoutAt').lean();
+          const dbUser = await User.findOne({ email: token.email }).select('disabled forceLogoutAt storeKey').lean();
           
           if (dbUser) {
+            if (!isStoreAllowed(dbUser.storeKey)) {
+              return null;
+            }
+            token.storeKey = dbUser.storeKey;
             // 1. Check if user is disabled
             if (dbUser.disabled) {
               return null; // This invalidates the JWT
@@ -121,6 +144,8 @@ export const authOptions = {
                 return null;
               }
             }
+          } else if (!isStoreAllowed(token.storeKey || expectedStoreKey)) {
+            return null;
           }
         } catch (error) {
           console.error("Auth DB Check Error:", error);
@@ -131,9 +156,14 @@ export const authOptions = {
     },
     async session({ session, token }) {
       if (session?.user) {
+        if (!isStoreAllowed(token?.storeKey)) {
+          throw new Error("Invalid store session");
+        }
         session.user.email = normalizeEmail(session.user.email || token?.email);
         // @ts-ignore - isAdmin is custom
         session.user.isAdmin = Boolean(token?.isAdmin);
+        // @ts-ignore - storeKey is custom
+        session.user.storeKey = token?.storeKey;
       }
       return session;
     },

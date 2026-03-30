@@ -18,12 +18,23 @@ const DEFAULT_STORE = {
   emailFromName: 'Storefront',
 };
 
+const STORE_PRESETS = {
+  'china-unique': {
+    primaryColor: 'oklch(0.396 0.0722 178.59)',
+    primaryForegroundColor: 'oklch(0.985 0.004 95)',
+    accentColor: 'oklch(0.78 0.11 92)',
+    accentForegroundColor: 'oklch(0.23 0.02 160)',
+  },
+};
+
 function trimValue(value, fallback = '') {
   const normalized = String(value || '').trim();
   return normalized || fallback;
 }
 
 export function getStoreConfig() {
+  const storeKey = trimValue(process.env.NEXT_PUBLIC_STORE_KEY, DEFAULT_STORE.key);
+  const preset = STORE_PRESETS[storeKey] || {};
   const siteUrl = trimValue(
     process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL,
     DEFAULT_STORE.siteUrl,
@@ -35,7 +46,7 @@ export function getStoreConfig() {
   );
 
   return {
-    key: trimValue(process.env.NEXT_PUBLIC_STORE_KEY, DEFAULT_STORE.key),
+    key: storeKey,
     name: trimValue(process.env.NEXT_PUBLIC_STORE_NAME, DEFAULT_STORE.name),
     shortName,
     tagline: trimValue(process.env.NEXT_PUBLIC_STORE_TAGLINE, DEFAULT_STORE.tagline),
@@ -57,19 +68,19 @@ export function getStoreConfig() {
     siteUrl,
     primaryColor: trimValue(
       process.env.NEXT_PUBLIC_STORE_PRIMARY_COLOR,
-      DEFAULT_STORE.primaryColor,
+      preset.primaryColor || DEFAULT_STORE.primaryColor,
     ),
     primaryForegroundColor: trimValue(
       process.env.NEXT_PUBLIC_STORE_PRIMARY_FOREGROUND_COLOR,
-      DEFAULT_STORE.primaryForegroundColor,
+      preset.primaryForegroundColor || DEFAULT_STORE.primaryForegroundColor,
     ),
     accentColor: trimValue(
       process.env.NEXT_PUBLIC_STORE_ACCENT_COLOR,
-      DEFAULT_STORE.accentColor,
+      preset.accentColor || DEFAULT_STORE.accentColor,
     ),
     accentForegroundColor: trimValue(
       process.env.NEXT_PUBLIC_STORE_ACCENT_FOREGROUND_COLOR,
-      DEFAULT_STORE.accentForegroundColor,
+      preset.accentForegroundColor || DEFAULT_STORE.accentForegroundColor,
     ),
     emailFromName: trimValue(process.env.STORE_EMAIL_FROM_NAME, shortName),
   };
