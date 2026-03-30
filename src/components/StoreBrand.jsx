@@ -29,8 +29,8 @@ export default function StoreBrand({
           width={compact ? 124 : 164}
           height={compact ? 44 : 58}
           className={cn(
-            'h-auto w-auto object-contain',
-            compact ? 'max-w-[7.75rem]' : 'max-w-[10.25rem]',
+            'w-auto object-contain',
+            compact ? 'max-h-10 max-w-[6.5rem]' : 'max-h-[3.6rem] max-w-[10.25rem]',
           )}
         />
         {resolvedSubtitle ? (
