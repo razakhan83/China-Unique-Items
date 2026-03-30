@@ -285,8 +285,8 @@
   display: flex;
   align-items: center;
   overflow-x: hidden;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 600;
   letter-spacing: 0.16em;
   line-height: 1;
   text-transform: uppercase;
@@ -318,8 +318,8 @@
 }
 
 .announcement-marquee__label {
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: inherit;
+  font-weight: inherit;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
