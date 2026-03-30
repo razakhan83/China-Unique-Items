@@ -41,6 +41,7 @@ export default function LayoutWrapper({ children, categories, settings }) {
               <div>
                 <div className="mb-4">
                   <StoreBrand
+                    surface="dark"
                     iconClassName="size-11 rounded-xl bg-white/10 text-primary-foreground"
                     textClassName="text-lg font-semibold normal-case tracking-normal text-primary-foreground"
                     subtitle={store.tagline}

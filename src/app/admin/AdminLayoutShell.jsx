@@ -64,6 +64,7 @@ export default function AdminLayoutShell({ children, sessionUser }) {
     <div className="flex h-full flex-col gap-6 bg-primary px-4 py-5 text-primary-foreground">
       <div className="border-b border-white/10 pb-4">
         <StoreBrand
+          surface="dark"
           iconClassName="size-11 rounded-xl bg-white/10 text-primary-foreground"
           textClassName="text-sm font-semibold uppercase tracking-[0.16em] text-primary-foreground"
           subtitle={`${store.shortName} admin workspace`}

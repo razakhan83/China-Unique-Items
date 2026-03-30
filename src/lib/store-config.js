@@ -10,6 +10,7 @@ const DEFAULT_STORE = {
   logoTextPrimary: 'Storefront',
   logoTextSecondary: 'Engine',
   logoImageUrl: '',
+  logoImageDarkUrl: '',
   siteUrl: 'https://example.com',
   primaryColor: 'oklch(0.396 0.0722 178.59)',
   primaryForegroundColor: 'oklch(0.985 0.004 95)',
@@ -25,6 +26,18 @@ const STORE_PRESETS = {
     accentColor: 'oklch(0.78 0.11 92)',
     accentForegroundColor: 'oklch(0.23 0.02 160)',
   },
+  'aam-saman': {
+    name: 'Aam Samaan',
+    shortName: 'Aam Samaan',
+    logoTextPrimary: 'Aam Samaan',
+    logoTextSecondary: '',
+    logoImageUrl: '/brands/aam-samaan-wordmark-dark.webp',
+    logoImageDarkUrl: '/brands/aam-samaan-wordmark-light.webp',
+    primaryColor: 'oklch(0.55 0.14 145)',
+    primaryForegroundColor: 'oklch(0.99 0.01 95)',
+    accentColor: 'oklch(0.82 0.12 88)',
+    accentForegroundColor: 'oklch(0.22 0.03 145)',
+  },
 };
 
 function trimValue(value, fallback = '') {
@@ -32,22 +45,35 @@ function trimValue(value, fallback = '') {
   return normalized || fallback;
 }
 
+function normalizeAamSamaanLabel(storeKey, value) {
+  if (storeKey !== 'aam-saman') return value;
+  if (/^aam$/i.test(value) || /^aam\s+saman$/i.test(value)) {
+    return 'Aam Samaan';
+  }
+  if (/^saman$/i.test(value)) {
+    return '';
+  }
+  return value;
+}
+
 export function getStoreConfig() {
   const storeKey = trimValue(process.env.NEXT_PUBLIC_STORE_KEY, DEFAULT_STORE.key);
   const preset = STORE_PRESETS[storeKey] || {};
+  const resolveLabel = (value, fallback = '') =>
+    normalizeAamSamaanLabel(storeKey, trimValue(value, fallback));
   const siteUrl = trimValue(
     process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXTAUTH_URL,
     DEFAULT_STORE.siteUrl,
   );
 
-  const shortName = trimValue(
+  const shortName = resolveLabel(
     process.env.NEXT_PUBLIC_STORE_SHORT_NAME,
-    trimValue(process.env.NEXT_PUBLIC_STORE_NAME, DEFAULT_STORE.shortName),
+    resolveLabel(process.env.NEXT_PUBLIC_STORE_NAME, preset.shortName || DEFAULT_STORE.shortName),
   );
 
   return {
     key: storeKey,
-    name: trimValue(process.env.NEXT_PUBLIC_STORE_NAME, DEFAULT_STORE.name),
+    name: resolveLabel(process.env.NEXT_PUBLIC_STORE_NAME, preset.name || DEFAULT_STORE.name),
     shortName,
     tagline: trimValue(process.env.NEXT_PUBLIC_STORE_TAGLINE, DEFAULT_STORE.tagline),
     description: trimValue(process.env.NEXT_PUBLIC_STORE_DESCRIPTION, DEFAULT_STORE.description),
@@ -59,12 +85,22 @@ export function getStoreConfig() {
       process.env.NEXT_PUBLIC_STORE_FOOTER_DESCRIPTION,
       DEFAULT_STORE.footerDescription,
     ),
-    logoTextPrimary: trimValue(process.env.NEXT_PUBLIC_STORE_LOGO_TEXT_PRIMARY, shortName),
-    logoTextSecondary: trimValue(
-      process.env.NEXT_PUBLIC_STORE_LOGO_TEXT_SECONDARY,
-      DEFAULT_STORE.logoTextSecondary,
+    logoTextPrimary: resolveLabel(
+      process.env.NEXT_PUBLIC_STORE_LOGO_TEXT_PRIMARY,
+      preset.logoTextPrimary || shortName,
     ),
-    logoImageUrl: trimValue(process.env.NEXT_PUBLIC_STORE_LOGO_URL, DEFAULT_STORE.logoImageUrl),
+    logoTextSecondary: resolveLabel(
+      process.env.NEXT_PUBLIC_STORE_LOGO_TEXT_SECONDARY,
+      preset.logoTextSecondary ?? DEFAULT_STORE.logoTextSecondary,
+    ),
+    logoImageUrl: trimValue(
+      process.env.NEXT_PUBLIC_STORE_LOGO_URL,
+      preset.logoImageUrl || DEFAULT_STORE.logoImageUrl,
+    ),
+    logoImageDarkUrl: trimValue(
+      process.env.NEXT_PUBLIC_STORE_LOGO_DARK_URL,
+      preset.logoImageDarkUrl || DEFAULT_STORE.logoImageDarkUrl,
+    ),
     siteUrl,
     primaryColor: trimValue(
       process.env.NEXT_PUBLIC_STORE_PRIMARY_COLOR,

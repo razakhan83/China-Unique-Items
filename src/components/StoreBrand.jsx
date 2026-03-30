@@ -7,13 +7,40 @@ import { getStoreConfig } from '@/lib/store-config';
 export default function StoreBrand({
   className,
   compact = false,
+  surface = 'light',
   textClassName,
   subtitle,
   subtitleClassName,
   iconClassName,
 }) {
   const store = getStoreConfig();
-  const resolvedSubtitle = subtitle ?? store.tagline;
+  const hasWordmarkLogo = store.key === 'aam-saman' && store.logoImageUrl;
+  const resolvedSubtitle = subtitle === undefined && hasWordmarkLogo ? null : subtitle ?? store.tagline;
+  const resolvedLogoSrc = surface === 'dark' && store.logoImageDarkUrl
+    ? store.logoImageDarkUrl
+    : store.logoImageUrl;
+
+  if (hasWordmarkLogo) {
+    return (
+      <div className={cn('flex min-w-0 flex-col gap-1', className)}>
+        <Image
+          src={resolvedLogoSrc}
+          alt={store.name}
+          width={compact ? 124 : 164}
+          height={compact ? 44 : 58}
+          className={cn(
+            'h-auto w-auto object-contain',
+            compact ? 'max-w-[7.75rem]' : 'max-w-[10.25rem]',
+          )}
+        />
+        {resolvedSubtitle ? (
+          <p className={cn('truncate text-xs text-muted-foreground', subtitleClassName)}>
+            {resolvedSubtitle}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className={cn('flex min-w-0 items-center gap-3', className)}>
@@ -26,7 +53,7 @@ export default function StoreBrand({
       >
         {store.logoImageUrl ? (
           <Image
-            src={store.logoImageUrl}
+            src={resolvedLogoSrc}
             alt={store.name}
             width={40}
             height={40}
