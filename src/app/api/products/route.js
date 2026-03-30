@@ -62,11 +62,18 @@ export async function POST(req) {
         let {
             Name,
             Description,
+            seoTitle,
+            seoDescription,
+            seoKeywords,
+            seoCanonicalUrl,
             Price,
+            discountPercentage,
+            stockQuantity,
             Images,
             cloudinary_id,
             Category: categoryInput,
             slug,
+            StockStatus,
             isLive,
             isNewArrival,
             isBestSelling,
@@ -96,21 +103,40 @@ export async function POST(req) {
             counter++;
         }
 
-        // New products default to In Stock
-        const stockStatus = 'In Stock';
+        const normalizedPrice = Number(Price);
+        const normalizedStockQuantity = Math.max(0, Number(stockQuantity) || 0);
+        const normalizedDiscountPercentage = Math.min(100, Math.max(0, Number(discountPercentage) || 0));
+        const stockStatus = StockStatus === 'Out of Stock'
+            ? 'Out of Stock'
+            : StockStatus === 'In Stock'
+                ? 'In Stock'
+                : normalizedStockQuantity > 0
+                    ? 'In Stock'
+                    : 'Out of Stock';
+        const discountedPrice = normalizedDiscountPercentage > 0
+            ? Math.round(normalizedPrice * (1 - normalizedDiscountPercentage / 100))
+            : null;
 
         const normalizedImages = await ensureProductImagesBlur(normalizeProductImages(Images));
 
         const product = await Product.create({
             Name,
             Description,
-            Price,
+            seoTitle: typeof seoTitle === 'string' ? seoTitle.trim() : '',
+            seoDescription: typeof seoDescription === 'string' ? seoDescription.trim() : '',
+            seoKeywords: typeof seoKeywords === 'string' ? seoKeywords.trim() : '',
+            seoCanonicalUrl: typeof seoCanonicalUrl === 'string' ? seoCanonicalUrl.trim() : '',
+            Price: normalizedPrice,
             Images: normalizedImages,
             cloudinary_id,
             Category: categoryArray,
+            stockQuantity: normalizedStockQuantity,
             StockStatus: stockStatus,
             slug: uniqueSlug, // Ensure slug is saved
             isLive: isLive === true || isLive === 'true' ? true : false,
+            discountPercentage: normalizedDiscountPercentage,
+            isDiscounted: normalizedDiscountPercentage > 0,
+            discountedPrice,
             isNewArrival: isNewArrival === true || isNewArrival === 'true',
             isBestSelling: isBestSelling === true || isBestSelling === 'true',
         });

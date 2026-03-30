@@ -38,9 +38,16 @@ export default function AddProduct() {
 
   const [Name, setName] = useState("");
   const [Description, setDescription] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+  const [seoKeywords, setSeoKeywords] = useState("");
+  const [seoCanonicalUrl, setSeoCanonicalUrl] = useState("");
   const [Price, setPrice] = useState("");
-  const [Categories, setCategories] = useState([]); // array of selected category ids
-  const [images, setImages] = useState([]); // Array of { url, file }
+  const [discountPercentage, setDiscountPercentage] = useState("");
+  const [stockQuantity, setStockQuantity] = useState("1");
+  const [stockStatus, setStockStatus] = useState("In Stock");
+  const [Categories, setCategories] = useState([]);
+  const [images, setImages] = useState([]);
   const [isLive, setIsLive] = useState(true);
   const [isNewArrival, setIsNewArrival] = useState(true);
   const [isBestSelling, setIsBestSelling] = useState(false);
@@ -63,6 +70,7 @@ export default function AddProduct() {
         console.error("Failed to fetch categories:", err);
       }
     };
+
     fetchCategories();
   }, []);
 
@@ -70,10 +78,12 @@ export default function AddProduct() {
     e.preventDefault();
     if (!newCatName.trim()) return;
     setIsAddingCat(true);
+
     try {
       let uploadedCategoryImage = "";
       let uploadedCategoryImagePublicId = "";
       let uploadedCategoryBlurDataURL = "";
+
       if (newCatImage) {
         const uploaded = await uploadImageDataUrl(
           newCatImage,
@@ -96,6 +106,7 @@ export default function AddProduct() {
         }),
       });
       const data = await res.json();
+
       if (data.success) {
         toast.success("Category added!");
         setNewCatName("");
@@ -134,6 +145,7 @@ export default function AddProduct() {
     e.preventDefault();
     setIsDragOver(true);
   }, []);
+
   const handleDragLeave = useCallback((e) => {
     e.preventDefault();
     setIsDragOver(false);
@@ -180,6 +192,7 @@ export default function AddProduct() {
 
     setSaving(true);
     const finalImages = [];
+
     try {
       for (const img of images) {
         const uploaded = await uploadImageDataUrl(
@@ -188,7 +201,7 @@ export default function AddProduct() {
         );
         finalImages.push(uploaded);
       }
-    } catch (err) {
+    } catch {
       toast.error("Image upload failed");
       setSaving(false);
       return;
@@ -201,7 +214,14 @@ export default function AddProduct() {
         body: JSON.stringify({
           Name,
           Description,
+          seoTitle,
+          seoDescription,
+          seoKeywords,
+          seoCanonicalUrl,
           Price: Number(Price),
+          discountPercentage: Number(discountPercentage) || 0,
+          stockQuantity: Math.max(0, Number(stockQuantity) || 0),
+          StockStatus: stockStatus,
           Images: finalImages,
           Category: Categories,
           isLive,
@@ -210,6 +230,7 @@ export default function AddProduct() {
         }),
       });
       const data = await res.json();
+
       if (res.ok && data.success) {
         toast.success("Product created!");
         router.push("/admin/products");
@@ -223,9 +244,42 @@ export default function AddProduct() {
     }
   };
 
+  const trimmedSeoTitle = seoTitle.trim();
+  const trimmedSeoDescription = seoDescription.trim();
+  const trimmedSeoKeywords = seoKeywords.trim();
+  const trimmedSeoCanonicalUrl = seoCanonicalUrl.trim();
+  const fallbackSlug = Name.trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  const seoPreviewTitle = trimmedSeoTitle || Name || "Product title preview";
+  const seoPreviewDescription =
+    trimmedSeoDescription ||
+    Description ||
+    "Add a focused product summary so search snippets look polished from day one.";
+  const seoPreviewUrl =
+    trimmedSeoCanonicalUrl ||
+    `https://china-unique-items.vercel.app/products/${fallbackSlug || "your-product"}`;
+  const seoChecks = [
+    { label: "SEO title", complete: trimmedSeoTitle.length >= 10 },
+    { label: "Meta description", complete: trimmedSeoDescription.length >= 50 },
+    { label: "Keywords", complete: trimmedSeoKeywords.length > 0 },
+  ];
+  const seoCompleteCount = seoChecks.filter((item) => item.complete).length;
+  const seoReady = seoCompleteCount === seoChecks.length;
+  const priceValue = Number(Price) || 0;
+  const discountValue = Math.min(
+    100,
+    Math.max(0, Number(discountPercentage) || 0)
+  );
+  const discountedPreview =
+    discountValue > 0
+      ? Math.round(priceValue * (1 - discountValue / 100))
+      : priceValue;
+
   return (
     <div className="w-full pb-10">
-      <div className="mb-6 md:mb-8 flex items-center gap-4">
+      <div className="mb-6 flex items-center gap-4 md:mb-8">
         <Link
           href="/admin/products"
           className={cn(
@@ -240,7 +294,7 @@ export default function AddProduct() {
             Add New Product
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            List a new item in your store catalog.
+            Create a launch-ready product with pricing, inventory, and SEO in one pass.
           </p>
         </div>
       </div>
@@ -259,21 +313,63 @@ export default function AddProduct() {
             />
           </div>
 
-          <div>
-            <Label className="mb-2">Price (Rs)</Label>
-            <Input
-              type="number"
-              value={Price}
-              onChange={(e) => setPrice(e.target.value)}
-              className="h-11 px-4"
-              placeholder="0.00"
-              step="0.01"
-              required
-            />
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label className="mb-2">Price (Rs)</Label>
+              <Input
+                type="number"
+                value={Price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="h-11 px-4"
+                placeholder="0.00"
+                step="0.01"
+                required
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2">Discount Percentage</Label>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                value={discountPercentage}
+                onChange={(e) => setDiscountPercentage(e.target.value)}
+                className="h-11 px-4"
+                placeholder="0"
+              />
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-muted/35 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Pricing Preview
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <p className="text-sm text-muted-foreground">
+                Base price
+                <span className="mt-1 block font-semibold text-foreground">
+                  Rs {priceValue || 0}
+                </span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Discount
+                <span className="mt-1 block font-semibold text-foreground">
+                  {discountValue}%
+                </span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Customer pays
+                <span className="mt-1 block text-base font-semibold text-primary">
+                  Rs {discountedPreview || 0}
+                </span>
+              </p>
+            </div>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <Label>Categories</Label>
               <button
                 type="button"
@@ -312,15 +408,47 @@ export default function AddProduct() {
             )}
           </div>
 
+          <div className="rounded-xl border border-border bg-muted/35 p-4 space-y-4">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Inventory</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Set launch stock and storefront availability before publishing.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label className="mb-2">Stock Quantity</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={stockQuantity}
+                  onChange={(e) => setStockQuantity(e.target.value)}
+                  className="h-11 px-4"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <Label className="mb-2">Stock Status</Label>
+                <select
+                  value={stockStatus}
+                  onChange={(e) => setStockStatus(e.target.value)}
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-4 py-2 text-sm ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="In Stock">In Stock</option>
+                  <option value="Out of Stock">Out of Stock</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between rounded-xl border border-border bg-muted/35 p-4">
             <div>
-              <p className="text-sm font-semibold text-foreground">
-                Publish as Live
-              </p>
+              <p className="text-sm font-semibold text-foreground">Visibility</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {isLive
-                  ? "🟢 Will be visible to customers immediately"
-                  : "🔴 Draft — hidden from store until toggled Live"}
+                  ? "Live and visible to customers immediately."
+                  : "Saved as draft and hidden from the storefront."}
               </p>
             </div>
             <button
@@ -340,43 +468,62 @@ export default function AddProduct() {
             </button>
           </div>
 
-          {/* Marketing Flags */}
           <div className="rounded-xl border border-border bg-muted/35 p-4 space-y-4">
             <p className="text-sm font-semibold text-foreground">Marketing Flags</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-4 sm:border-0 sm:pb-0">
-                <Label className="text-xs text-muted-foreground mr-2 cursor-pointer" htmlFor="toggle-new">New Arrival</Label>
+                <Label
+                  className="mr-2 cursor-pointer text-xs text-muted-foreground"
+                  htmlFor="toggle-new"
+                >
+                  New Arrival
+                </Label>
                 <button
                   id="toggle-new"
                   type="button"
                   onClick={() => setIsNewArrival(!isNewArrival)}
                   className={cn(
                     "relative h-5 w-10 rounded-lg transition-colors duration-300",
-                    isNewArrival ? "bg-primary" : "bg-border",
+                    isNewArrival ? "bg-primary" : "bg-border"
                   )}
                 >
-                  <span className={cn("absolute left-0.5 top-0.5 h-4 w-4 rounded-md bg-background shadow transition-transform duration-300", isNewArrival ? "translate-x-5" : "translate-x-0")} />
+                  <span
+                    className={cn(
+                      "absolute left-0.5 top-0.5 h-4 w-4 rounded-md bg-background shadow transition-transform duration-300",
+                      isNewArrival ? "translate-x-5" : "translate-x-0"
+                    )}
+                  />
                 </button>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <Label className="text-xs text-muted-foreground mr-2 cursor-pointer" htmlFor="toggle-best">Best Selling</Label>
+                <Label
+                  className="mr-2 cursor-pointer text-xs text-muted-foreground"
+                  htmlFor="toggle-best"
+                >
+                  Best Selling
+                </Label>
                 <button
                   id="toggle-best"
                   type="button"
                   onClick={() => setIsBestSelling(!isBestSelling)}
                   className={cn(
                     "relative h-5 w-10 rounded-lg transition-colors duration-300",
-                    isBestSelling ? "bg-primary" : "bg-border",
+                    isBestSelling ? "bg-primary" : "bg-border"
                   )}
                 >
-                  <span className={cn("absolute left-0.5 top-0.5 h-4 w-4 rounded-md bg-background shadow transition-transform duration-300", isBestSelling ? "translate-x-5" : "translate-x-0")} />
+                  <span
+                    className={cn(
+                      "absolute left-0.5 top-0.5 h-4 w-4 rounded-md bg-background shadow transition-transform duration-300",
+                      isBestSelling ? "translate-x-5" : "translate-x-0"
+                    )}
+                  />
                 </button>
               </div>
             </div>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <Label>Product Images</Label>
               <div className={uploadActionClass}>
                 <PlusCircle className="size-3.5" /> Add Images
@@ -385,12 +532,12 @@ export default function AddProduct() {
                   multiple
                   accept="image/*"
                   onChange={handleFileSelect}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+            <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
               {images.map((img, idx) => (
                 <div
                   key={idx}
@@ -419,12 +566,11 @@ export default function AddProduct() {
                     >
                       Set Main
                     </button>
-                  ) : null}
-                  {idx === 0 ? (
+                  ) : (
                     <span className="absolute bottom-2 left-2 rounded-md bg-foreground/80 px-2 py-0.5 text-[10px] font-bold text-background shadow-sm">
                       Main Image
                     </span>
-                  ) : null}
+                  )}
                 </div>
               ))}
             </div>
@@ -445,7 +591,7 @@ export default function AddProduct() {
                 multiple
                 accept="image/*"
                 onChange={handleFileSelect}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               />
               <div className="space-y-3">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -457,6 +603,9 @@ export default function AddProduct() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     or click to browse multiple files
+                  </p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    PNG, JPG up to 10MB each. Use &quot;Set Main&quot; to control the hero image.
                   </p>
                 </div>
               </div>
@@ -474,7 +623,139 @@ export default function AddProduct() {
             />
           </div>
 
-          <div className="flex gap-4 mt-6 md:mt-8">
+          <div className="space-y-4 rounded-xl border border-border bg-muted/35 p-4 md:p-5">
+            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">SEO & Metadata</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Set search-facing copy during creation so each product launches ready for discovery.
+                </p>
+              </div>
+              <div
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold",
+                  seoReady
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-amber-200 bg-amber-50 text-amber-700"
+                )}
+              >
+                <Check
+                  className={cn(
+                    "size-3.5",
+                    seoReady ? "text-emerald-600" : "text-amber-600"
+                  )}
+                />
+                {seoReady
+                  ? "SEO basics complete"
+                  : `${seoCompleteCount}/${seoChecks.length} SEO basics complete`}
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div>
+                <Label className="mb-2">SEO Title</Label>
+                <Input
+                  type="text"
+                  value={seoTitle}
+                  onChange={(e) => setSeoTitle(e.target.value)}
+                  className="h-11 px-4"
+                  placeholder="Custom search title for this product"
+                  maxLength={70}
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {seoTitle.length}/70 characters
+                </p>
+              </div>
+
+              <div>
+                <Label className="mb-2">Meta Description</Label>
+                <Textarea
+                  value={seoDescription}
+                  onChange={(e) => setSeoDescription(e.target.value)}
+                  className="min-h-24 resize-none px-4 py-3"
+                  placeholder="Short product summary for search engines and social previews"
+                  rows="3"
+                  maxLength={320}
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {seoDescription.length}/320 characters
+                </p>
+              </div>
+
+              <div>
+                <Label className="mb-2">Keywords</Label>
+                <Input
+                  type="text"
+                  value={seoKeywords}
+                  onChange={(e) => setSeoKeywords(e.target.value)}
+                  className="h-11 px-4"
+                  placeholder="e.g., tea set, chinese tea cups, luxury gift"
+                />
+              </div>
+
+              <div>
+                <Label className="mb-2">Canonical URL</Label>
+                <Input
+                  type="url"
+                  value={seoCanonicalUrl}
+                  onChange={(e) => setSeoCanonicalUrl(e.target.value)}
+                  className="h-11 px-4"
+                  placeholder="https://china-unique-items.vercel.app/products/your-product"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="rounded-xl border border-border bg-background p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  Search Preview
+                </p>
+                <div className="mt-3 space-y-1.5">
+                  <p className="line-clamp-2 text-base font-semibold text-primary">
+                    {seoPreviewTitle}
+                  </p>
+                  <p className="truncate text-xs text-emerald-700">
+                    {seoPreviewUrl}
+                  </p>
+                  <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">
+                    {seoPreviewDescription}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-background p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                  Completion Check
+                </p>
+                <div className="mt-3 space-y-2">
+                  {seoChecks.map((item) => (
+                    <div
+                      key={item.label}
+                      className={cn(
+                        "flex items-center justify-between rounded-lg border px-3 py-2 text-xs font-medium",
+                        item.complete
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border-border bg-muted/40 text-muted-foreground"
+                      )}
+                    >
+                      <span>{item.label}</span>
+                      <span className="inline-flex items-center gap-1">
+                        <Check
+                          className={cn(
+                            "size-3.5",
+                            item.complete ? "opacity-100" : "opacity-30"
+                          )}
+                        />
+                        {item.complete ? "Ready" : "Missing"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex gap-4 md:mt-8">
             <Button
               type="submit"
               disabled={saving}
