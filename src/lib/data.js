@@ -69,6 +69,25 @@ async function ensureSingletonDocument(Model, singletonKey) {
   ).lean();
 }
 
+async function ensureStoreSingletonDocument(Model, singletonKey) {
+  return Model.findOneAndUpdate(
+    {
+      singletonKey,
+      $or: [
+        { storeKey: getStoreKey() },
+        { storeKey: { $exists: false } },
+        { storeKey: null },
+        { storeKey: '' },
+      ],
+    },
+    {
+      $setOnInsert: { singletonKey },
+      $set: { storeKey: getStoreKey() },
+    },
+    { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true },
+  ).lean();
+}
+
 function normalizeMediaItem(item, sortOrder = 0, fallbackItem = null) {
   if ((!item || typeof item !== 'object') && (!fallbackItem || typeof fallbackItem !== 'object')) return null;
 
@@ -333,7 +352,7 @@ async function getSettingsRaw() {
 async function getCoverPhotosRaw() {
   await mongooseConnect();
 
-  const coverPhoto = await ensureSingletonDocument(CoverPhoto, getScopedSingletonKey(COVER_PHOTOS_KEY));
+  const coverPhoto = await ensureStoreSingletonDocument(CoverPhoto, getScopedSingletonKey(COVER_PHOTOS_KEY));
 
   return Array.isArray(coverPhoto.slides)
     ? coverPhoto.slides
@@ -436,7 +455,7 @@ export async function getStoreSettings() {
 export async function getAdminCoverPhotos() {
   await mongooseConnect();
 
-  const coverPhoto = await ensureSingletonDocument(CoverPhoto, getScopedSingletonKey(COVER_PHOTOS_KEY));
+  const coverPhoto = await ensureStoreSingletonDocument(CoverPhoto, getScopedSingletonKey(COVER_PHOTOS_KEY));
 
   return Array.isArray(coverPhoto.slides)
     ? coverPhoto.slides

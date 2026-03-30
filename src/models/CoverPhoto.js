@@ -53,6 +53,12 @@ const CoverSlideSchema = new mongoose.Schema(
 
 const CoverPhotoSchema = new mongoose.Schema(
   {
+    storeKey: {
+      type: String,
+      required: true,
+      index: true,
+      trim: true,
+    },
     singletonKey: {
       type: String,
       default: 'home-cover-photos',
@@ -67,5 +73,16 @@ const CoverPhotoSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+const cachedCoverPhoto = mongoose.models.CoverPhoto;
+if (
+  cachedCoverPhoto &&
+  (
+    !cachedCoverPhoto.schema.path('storeKey') ||
+    !cachedCoverPhoto.schema.path('slides')
+  )
+) {
+  delete mongoose.models.CoverPhoto;
+}
 
 export default mongoose.models.CoverPhoto || mongoose.model('CoverPhoto', CoverPhotoSchema);

@@ -8,8 +8,25 @@ import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import CoverPhoto from '@/models/CoverPhoto';
 import { ensureAssetBlurData } from '@/lib/serverImageBlur';
+import { getStoreKey } from '@/lib/store-scope';
 
 const SINGLETON_KEY = 'home-cover-photos';
+
+function getScopedSingletonKey() {
+  return `${getStoreKey()}:${SINGLETON_KEY}`;
+}
+
+function getCoverPhotoFilter() {
+  return {
+    singletonKey: getScopedSingletonKey(),
+    $or: [
+      { storeKey: getStoreKey() },
+      { storeKey: { $exists: false } },
+      { storeKey: null },
+      { storeKey: '' },
+    ],
+  };
+}
 
 function normalizeAsset(asset, fallback = null) {
   const source = asset && typeof asset === 'object' ? asset : {};
@@ -61,11 +78,14 @@ export async function GET() {
   try {
     await mongooseConnect();
 
-    let coverPhoto = await CoverPhoto.findOne({ singletonKey: SINGLETON_KEY }).lean();
-    if (!coverPhoto) {
-      coverPhoto = await CoverPhoto.create({ singletonKey: SINGLETON_KEY });
-      coverPhoto = coverPhoto.toObject();
-    }
+    const coverPhoto = await CoverPhoto.findOneAndUpdate(
+      getCoverPhotoFilter(),
+      {
+        $set: { storeKey: getStoreKey() },
+        $setOnInsert: { singletonKey: getScopedSingletonKey() },
+      },
+      { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true },
+    ).lean();
 
     coverPhoto._id = coverPhoto._id.toString();
     return NextResponse.json({ success: true, data: coverPhoto });
@@ -87,9 +107,15 @@ export async function PUT(req) {
     const slides = await normalizeSlides(body.slides);
 
     const coverPhoto = await CoverPhoto.findOneAndUpdate(
-      { singletonKey: SINGLETON_KEY },
-      { $set: { slides } },
-      { new: true, upsert: true, runValidators: true },
+      getCoverPhotoFilter(),
+      {
+        $set: {
+          slides,
+          storeKey: getStoreKey(),
+        },
+        $setOnInsert: { singletonKey: getScopedSingletonKey() },
+      },
+      { returnDocument: 'after', upsert: true, runValidators: true, setDefaultsOnInsert: true },
     ).lean();
 
     coverPhoto._id = coverPhoto._id.toString();
