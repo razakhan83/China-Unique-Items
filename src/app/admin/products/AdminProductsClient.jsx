@@ -261,11 +261,11 @@ export default function AdminProductsClient({
       try {
         await deleteProductAction(deleteModal.product._id);
         setProducts((previous) => previous.filter((product) => product._id !== deleteModal.product._id));
-        toast.error(`Product "${deleteModal.product.Name}" deleted.`);
+        toast.success(`Product "${deleteModal.product.Name}" deleted.`);
         setDeleteModal({ open: false, product: null });
         router.refresh();
       } catch (error) {
-        toast.error(error.message || "Failed to delete product");
+        toast.error(error.message || "Could not delete the product.");
       } finally {
         setDeleting(false);
       }
@@ -283,7 +283,7 @@ export default function AdminProductsClient({
         toast.success(`"${product.Name}" is now ${result.isLive ? "Live" : "Draft"}.`);
         router.refresh();
       } catch (error) {
-        toast.error(error.message || "Toggle failed");
+        toast.error(error.message || "Could not update product visibility.");
       } finally {
         setTogglingId(null);
       }
@@ -311,7 +311,7 @@ export default function AdminProductsClient({
         toast.success(`"${product.Name}" is now ${newStockStatus}.`);
         router.refresh();
       } catch (error) {
-        toast.error(error.message || "Toggle failed");
+        toast.error(error.message || "Could not update stock status.");
       } finally {
         setTogglingStockId(null);
       }
@@ -334,11 +334,15 @@ export default function AdminProductsClient({
       });
 
       if (!res.ok) throw new Error("Failed to update flag");
-      toast.success("Product updated");
+      toast.success(
+        flag === "isNewArrival"
+          ? `New Arrival ${newStatus ? "enabled" : "disabled"} for this product.`
+          : `Best Selling ${newStatus ? "enabled" : "disabled"} for this product.`
+      );
       router.refresh();
     } catch (error) {
       setProducts(originalProducts);
-      toast.error("Failed to update product");
+      toast.error(error.message || "Could not update the product badge.");
     }
   }
 

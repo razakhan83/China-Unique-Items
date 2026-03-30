@@ -8,7 +8,7 @@ function Toaster({ ...props }) {
     <Sonner
       className="toaster group"
       toastOptions={{
-        style: { width: '320px', backgroundColor: 'var(--color-card)' },
+        style: { width: '340px', backgroundColor: 'var(--color-card)' },
         className: 'max-w-[320px]',
         classNames: {
           toast:
@@ -23,15 +23,17 @@ function Toaster({ ...props }) {
             "!border-success/25 !bg-card",
           error:
             "!border-destructive/25 !bg-card",
+          info:
+            "!border-primary/20 !bg-card",
           icon: "group-[.toast]:text-primary",
           closeButton: "!bg-card !text-muted-foreground !border-border hover:!bg-muted",
         },
       }}
       richColors
-      closeButton={false}
+      closeButton
       position="bottom-center"
       expand={false}
-      duration={3000}
+      duration={4200}
       {...props}
     />
   )
