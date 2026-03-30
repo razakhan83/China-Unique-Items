@@ -230,7 +230,7 @@ function NavbarContent({
         </Button>
 
         <Link href="/" className="flex min-w-0 items-center gap-3">
-          <StoreBrand />
+          <StoreBrand compact />
         </Link>
 
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
