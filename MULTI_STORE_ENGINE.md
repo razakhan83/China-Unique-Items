@@ -33,7 +33,8 @@ Required env vars per deployment:
 Notes:
 - New `Product` and `Order` documents are written with `storeKey`.
 - Shared-DB storefront/admin reads now scope product and order access to the active store key.
-- Existing China data should be backfilled with `storeKey=china-unique-items` before both stores run against the same MongoDB in production.
+- Existing legacy data should be backfilled before both stores run against the same MongoDB in production.
+- Backfill script: `node scripts/backfill-store-key.mjs`
 
 Sample presets:
 - [stores/china-unique-items.env.sample](/Users/razak/China-Unique-Items/stores/china-unique-items.env.sample)
