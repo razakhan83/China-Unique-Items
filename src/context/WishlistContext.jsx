@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 
 const WishlistContext = createContext(null);
@@ -134,6 +134,8 @@ async function readJsonSafely(response) {
 export function WishlistProvider({ children }) {
   const { data: session, status } = useSession();
   const [state, setState] = useState(getInitialWishlistState);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   useEffect(() => {
     let ignore = false;
@@ -206,12 +208,13 @@ export function WishlistProvider({ children }) {
       return { success: false, isWishlisted: false, error: 'This product cannot be added right now.' };
     }
 
-    const isWishlisted = state.ids.includes(itemId);
+    const currentState = stateRef.current;
+    const isWishlisted = currentState.ids.includes(itemId);
     const eventId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
       : `${Date.now()}-${itemId}`;
 
-    const optimisticState = buildNextWishlistState(state, itemId, product, isWishlisted);
+    const optimisticState = buildNextWishlistState(currentState, itemId, product, isWishlisted);
     setState(optimisticState);
 
     if (!session) {
@@ -235,7 +238,7 @@ export function WishlistProvider({ children }) {
       });
       const data = await readJsonSafely(response);
 
-      if (!response.ok || !data.success) {
+      if (!response.ok || !data?.success) {
         throw new Error(data?.error || 'Failed to update wishlist');
       }
 
@@ -245,8 +248,8 @@ export function WishlistProvider({ children }) {
         items: Array.isArray(data?.data?.items) ? data.data.items : current.items,
       }));
       writeGuestWishlistSnapshot(
-        Array.isArray(data?.data?.ids) ? data.data.ids : optimisticState?.ids || state.ids,
-        Array.isArray(data?.data?.items) ? data.data.items : optimisticState?.items || state.items,
+        Array.isArray(data?.data?.ids) ? data.data.ids : optimisticState?.ids || currentState.ids,
+        Array.isArray(data?.data?.items) ? data.data.items : optimisticState?.items || currentState.items,
       );
 
       if (!isWishlisted) {
@@ -267,7 +270,7 @@ export function WishlistProvider({ children }) {
         error: error instanceof Error ? error.message : 'Unable to update wishlist right now.',
       };
     }
-  }, [session, state]);
+  }, [session]);
 
   const value = useMemo(
     () => ({

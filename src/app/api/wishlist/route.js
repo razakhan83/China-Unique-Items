@@ -129,17 +129,37 @@ async function resolveScopedProductId(rawProductId) {
   if (!safeProductId) return null;
 
   if (mongoose.Types.ObjectId.isValid(safeProductId)) {
+    // Try scoped lookup first (products with storeKey set)
     const productById = await Product.findOne(withStoreScope({ _id: safeProductId })).select('_id').lean();
     if (productById?._id) {
       return String(productById._id);
+    }
+
+    // Fallback: find legacy products that lack storeKey entirely
+    const legacyById = await Product.findOne({
+      _id: safeProductId,
+      $or: [{ storeKey: { $exists: false } }, { storeKey: null }, { storeKey: '' }],
+    }).select('_id').lean();
+    if (legacyById?._id) {
+      return String(legacyById._id);
     }
   }
 
   const slugFilter = withStoreScopedSlug(safeProductId);
   if (!slugFilter) return null;
 
+  // Try scoped slug lookup
   const productBySlug = await Product.findOne(slugFilter).select('_id').lean();
-  return productBySlug?._id ? String(productBySlug._id) : null;
+  if (productBySlug?._id) {
+    return String(productBySlug._id);
+  }
+
+  // Fallback: find legacy products by slug without storeKey
+  const legacyBySlug = await Product.findOne({
+    slug: safeProductId,
+    $or: [{ storeKey: { $exists: false } }, { storeKey: null }, { storeKey: '' }],
+  }).select('_id').lean();
+  return legacyBySlug?._id ? String(legacyBySlug._id) : null;
 }
 
 export async function GET() {
