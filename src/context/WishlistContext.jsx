@@ -183,7 +183,9 @@ export function WishlistProvider({ children }) {
 
   const toggleWishlist = useCallback(async (product) => {
     const itemId = getWishlistItemId(product);
-    if (!itemId) return { success: false, isWishlisted: false };
+    if (!itemId) {
+      return { success: false, isWishlisted: false, error: 'This product cannot be added right now.' };
+    }
 
     const isWishlisted = state.ids.includes(itemId);
     const eventId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -240,7 +242,11 @@ export function WishlistProvider({ children }) {
       setState(rollbackState);
       writeGuestWishlistSnapshot(rollbackState.ids, rollbackState.items);
 
-      return { success: false, isWishlisted };
+      return {
+        success: false,
+        isWishlisted,
+        error: error instanceof Error ? error.message : 'Unable to update wishlist right now.',
+      };
     }
   }, [session, state]);
 
