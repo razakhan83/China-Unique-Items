@@ -118,6 +118,19 @@ function buildNextWishlistState(current, itemId, product, shouldRemove) {
   };
 }
 
+async function readJsonSafely(response) {
+  const raw = await response.text();
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new Error('The server returned an invalid response.');
+  }
+}
+
 export function WishlistProvider({ children }) {
   const { data: session, status } = useSession();
   const [state, setState] = useState(getInitialWishlistState);
@@ -146,16 +159,22 @@ export function WishlistProvider({ children }) {
       try {
         const guestIds = readGuestWishlistIds();
         if (guestIds.length > 0) {
-          await fetch('/api/wishlist', {
+          const mergeResponse = await fetch('/api/wishlist', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ productIds: guestIds, storeKey: STORE_KEY }),
           });
-          clearGuestWishlistSnapshot();
+          if (mergeResponse.ok) {
+            clearGuestWishlistSnapshot();
+          }
         }
 
         const response = await fetch('/api/wishlist', { cache: 'no-store' });
-        const data = await response.json();
+        const data = await readJsonSafely(response);
+
+        if (!response.ok) {
+          throw new Error(data?.error || 'Failed to load wishlist.');
+        }
 
         if (!ignore) {
           const nextItems = Array.isArray(data?.data?.items) ? data.data.items : [];
@@ -214,7 +233,7 @@ export function WishlistProvider({ children }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: itemId, storeKey: STORE_KEY }),
       });
-      const data = await response.json();
+      const data = await readJsonSafely(response);
 
       if (!response.ok || !data.success) {
         throw new Error(data?.error || 'Failed to update wishlist');
