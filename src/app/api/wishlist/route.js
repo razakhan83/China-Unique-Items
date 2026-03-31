@@ -14,6 +14,7 @@ import {
   withStoreScopeForCreate,
   withStoreScopedSlug,
 } from '@/lib/store-scope';
+import { getCurrentStoreUserFilter } from '@/lib/user-store';
 
 function serializeWishlistProduct(product) {
   return {
@@ -32,23 +33,13 @@ function serializeWishlistProduct(product) {
   };
 }
 
-function getWishlistUserFilter(email) {
-  return {
-    email,
-    $or: [
-      { storeKey: getStoreKey() },
-      { storeKey: { $exists: false } },
-      { storeKey: null },
-      { storeKey: '' },
-    ],
-  };
-}
-
 async function getWishlistPayload(email) {
   await mongooseConnect();
 
   const normalizedEmail = normalizeEmail(email);
-  const user = await User.findOne(getWishlistUserFilter(normalizedEmail)).select('_id wishlist').lean();
+  const user = await User.findOne(getCurrentStoreUserFilter(normalizedEmail, { includeLegacy: true }))
+    .select('_id wishlist')
+    .lean();
   if (!user?._id) {
     return { ids: [], items: [] };
   }
@@ -105,7 +96,7 @@ async function getWishlistPayload(email) {
 async function upsertWishlistUser(email, update) {
   const normalizedEmail = normalizeEmail(email);
   return User.findOneAndUpdate(
-    getWishlistUserFilter(normalizedEmail),
+    getCurrentStoreUserFilter(normalizedEmail, { includeLegacy: true }),
     {
       ...update,
       $set: {

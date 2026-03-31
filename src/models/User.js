@@ -9,7 +9,6 @@ const UserSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
     },
     image: {
@@ -50,8 +49,16 @@ const UserSchema = new mongoose.Schema(
   }
 );
 
+UserSchema.index({ email: 1, storeKey: 1 }, { unique: true });
+
 const cachedUser = mongoose.models.User;
-if (cachedUser && !cachedUser.schema.path('storeKey')) {
+if (
+  cachedUser &&
+  (
+    !cachedUser.schema.path('storeKey') ||
+    !cachedUser.schema.indexes().some(([index]) => index?.email === 1 && index?.storeKey === 1)
+  )
+) {
   delete mongoose.models.User;
 }
 

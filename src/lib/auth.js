@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { isAdminEmail, normalizeEmail } from "@/lib/admin";
 import mongooseConnect from "@/lib/mongooseConnect";
 import { getStoreKey } from "@/lib/store-scope";
+import { getCurrentStoreUserFilter } from "@/lib/user-store";
 import User from "@/models/User";
 
 // ─── Helper: Super-Admin check ──────────────────────────────────────────────
@@ -109,9 +110,9 @@ export const authOptions = {
           const normalizedEmail = normalizeEmail(user.email);
           const tier = await getAdminTier(normalizedEmail);
 
-          const existingUser = await User.findOne({
-            email: normalizedEmail,
-          }).lean();
+          const existingUser = await User.findOne(
+            getCurrentStoreUserFilter(normalizedEmail, { includeLegacy: true })
+          ).lean();
 
           // Block disabled users
           if (existingUser?.disabled) return false;
@@ -127,7 +128,7 @@ export const authOptions = {
           // Customers: set storeKey to current store
           if (tier !== "super-admin") {
             await User.findOneAndUpdate(
-              { email: normalizedEmail },
+              getCurrentStoreUserFilter(normalizedEmail, { includeLegacy: true }),
               {
                 name: user.name,
                 image: user.image,
@@ -140,9 +141,9 @@ export const authOptions = {
 
           // ── New-user notification ──────────────────────────────────
           if (!existingUser) {
-            const newUser = await User.findOne({
-              email: normalizedEmail,
-            }).lean();
+            const newUser = await User.findOne(
+              getCurrentStoreUserFilter(normalizedEmail, { includeLegacy: true })
+            ).lean();
             const Notification = (await import("@/models/Notification"))
               .default;
             await Notification.create({
@@ -187,7 +188,7 @@ export const authOptions = {
         // ── Validate against DB on every token refresh ──────────────
         try {
           await mongooseConnect();
-          const dbUser = await User.findOne({ email: token.email })
+          const dbUser = await User.findOne(getCurrentStoreUserFilter(token.email, { includeLegacy: true }))
             .select("disabled forceLogoutAt storeKey")
             .lean();
 
