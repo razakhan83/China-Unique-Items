@@ -41,8 +41,15 @@ export async function GET() {
         // Find or create the singleton settings document atomically
         const settings = await Settings.findOneAndUpdate(
             { singletonKey: getScopedSettingsKey() },
-            { $setOnInsert: { singletonKey: getScopedSettingsKey() } },
-            { new: true, upsert: true, setDefaultsOnInsert: true }
+            {
+                $set: {
+                    storeKey: getStoreKey(),
+                },
+                $setOnInsert: {
+                    singletonKey: getScopedSettingsKey(),
+                },
+            },
+            { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
         ).lean();
 
         // Clean up internal fields
@@ -124,8 +131,16 @@ export async function PUT(req) {
 
         const settings = await Settings.findOneAndUpdate(
             { singletonKey: getScopedSettingsKey() },
-            { $set: updates },
-            { new: true, upsert: true, runValidators: true }
+            {
+                $set: {
+                    ...updates,
+                    storeKey: getStoreKey(),
+                },
+                $setOnInsert: {
+                    singletonKey: getScopedSettingsKey(),
+                },
+            },
+            { returnDocument: 'after', upsert: true, runValidators: true }
         ).lean();
 
         settings._id = settings._id.toString();

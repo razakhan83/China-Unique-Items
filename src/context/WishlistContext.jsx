@@ -4,8 +4,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { useSession } from 'next-auth/react';
 
 const WishlistContext = createContext(null);
-const GUEST_WISHLIST_STORAGE_KEY = 'china_unique_guest_wishlist';
-const GUEST_WISHLIST_ITEMS_STORAGE_KEY = 'china_unique_guest_wishlist_items';
+const STORE_KEY = String(process.env.NEXT_PUBLIC_STORE_KEY || 'default-store').trim();
+const GUEST_WISHLIST_STORAGE_KEY = `${STORE_KEY}:guest-wishlist`;
+const GUEST_WISHLIST_ITEMS_STORAGE_KEY = `${STORE_KEY}:guest-wishlist-items`;
 
 function getWishlistItemId(item) {
   return String(item?._id || item?.id || item?.slug || '').trim();
@@ -148,7 +149,7 @@ export function WishlistProvider({ children }) {
           await fetch('/api/wishlist', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productIds: guestIds }),
+            body: JSON.stringify({ productIds: guestIds, storeKey: STORE_KEY }),
           });
           clearGuestWishlistSnapshot();
         }
@@ -209,7 +210,7 @@ export function WishlistProvider({ children }) {
       const response = await fetch('/api/wishlist', {
         method: isWishlisted ? 'DELETE' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: itemId }),
+        body: JSON.stringify({ productId: itemId, storeKey: STORE_KEY }),
       });
       const data = await response.json();
 

@@ -24,6 +24,12 @@ const AnnouncementMessageSchema = new mongoose.Schema(
 
 const SettingsSchema = new mongoose.Schema(
     {
+        storeKey: {
+            type: String,
+            required: true,
+            index: true,
+            trim: true,
+        },
         // Use a singleton pattern: there's only one settings doc, identified by this key
         singletonKey: {
             type: String,
@@ -132,6 +138,7 @@ const cachedSettings = mongoose.models.Settings;
 if (
     cachedSettings &&
     (
+        !cachedSettings.schema.path('storeKey') ||
         !cachedSettings.schema.path('homepageSectionOrder') ||
         !cachedSettings.schema.path('announcementBarMessages')
     )
