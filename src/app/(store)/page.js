@@ -2,7 +2,6 @@ import { Suspense } from 'react';
 
 import HomeClientWrapper from '@/components/HomeClientWrapper';
 import HomeCategories from '@/components/HomeCategories';
-import HomeFeaturedProducts from '@/components/HomeFeaturedProducts';
 import HomePageSkeleton from '@/components/HomePageSkeleton';
 import { getHomeSections, getStoreCategories } from '@/lib/data';
 
@@ -22,7 +21,7 @@ export default function Home() {
 }
 
 async function HomeContent() {
-  const [{ coverPhotos, sections, featuredProducts }, categories] = await Promise.all([
+  const [{ coverPhotos, sections }, categories] = await Promise.all([
     getHomeSections(),
     getStoreCategories(),
   ]);
@@ -41,7 +40,6 @@ async function HomeContent() {
         heroSlides={activeHeroSlides}
         categories={categories}
       />
-      <HomeFeaturedProducts products={featuredProducts} />
       <HomeCategories sections={sections} />
     </>
   );

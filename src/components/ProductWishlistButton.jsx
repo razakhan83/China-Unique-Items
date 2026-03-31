@@ -40,7 +40,7 @@ export default function ProductWishlistButton({ product, mode = 'grid', classNam
       return;
     }
 
-    toast.error('Unable to update wishlist right now.');
+    toast.error(result?.error || 'Unable to update wishlist right now.');
   }
 
   if (mode === 'detail') {

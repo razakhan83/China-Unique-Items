@@ -8,7 +8,12 @@ import Product from '@/models/Product';
 import User from '@/models/User';
 import Wishlist from '@/models/Wishlist';
 import { normalizeEmail } from '@/lib/admin';
-import { getStoreKey, withStoreScope, withStoreScopeForCreate } from '@/lib/store-scope';
+import {
+  getStoreKey,
+  withStoreScope,
+  withStoreScopeForCreate,
+  withStoreScopedSlug,
+} from '@/lib/store-scope';
 
 function serializeWishlistProduct(product) {
   return {
@@ -116,6 +121,24 @@ function validateStoreKey(inputStoreKey) {
   return true;
 }
 
+async function resolveScopedProductId(rawProductId) {
+  const safeProductId = String(rawProductId || '').trim();
+  if (!safeProductId) return null;
+
+  if (mongoose.Types.ObjectId.isValid(safeProductId)) {
+    const productById = await Product.findOne(withStoreScope({ _id: safeProductId })).select('_id').lean();
+    if (productById?._id) {
+      return String(productById._id);
+    }
+  }
+
+  const slugFilter = withStoreScopedSlug(safeProductId);
+  if (!slugFilter) return null;
+
+  const productBySlug = await Product.findOne(slugFilter).select('_id').lean();
+  return productBySlug?._id ? String(productBySlug._id) : null;
+}
+
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
@@ -137,19 +160,19 @@ export async function POST(request) {
     return NextResponse.json({ success: false, error: 'Invalid store scope' }, { status: 403 });
   }
   const safeProductId = String(productId || '').trim();
-  if (!safeProductId || !mongoose.Types.ObjectId.isValid(safeProductId)) {
+  if (!safeProductId) {
     return NextResponse.json({ success: false, error: 'Product is required' }, { status: 400 });
   }
 
   await mongooseConnect();
-  const product = await Product.findOne(withStoreScope({ _id: safeProductId })).select('_id').lean();
-  if (!product) {
+  const resolvedProductId = await resolveScopedProductId(safeProductId);
+  if (!resolvedProductId) {
     return NextResponse.json({ success: false, error: 'Product not found for this store' }, { status: 404 });
   }
   const user = await upsertWishlistUser(session.user.email);
   await Wishlist.updateOne(
-    withStoreScope({ userId: user._id, productId: safeProductId }),
-    { $setOnInsert: withStoreScopeForCreate({ userId: user._id, productId: safeProductId }) },
+    withStoreScope({ userId: user._id, productId: resolvedProductId }),
+    { $setOnInsert: withStoreScopeForCreate({ userId: user._id, productId: resolvedProductId }) },
     { upsert: true },
   );
 
@@ -167,19 +190,12 @@ export async function PUT(request) {
   if (!validateStoreKey(storeKey)) {
     return NextResponse.json({ success: false, error: 'Invalid store scope' }, { status: 403 });
   }
-  const safeIds = Array.isArray(productIds)
-    ? productIds
-        .map((id) => String(id || '').trim())
-        .filter((id) => mongoose.Types.ObjectId.isValid(id))
-    : [];
+  const safeIds = Array.isArray(productIds) ? productIds.map((id) => String(id || '').trim()).filter(Boolean) : [];
 
   await mongooseConnect();
   if (safeIds.length > 0) {
-    const scopedProducts = await Product.find(withStoreScope({ _id: { $in: safeIds } }))
-      .select('_id')
-      .lean();
-    const scopedProductIds = new Set(scopedProducts.map((product) => String(product._id)));
-    const validIds = safeIds.filter((id) => scopedProductIds.has(id));
+    const resolvedIds = await Promise.all(safeIds.map((id) => resolveScopedProductId(id)));
+    const validIds = Array.from(new Set(resolvedIds.filter(Boolean)));
 
     if (validIds.length === 0) {
       const data = await getWishlistPayload(session.user.email);
@@ -216,13 +232,17 @@ export async function DELETE(request) {
     return NextResponse.json({ success: false, error: 'Invalid store scope' }, { status: 403 });
   }
   const safeProductId = String(productId || '').trim();
-  if (!safeProductId || !mongoose.Types.ObjectId.isValid(safeProductId)) {
+  if (!safeProductId) {
     return NextResponse.json({ success: false, error: 'Product is required' }, { status: 400 });
   }
 
   await mongooseConnect();
+  const resolvedProductId = await resolveScopedProductId(safeProductId);
+  if (!resolvedProductId) {
+    return NextResponse.json({ success: false, error: 'Product not found for this store' }, { status: 404 });
+  }
   const user = await upsertWishlistUser(session.user.email);
-  await Wishlist.deleteOne(withStoreScope({ userId: user._id, productId: safeProductId }));
+  await Wishlist.deleteOne(withStoreScope({ userId: user._id, productId: resolvedProductId }));
 
   const data = await getWishlistPayload(session.user.email);
   return NextResponse.json({ success: true, data });
