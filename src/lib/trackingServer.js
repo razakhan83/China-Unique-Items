@@ -44,7 +44,9 @@ function buildContents(items) {
 async function getTrackingSettings() {
   await mongooseConnect();
 
-  const settings = await Settings.findOne({ singletonKey: `${getStoreKey()}:${SETTINGS_KEY}` }).lean();
+  const settings = await Settings.findOne({
+    singletonKey: `${getStoreKey()}:${SETTINGS_KEY}`,
+  }).lean();
   return {
     trackingEnabled: settings?.trackingEnabled === true,
     facebookPixelId: String(settings?.facebookPixelId || '').trim(),

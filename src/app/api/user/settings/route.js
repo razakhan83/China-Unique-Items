@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import User from '@/models/User';
-import { getStoreKey, withStoreScopeForCreate } from '@/lib/store-scope';
+import { getStoreKey, withStoreScope, withStoreScopeForCreate } from '@/lib/store-scope';
 
 export async function GET() {
   try {
@@ -13,7 +13,7 @@ export async function GET() {
     }
 
     await mongooseConnect();
-    const user = await User.findOne({ email: session.user.email }).lean();
+    const user = await User.findOne(withStoreScope({ email: session.user.email })).lean();
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -51,7 +51,7 @@ export async function PATCH(request) {
 
     await mongooseConnect();
     const user = await User.findOneAndUpdate(
-      { email: session.user.email },
+      withStoreScope({ email: session.user.email }),
       {
         $set: { 
           name, 

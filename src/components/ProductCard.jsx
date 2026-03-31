@@ -23,7 +23,7 @@ function getDiscountBadge(product) {
   return null;
 }
 
-export default function ProductCard({ product, className = "" }) {
+export default function ProductCard({ product, className = "", imagePriority = false }) {
   const productName = product.Name || product.name || "Unknown";
   const primaryImage = getPrimaryProductImage(product);
   const primaryImageSrc = primaryImage?.url
@@ -89,8 +89,9 @@ export default function ProductCard({ product, className = "" }) {
               alt={productName}
               fill
               draggable={false}
+              priority={imagePriority}
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              loading="lazy"
+              loading={imagePriority ? undefined : "lazy"}
               className={cn(
                 "object-cover outline outline-1 outline-black/5 transition-transform duration-500 ease-out md:group-hover:scale-105",
                 isUnavailable && "scale-[1.01] saturate-[0.85] opacity-75"

@@ -51,7 +51,7 @@ export async function POST(req) {
 
     // Find user in DB
     const email = normalizeEmail(session.user.email);
-    const user = await User.findOne({ email });
+    const user = await User.findOne(withStoreScope({ email }));
     if (!user) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
     }
@@ -108,6 +108,7 @@ export async function POST(req) {
 
     // Create Admin Notification
     await Notification.create({
+      storeKey: session.user.storeKey || withStoreScope({}).storeKey,
       type: 'review',
       message: `${user.name} left a ${rating}-star rating on ${product.Name}`,
       link: `/admin/reviews?id=${review._id}`,

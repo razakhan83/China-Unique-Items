@@ -233,8 +233,16 @@ export async function saveStoreSettingsAction(nextSettings) {
 
   const settings = await Settings.findOneAndUpdate(
     { singletonKey: getScopedSettingsKey() },
-    { $set: updates },
-    { new: true, upsert: true, runValidators: true },
+    {
+      $set: {
+        ...updates,
+        storeKey: getStoreKey(),
+      },
+      $setOnInsert: {
+        singletonKey: getScopedSettingsKey(),
+      },
+    },
+    { returnDocument: 'after', upsert: true, runValidators: true },
   ).lean();
 
   revalidateTag('settings');
@@ -323,7 +331,7 @@ export async function submitOrderAction(input) {
             storeKey: getStoreKey(),
           },
         },
-        { new: true, upsert: true, setDefaultsOnInsert: true }
+        { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
       );
 
       // 2. Link all previous orders using fuzzy phone matching
@@ -347,6 +355,7 @@ export async function submitOrderAction(input) {
   try {
     const Notification = (await import('@/models/Notification')).default;
     await Notification.create({
+      storeKey: getStoreKey(),
       type: 'order',
       message: `New Order ${order.orderId} received from ${customerName}`,
       link: `/admin/orders/${order._id}`,

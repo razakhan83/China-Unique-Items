@@ -134,7 +134,7 @@ export const authOptions = {
                 email: normalizedEmail,
                 storeKey: expectedStoreKey,
               },
-              { upsert: true, new: true, setDefaultsOnInsert: true }
+              { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
             ).lean();
           }
 
@@ -146,6 +146,7 @@ export const authOptions = {
             const Notification = (await import("@/models/Notification"))
               .default;
             await Notification.create({
+              storeKey: expectedStoreKey,
               type: "user",
               message: `New user ${user.name} just signed up`,
               link: `/admin/users?id=${newUser?._id}`,

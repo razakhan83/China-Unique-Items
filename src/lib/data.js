@@ -63,28 +63,12 @@ function getScopedSingletonKey(baseKey) {
   return `${getStoreKey()}:${baseKey}`;
 }
 
-async function ensureSingletonDocument(Model, singletonKey) {
-  return Model.findOneAndUpdate(
-    { singletonKey },
-    { $setOnInsert: { singletonKey } },
-    { new: true, upsert: true, setDefaultsOnInsert: true },
-  ).lean();
-}
-
 async function ensureStoreSingletonDocument(Model, singletonKey) {
   return Model.findOneAndUpdate(
+    { singletonKey },
     {
-      singletonKey,
-      $or: [
-        { storeKey: getStoreKey() },
-        { storeKey: { $exists: false } },
-        { storeKey: null },
-        { storeKey: '' },
-      ],
-    },
-    {
-      $setOnInsert: { singletonKey },
       $set: { storeKey: getStoreKey() },
+      $setOnInsert: { singletonKey },
     },
     { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true },
   ).lean();
@@ -328,7 +312,7 @@ async function getSettingsRaw() {
   await mongooseConnect();
   const store = getStoreConfig();
 
-  const settings = await ensureSingletonDocument(Settings, getScopedSingletonKey(SETTINGS_KEY));
+  const settings = await ensureStoreSingletonDocument(Settings, getScopedSingletonKey(SETTINGS_KEY));
 
   return {
     _id: settings._id.toString(),
@@ -505,7 +489,7 @@ export async function getHomeSections() {
     getCoverPhotosRaw(),
     getSettingsRaw(),
   ]);
-  const featuredProducts = products.slice(0, 8).map(toProductCardItem);
+  const featuredProducts = products.slice(0, 12).map(toProductCardItem);
   const sections = categories
     .map((category) => {
       let items;
@@ -1268,7 +1252,7 @@ export async function getUserOrders(email) {
   const normalizedEmail = normalizeEmail(email);
 
   // 1. Fetch user to see if they have a phone number linked
-  const user = await User.findOne({ email: normalizedEmail }).lean();
+  const user = await User.findOne(withStoreScope({ email: normalizedEmail })).lean();
   
   // 2. Build query: match by customerEmail OR by customerPhone if phone exists (fuzzy)
   const query = withStoreScope({
@@ -1379,7 +1363,7 @@ export async function getAdminSettings() {
   await mongooseConnect();
   const store = getStoreConfig();
 
-  const settings = await ensureSingletonDocument(Settings, getScopedSingletonKey(SETTINGS_KEY));
+  const settings = await ensureStoreSingletonDocument(Settings, getScopedSingletonKey(SETTINGS_KEY));
 
   return {
     _id: settings._id.toString(),

@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import mongoose from 'mongoose';
 
 import { authOptions } from '@/lib/auth';
 import mongooseConnect from '@/lib/mongooseConnect';
 import Product from '@/models/Product';
 import User from '@/models/User';
+import Wishlist from '@/models/Wishlist';
 import { normalizeEmail } from '@/lib/admin';
 import { getStoreKey, withStoreScope, withStoreScopeForCreate } from '@/lib/store-scope';
 
@@ -29,8 +31,40 @@ async function getWishlistPayload(email) {
   await mongooseConnect();
 
   const normalizedEmail = normalizeEmail(email);
-  const user = await User.findOne({ email: normalizedEmail }).select('wishlist').lean();
-  const wishlistIds = Array.isArray(user?.wishlist) ? user.wishlist.map((id) => String(id)) : [];
+  const user = await User.findOne(withStoreScope({ email: normalizedEmail })).select('_id wishlist').lean();
+  if (!user?._id) {
+    return { ids: [], items: [] };
+  }
+
+  const wishlistEntries = await Wishlist.find(withStoreScope({ userId: user._id }))
+    .select('productId')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  let wishlistIds = wishlistEntries.map((entry) => String(entry.productId || '')).filter(Boolean);
+
+  if (wishlistIds.length === 0 && Array.isArray(user?.wishlist) && user.wishlist.length > 0) {
+    const legacyIds = user.wishlist
+      .map((id) => String(id || '').trim())
+      .filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+    if (legacyIds.length > 0) {
+      await Wishlist.bulkWrite(
+        legacyIds.map((productId) => ({
+          updateOne: {
+            filter: withStoreScope({ userId: user._id, productId }),
+            update: {
+              $setOnInsert: withStoreScopeForCreate({ userId: user._id, productId }),
+            },
+            upsert: true,
+          },
+        })),
+        { ordered: false },
+      ).catch(() => null);
+
+      wishlistIds = legacyIds;
+    }
+  }
 
   if (wishlistIds.length === 0) {
     return { ids: [], items: [] };
@@ -54,7 +88,7 @@ async function getWishlistPayload(email) {
 async function upsertWishlistUser(email, update) {
   const normalizedEmail = normalizeEmail(email);
   return User.findOneAndUpdate(
-    { email: normalizedEmail },
+    withStoreScope({ email: normalizedEmail }),
     {
       ...update,
       $set: {
@@ -69,6 +103,17 @@ async function upsertWishlistUser(email, update) {
     },
     { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true },
   );
+}
+
+function validateStoreKey(inputStoreKey) {
+  const requestStoreKey = String(inputStoreKey || '').trim();
+  const currentStoreKey = getStoreKey();
+
+  if (requestStoreKey && requestStoreKey !== currentStoreKey) {
+    return false;
+  }
+
+  return true;
 }
 
 export async function GET() {
@@ -87,14 +132,26 @@ export async function POST(request) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { productId } = await request.json();
+  const { productId, storeKey } = await request.json();
+  if (!validateStoreKey(storeKey)) {
+    return NextResponse.json({ success: false, error: 'Invalid store scope' }, { status: 403 });
+  }
   const safeProductId = String(productId || '').trim();
-  if (!safeProductId) {
+  if (!safeProductId || !mongoose.Types.ObjectId.isValid(safeProductId)) {
     return NextResponse.json({ success: false, error: 'Product is required' }, { status: 400 });
   }
 
   await mongooseConnect();
-  await upsertWishlistUser(session.user.email, { $addToSet: { wishlist: safeProductId } });
+  const product = await Product.findOne(withStoreScope({ _id: safeProductId })).select('_id').lean();
+  if (!product) {
+    return NextResponse.json({ success: false, error: 'Product not found for this store' }, { status: 404 });
+  }
+  const user = await upsertWishlistUser(session.user.email);
+  await Wishlist.updateOne(
+    withStoreScope({ userId: user._id, productId: safeProductId }),
+    { $setOnInsert: withStoreScopeForCreate({ userId: user._id, productId: safeProductId }) },
+    { upsert: true },
+  );
 
   const data = await getWishlistPayload(session.user.email);
   return NextResponse.json({ success: true, data });
@@ -106,14 +163,42 @@ export async function PUT(request) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { productIds } = await request.json();
+  const { productIds, storeKey } = await request.json();
+  if (!validateStoreKey(storeKey)) {
+    return NextResponse.json({ success: false, error: 'Invalid store scope' }, { status: 403 });
+  }
   const safeIds = Array.isArray(productIds)
-    ? productIds.map((id) => String(id || '').trim()).filter(Boolean)
+    ? productIds
+        .map((id) => String(id || '').trim())
+        .filter((id) => mongoose.Types.ObjectId.isValid(id))
     : [];
 
   await mongooseConnect();
   if (safeIds.length > 0) {
-    await upsertWishlistUser(session.user.email, { $addToSet: { wishlist: { $each: safeIds } } });
+    const scopedProducts = await Product.find(withStoreScope({ _id: { $in: safeIds } }))
+      .select('_id')
+      .lean();
+    const scopedProductIds = new Set(scopedProducts.map((product) => String(product._id)));
+    const validIds = safeIds.filter((id) => scopedProductIds.has(id));
+
+    if (validIds.length === 0) {
+      const data = await getWishlistPayload(session.user.email);
+      return NextResponse.json({ success: true, data });
+    }
+
+    const user = await upsertWishlistUser(session.user.email);
+    await Wishlist.bulkWrite(
+      validIds.map((productId) => ({
+        updateOne: {
+          filter: withStoreScope({ userId: user._id, productId }),
+          update: {
+            $setOnInsert: withStoreScopeForCreate({ userId: user._id, productId }),
+          },
+          upsert: true,
+        },
+      })),
+      { ordered: false },
+    );
   }
 
   const data = await getWishlistPayload(session.user.email);
@@ -126,14 +211,18 @@ export async function DELETE(request) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { productId } = await request.json();
+  const { productId, storeKey } = await request.json();
+  if (!validateStoreKey(storeKey)) {
+    return NextResponse.json({ success: false, error: 'Invalid store scope' }, { status: 403 });
+  }
   const safeProductId = String(productId || '').trim();
-  if (!safeProductId) {
+  if (!safeProductId || !mongoose.Types.ObjectId.isValid(safeProductId)) {
     return NextResponse.json({ success: false, error: 'Product is required' }, { status: 400 });
   }
 
   await mongooseConnect();
-  await upsertWishlistUser(session.user.email, { $pull: { wishlist: safeProductId } });
+  const user = await upsertWishlistUser(session.user.email);
+  await Wishlist.deleteOne(withStoreScope({ userId: user._id, productId: safeProductId }));
 
   const data = await getWishlistPayload(session.user.email);
   return NextResponse.json({ success: true, data });

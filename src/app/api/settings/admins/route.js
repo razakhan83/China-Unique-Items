@@ -72,8 +72,12 @@ export async function POST(req) {
     await mongooseConnect();
     const settings = await Settings.findOneAndUpdate(
       { singletonKey: getScopedSettingsKey() },
-      { $addToSet: { adminEmails: email } }, // addToSet avoids duplicates
-      { upsert: true, new: true },
+      {
+        $addToSet: { adminEmails: email },
+        $set: { storeKey: getStoreKey() },
+        $setOnInsert: { singletonKey: getScopedSettingsKey() },
+      }, // addToSet avoids duplicates
+      { upsert: true, returnDocument: 'after' },
     ).lean();
 
     return NextResponse.json({ success: true, data: settings.adminEmails });
@@ -100,8 +104,8 @@ export async function DELETE(req) {
     await mongooseConnect();
     const settings = await Settings.findOneAndUpdate(
       { singletonKey: getScopedSettingsKey() },
-      { $pull: { adminEmails: email } },
-      { new: true },
+      { $pull: { adminEmails: email }, $set: { storeKey: getStoreKey() } },
+      { returnDocument: 'after' },
     ).lean();
 
     return NextResponse.json({ success: true, data: settings?.adminEmails || [] });

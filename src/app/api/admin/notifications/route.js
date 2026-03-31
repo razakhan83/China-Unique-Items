@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 
 import mongooseConnect from '@/lib/mongooseConnect';
 import Notification from '@/models/Notification';
+import { withStoreScope, withStoreScopedId } from '@/lib/store-scope';
 
 // GET recent notifications
 export async function GET() {
@@ -15,7 +16,7 @@ export async function GET() {
     }
 
     await mongooseConnect();
-    const notifications = await Notification.find()
+    const notifications = await Notification.find(withStoreScope({}))
       .sort({ createdAt: -1 })
       .limit(50)
       .lean();
@@ -38,9 +39,13 @@ export async function PATCH(req) {
     await mongooseConnect();
 
     if (all) {
-      await Notification.updateMany({ isRead: false }, { isRead: true });
+      await Notification.updateMany(withStoreScope({ isRead: false }), { isRead: true });
     } else if (id) {
-      await Notification.findByIdAndUpdate(id, { isRead: true });
+      const scopedId = withStoreScopedId(id);
+      if (!scopedId) {
+        return NextResponse.json({ success: false, error: 'Notification not found' }, { status: 404 });
+      }
+      await Notification.findOneAndUpdate(scopedId, { isRead: true });
     }
 
     return NextResponse.json({ success: true });
